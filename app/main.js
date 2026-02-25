@@ -950,6 +950,129 @@ function previewHtml(cssText) {
     return `<img class="exe-icon" src="${src}" alt="" aria-label="${escapeHtml(label)}" width="48" height="48" />`;
   };
   const screenshot = getBlobUrl("screenshot.png");
+  const pages = [
+    {
+      title: "Introducción",
+      content: `
+      <article class="box" id="id1">
+        <header class="box-head">
+          ${iconMarkup("info", "icono info")}
+          <h1 class="box-title">Presentación</h1>
+          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+        </header>
+        <div class="box-content">
+          <p>Bienvenido al curso de ejemplo. Este contenido es una <a href="#">simulación interactiva</a>.</p>
+          <ul><li>Elemento 1</li><li>Elemento 2</li><li>Elemento 3</li></ul>
+          <table border="1" cellpadding="6"><tr><th>Campo</th><th>Valor</th></tr><tr><td>A</td><td>10</td></tr><tr><td>B</td><td>20</td></tr></table>
+        </div>
+      </article>
+      <article class="box" id="id2">
+        <header class="box-head">
+          ${iconMarkup("objectives", "icono objetivos")}
+          <h1 class="box-title">Objetivos</h1>
+          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+        </header>
+        <div class="box-content"><p>Objetivo 1: Conocer la estructura del curso.</p><p>Objetivo 2: Navegar por las distintas secciones.</p></div>
+      </article>
+      ${screenshot ? `<article class="box"><header class="box-head"><h1 class="box-title">Screenshot del tema</h1></header><div class="box-content"><img src="${screenshot}" alt="screenshot" style="max-width:100%;height:auto" /></div></article>` : ""}
+      `
+    },
+    {
+      title: "Tema 1: Células",
+      content: `
+      <article class="box" id="id1">
+        <header class="box-head">
+          ${iconMarkup("info", "icono info")}
+          <h1 class="box-title">La célula</h1>
+          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+        </header>
+        <div class="box-content">
+          <p>La célula es la unidad estructural y funcional básica de todos los seres vivos.</p>
+          <ul><li>Membrana celular</li><li>Citoplasma</li><li>Núcleo</li></ul>
+        </div>
+      </article>
+      <article class="box" id="id2">
+        <header class="box-head">
+          ${iconMarkup("activity", "icono actividad")}
+          <h1 class="box-title">Actividad 1</h1>
+          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+        </header>
+        <div class="box-content">
+          <p>Identifica los componentes de la célula en el diagrama.</p>
+          <p><button type="button">Comprobar respuesta</button></p>
+        </div>
+      </article>
+      `
+    },
+    {
+      title: "Tema 2: Genética",
+      content: `
+      <article class="box" id="id1">
+        <header class="box-head">
+          ${iconMarkup("info", "icono info")}
+          <h1 class="box-title">ADN y genes</h1>
+          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+        </header>
+        <div class="box-content">
+          <p>El ADN contiene la información genética de los organismos.</p>
+          <table border="1" cellpadding="6">
+            <tr><th>Nucleótido</th><th>Base</th></tr>
+            <tr><td>Adenina</td><td>A</td></tr>
+            <tr><td>Timina</td><td>T</td></tr>
+            <tr><td>Guanina</td><td>G</td></tr>
+            <tr><td>Citosina</td><td>C</td></tr>
+          </table>
+        </div>
+      </article>
+      <article class="box" id="id2">
+        <header class="box-head">
+          ${iconMarkup("activity", "icono actividad")}
+          <h1 class="box-title">Actividad 2</h1>
+          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+        </header>
+        <div class="box-content">
+          <p>Relaciona los conceptos de genética con sus definiciones.</p>
+          <p><button type="button">Ver solución</button></p>
+        </div>
+      </article>
+      `
+    },
+    {
+      title: "Evaluación",
+      content: `
+      <article class="box" id="id1">
+        <header class="box-head">
+          ${iconMarkup("info", "icono info")}
+          <h1 class="box-title">Evaluación final</h1>
+          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+        </header>
+        <div class="box-content">
+          <p>Responde las siguientes preguntas para evaluar tu aprendizaje.</p>
+          <ol><li>¿Qué es una célula?</li><li>¿Cuáles son los componentes del ADN?</li></ol>
+        </div>
+      </article>
+      <article class="box" id="id2">
+        <header class="box-head">
+          ${iconMarkup("activity", "icono actividad")}
+          <h1 class="box-title">Pregunta de opción múltiple</h1>
+          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+        </header>
+        <div class="box-content">
+          <p>¿Cuál es la unidad básica de la vida?</p>
+          <ul>
+            <li><label><input type="radio" name="q1" /> La célula</label></li>
+            <li><label><input type="radio" name="q1" /> El átomo</label></li>
+            <li><label><input type="radio" name="q1" /> El gen</label></li>
+          </ul>
+          <p><button type="button">Enviar respuesta</button></p>
+        </div>
+      </article>
+      `
+    }
+  ];
+  const pagesJson = JSON.stringify(pages.map((p) => ({ title: p.title, content: p.content })))
+    .replace(/<\/script>/gi, "<\\/script>");
+  const totalPages = pages.length;
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -1015,8 +1138,11 @@ body.preview-sim .sr-av {
   clip: rect(0, 0, 0, 0) !important;
   border: 0 !important;
 }
-body.preview-sim a[href] {
+body.preview-sim .box-content a[href] {
   pointer-events: none !important;
+}
+body.preview-sim .nav-buttons .nav-button {
+  cursor: pointer;
 }
 </style>
 </head>
@@ -1035,55 +1161,85 @@ body.preview-sim a[href] {
   <main id="preview-page" class="page">
     <div id="exe-client-search"><input id="exe-client-search-text" type="search" placeholder="Buscar en este recurso" /></div>
     <header class="main-header">
-      <p class="page-counter"><span class="page-counter-label">Página </span><span class="page-counter-content"><strong class="page-counter-current-page">1</strong><span class="page-counter-sep">/</span><strong class="page-counter-total">20</strong></span></p>
+      <p class="page-counter"><span class="page-counter-label">Página </span><span class="page-counter-content"><strong class="page-counter-current-page">1</strong><span class="page-counter-sep">/</span><strong class="page-counter-total">${totalPages}</strong></span></p>
       <div class="package-header"><h1 class="package-title">Curso de ejemplo (simulado)</h1></div>
-      <div class="page-header"><h2 class="page-title">Título de página simulado</h2></div>
+      <div class="page-header"><h2 class="page-title">${escapeHtml(pages[0].title)}</h2></div>
     </header>
-
     <div id="page-content-preview" class="page-content">
-      <article class="box" id="id1">
-        <header class="box-head">
-          ${iconMarkup("info", "icono info")}
-          <h1 class="box-title">Texto</h1>
-          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
-        </header>
-        <div class="box-content">
-          <p>Contenido con <a href="#">enlace de prueba</a>, listas y tabla.</p>
-          <ul><li>Elemento 1</li><li>Elemento 2</li></ul>
-          <table border="1" cellpadding="6"><tr><th>Campo</th><th>Valor</th></tr><tr><td>A</td><td>10</td></tr></table>
-        </div>
-      </article>
-
-      <article class="box" id="id2">
-        <header class="box-head">
-          ${iconMarkup("objectives", "icono objetivos")}
-          <h1 class="box-title">Objetivos</h1>
-          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
-        </header>
-        <div class="box-content"><p>Objetivo 1. Objetivo 2. Objetivo 3.</p></div>
-      </article>
-
-      <article class="box" id="id3">
-        <header class="box-head">
-          ${iconMarkup("activity", "icono actividad")}
-          <h1 class="box-title">Actividad</h1>
-          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
-        </header>
-        <div class="box-content">
-          <p>Enunciado de actividad con botón de ejemplo.</p>
-          <p><button type="button">Comprobar</button></p>
-        </div>
-      </article>
-
-      ${screenshot ? `<article class="box"><header class="box-head"><h1 class="box-title">Screenshot del tema</h1></header><div class="box-content"><img src="${screenshot}" alt="screenshot" style="max-width:100%;height:auto" /></div></article>` : ""}
+      ${pages[0].content}
     </div>
   </main>
   <div class="nav-buttons">
-    <span class="nav-button nav-button-left" aria-hidden="true"><span>Anterior</span></span>
-    <a href="#" title="Siguiente" class="nav-button nav-button-right"><span>Siguiente</span></a>
+    <button type="button" id="navPrev" class="nav-button nav-button-left" style="display:none"><span>Anterior</span></button>
+    <button type="button" id="navNext" class="nav-button nav-button-right"><span>Siguiente</span></button>
   </div>
   <footer id="siteFooter"><div id="siteFooterContent">Pie de página simulado</div></footer>
 </div>
+<script>
+(function () {
+  var pages = ${pagesJson};
+  var current = 0;
+
+  function renderPage(idx) {
+    current = idx;
+    var page = pages[idx];
+    document.querySelector('.page-title').textContent = page.title;
+    document.querySelector('.page-counter-current-page').textContent = idx + 1;
+    document.getElementById('page-content-preview').innerHTML = page.content;
+    document.querySelectorAll('#siteNav li').forEach(function (li, i) {
+      li.classList.toggle('active', i === idx);
+      var a = li.querySelector('a');
+      if (a) a.classList.toggle('active', i === idx);
+    });
+    var prev = document.getElementById('navPrev');
+    var next = document.getElementById('navNext');
+    if (prev) prev.style.display = idx === 0 ? 'none' : '';
+    if (next) next.style.display = idx === pages.length - 1 ? 'none' : '';
+    window.scrollTo(0, 0);
+    initBoxToggles();
+  }
+
+  function initBoxToggles() {
+    document.querySelectorAll('.box-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var box = btn.closest('article.box');
+        if (!box) return;
+        var content = box.querySelector('.box-content');
+        if (!content) return;
+        if (btn.classList.contains('box-toggle-on')) {
+          content.style.display = 'none';
+          btn.classList.replace('box-toggle-on', 'box-toggle-off');
+        } else {
+          content.style.display = '';
+          btn.classList.replace('box-toggle-off', 'box-toggle-on');
+        }
+      });
+    });
+  }
+
+  var prevBtn = document.getElementById('navPrev');
+  var nextBtn = document.getElementById('navNext');
+  if (prevBtn) prevBtn.addEventListener('click', function () { if (current > 0) renderPage(current - 1); });
+  if (nextBtn) nextBtn.addEventListener('click', function () { if (current < pages.length - 1) renderPage(current + 1); });
+
+  document.querySelectorAll('#siteNav a').forEach(function (a, i) {
+    a.addEventListener('click', function (e) { e.preventDefault(); renderPage(i); });
+  });
+
+  var navToggler = document.getElementById('siteNavToggler');
+  if (navToggler) navToggler.addEventListener('click', function () { document.body.classList.toggle('nav-open'); });
+
+  var searchToggler = document.getElementById('searchBarTogger');
+  var searchBar = document.getElementById('exe-client-search');
+  if (searchToggler && searchBar) {
+    searchToggler.addEventListener('click', function () {
+      searchBar.style.display = searchBar.style.display === 'none' ? '' : 'none';
+    });
+  }
+
+  initBoxToggles();
+})();
+</script>
 </body>
 </html>`;
 }

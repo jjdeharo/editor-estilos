@@ -8,7 +8,7 @@ Prioridad acordada: **compatibilidad real con eXeLearning** y cambios automátic
 - App estática: `index.html`, `app/main.js`, `app/styles.css`.
 - ZIP en cliente con `vendor/jszip.min.js`.
 - Carga inicial automática del estilo oficial `base`.
-- Previsualización simulada fija en panel derecho (enlaces inactivos para evitar navegación accidental).
+- Previsualización interactiva: navegación entre páginas simuladas, menú plegable y cajas desplegables.
 
 ## Estructura relevante
 - `index.html`: interfaz y controles.
@@ -29,6 +29,11 @@ Prioridad acordada: **compatibilidad real con eXeLearning** y cambios automátic
 - Metadatos completos de `config.xml`:
   - `name`, `title`, `version`, `compatibility`, `author`, `license`, `license-url`, `description`, `downloadable`.
 - Exportación ZIP con validación automática.
+- Previsualización interactiva con 4 páginas simuladas navegables (Introducción, Tema 1, Tema 2, Evaluación):
+  - Botones Siguiente/Anterior funcionales con ocultación en extremos.
+  - Menú lateral navegable y plegable mediante botón hamburguesa.
+  - Barra de búsqueda activable con su botón toggler.
+  - Cajas (iDevices) contraíbles/expandibles con `.box-toggle`.
 
 ## Reglas de compatibilidad y seguridad
 - Los ajustes rápidos escriben solo dentro del bloque `quick-overrides`.
