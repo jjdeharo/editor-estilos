@@ -1113,35 +1113,6 @@ function rewriteCssUrls(css) {
 }
 
 function previewHtml(cssText) {
-  const getLastCssProp = (selectorPattern, propPattern) => {
-    const blockRe = new RegExp(`${selectorPattern}\\s*\\{([^}]*)\\}`, "gi");
-    let value = "";
-    for (const m of cssText.matchAll(blockRe)) {
-      const decls = m[1] || "";
-      const propRe = new RegExp(`${propPattern}\\s*:\\s*([^;]+);`, "i");
-      const pm = decls.match(propRe);
-      if (pm && pm[1]) value = pm[1].trim();
-    }
-    return value;
-  };
-  const previewPageBg = normalizeHex(
-    getLastCssProp("body\\.exe-web-site", "background-color")
-      || getLastCssProp("body\\.exe-web-site", "background")
-      || state.quick.pageBgColor,
-    QUICK_DEFAULTS.pageBgColor
-  );
-  const previewContentBg = normalizeHex(
-    getLastCssProp("\\.exe-content", "background-color")
-      || getLastCssProp("\\.exe-content", "background")
-      || state.quick.contentBgColor,
-    QUICK_DEFAULTS.contentBgColor
-  );
-  const asset = (...candidates) => {
-    for (const file of candidates) {
-      if (state.files.has(file)) return getBlobUrl(file);
-    }
-    return "";
-  };
   const icon = (name) => {
     const candidates = ["svg", "png", "gif", "jpg", "jpeg", "webp"];
     for (const ext of candidates) {
@@ -1152,10 +1123,17 @@ function previewHtml(cssText) {
   };
   const iconMarkup = (name, label) => {
     const src = icon(name);
-    if (!src) return "";
-    return `<img class="exe-icon" src="${src}" alt="" aria-label="${escapeHtml(label)}" width="48" height="48" />`;
+    if (!src) return { html: "", hasIcon: false };
+    return {
+      html: `<img class="exe-icon" src="${src}" alt="" aria-label="${escapeHtml(label)}" width="48" height="48" />`,
+      hasIcon: true
+    };
   };
   const screenshot = getBlobUrl("screenshot.png");
+  const previewPageId = "20260101000000SIMULADO";
+  const infoIcon = iconMarkup("info", "icono info");
+  const objectivesIcon = iconMarkup("objectives", "icono objetivos");
+  const activityIcon = iconMarkup("activity", "icono actividad");
   const p = { ...PREVIEW_DEFAULTS, ...state.preview };
   const bodyClasses = ["exe-export", "exe-web-site", "js", "preview-sim"];
   if (p.navCollapsed) bodyClasses.push("siteNav-off");
@@ -1168,39 +1146,9 @@ function previewHtml(cssText) {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>${rewriteCssUrls(cssText)}
-/* Ajustes de la maqueta para evitar artefactos visuales de simulación */
-body.preview-sim {
-  overflow-x: hidden;
-}
-body.preview-sim .exe-content {
-  min-height: 100vh;
-}
-body.preview-sim #siteNav {
-  min-height: 100vh;
-}
-@media (min-width: 576px) and (max-width: 767.98px) {
-  body.preview-sim main.page,
-  body.preview-sim #siteFooter {
-    padding-left: 252px !important;
-  }
-}
-body.preview-sim .box-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-body.preview-sim .box-head .box-title {
-  margin: 0;
-}
-body.preview-sim .box-head .box-toggle {
-  margin-left: auto;
-}
+/* Reglas mínimas de simulación: no alterar la maquetación del tema */
 body.preview-sim.preview-boxes-collapsed .box-content {
   display: none !important;
-}
-body.preview-sim .exe-icon {
-  flex: 0 0 auto;
-  object-fit: contain;
 }
 body.preview-sim .sr-av {
   position: absolute !important;
@@ -1214,16 +1162,6 @@ body.preview-sim .sr-av {
 }
 body.preview-sim a[href] {
   pointer-events: none !important;
-}
-/* Fondo fiel a los ajustes actuales del editor */
-body.preview-sim {
-  background-color: ${previewPageBg} !important;
-}
-body.preview-sim .exe-content,
-body.preview-sim main.page,
-body.preview-sim .page-content,
-body.preview-sim .main-header {
-  background-color: ${previewContentBg} !important;
 }
 </style>
 </head>
@@ -1239,18 +1177,18 @@ body.preview-sim .main-header {
       <li><a class="no-ch" href="#">Evaluación</a></li>
     </ul>
   </nav>
-  <main id="preview-page" class="page">
+  <main id="${previewPageId}" class="page">
     ${p.showSearch ? `<div id="exe-client-search"><input id="exe-client-search-text" type="search" placeholder="Buscar en este recurso" /></div>` : ""}
-    <header class="main-header">
+    <header id="header-${previewPageId}" class="main-header">
       ${p.showPageCounter ? `<p class="page-counter"><span class="page-counter-label">Página </span><span class="page-counter-content"><strong class="page-counter-current-page">1</strong><span class="page-counter-sep">/</span><strong class="page-counter-total">20</strong></span></p>` : ""}
-      ${p.showPackageTitle ? `<div class="package-header"><h1 class="package-title">Curso de ejemplo (simulado)</h1></div>` : ""}
-      ${p.showPageTitle ? `<div class="page-header"><h2 class="page-title">Título de página simulado</h2></div>` : ""}
+      ${p.showPackageTitle ? `<div class="package-header"><h1 class="package-title">Curso de ejemplo</h1></div>` : ""}
+      ${p.showPageTitle ? `<div class="page-header"><h2 class="page-title">Introducción</h2></div>` : ""}
     </header>
 
-    <div id="page-content-preview" class="page-content">
+    <div id="page-content-${previewPageId}" class="page-content">
       <article class="box" id="id1">
-        <header class="box-head">
-          ${iconMarkup("info", "icono info")}
+        <header class="box-head${infoIcon.hasIcon ? "" : " no-icon"}">
+          ${infoIcon.html}
           <h1 class="box-title">Texto</h1>
           <button class="${boxToggleClass}" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
         </header>
@@ -1262,8 +1200,8 @@ body.preview-sim .main-header {
       </article>
 
       <article class="box" id="id2">
-        <header class="box-head">
-          ${iconMarkup("objectives", "icono objetivos")}
+        <header class="box-head${objectivesIcon.hasIcon ? "" : " no-icon"}">
+          ${objectivesIcon.html}
           <h1 class="box-title">Objetivos</h1>
           <button class="${boxToggleClass}" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
         </header>
@@ -1271,8 +1209,8 @@ body.preview-sim .main-header {
       </article>
 
       <article class="box" id="id3">
-        <header class="box-head">
-          ${iconMarkup("activity", "icono actividad")}
+        <header class="box-head${activityIcon.hasIcon ? "" : " no-icon"}">
+          ${activityIcon.html}
           <h1 class="box-title">Actividad</h1>
           <button class="${boxToggleClass}" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
         </header>
@@ -1297,7 +1235,52 @@ body.preview-sim .main-header {
 
 function renderPreview() {
   const css = readCss();
-  els.previewFrame.srcdoc = previewHtml(css);
+  const frame = els.previewFrame;
+  if (!frame) return;
+  frame.addEventListener("load", () => {
+    applyPreviewThemeDomFixes();
+  }, { once: true });
+  frame.srcdoc = previewHtml(css);
+}
+
+function styleJsText() {
+  if (!state.files.has("style.js")) return "";
+  try {
+    return decode(state.files.get("style.js"));
+  } catch {
+    return "";
+  }
+}
+
+function previewThemeMovesPageTitle(styleJs = styleJsText()) {
+  if (!styleJs) return false;
+  return /this\.movePageTitle\s*\(\s*\)/i.test(styleJs)
+    || /movePageTitle\s*:\s*function/i.test(styleJs)
+    || /prepend\s*\(\s*\$title\s*\)/i.test(styleJs);
+}
+
+function applyPreviewThemeDomFixes() {
+  const frame = els.previewFrame;
+  const doc = frame?.contentDocument;
+  if (!doc) return;
+
+  if (previewThemeMovesPageTitle()) {
+    const header = doc.querySelector(".main-header .page-header");
+    const title = header?.querySelector(".page-title");
+    let content = doc.querySelector(".page-content");
+    if (!content) content = doc.querySelector(".content, main .content");
+    if (!content) content = doc.querySelector("#main, #content");
+    if (!content && header) {
+      let next = header.nextElementSibling;
+      while (next && /^header$/i.test(next.tagName)) next = next.nextElementSibling;
+      if (next) content = next;
+    }
+    if (!content && header) content = header.parentElement;
+
+    if (header && title && content && !content.contains(title)) {
+      content.prepend(title);
+    }
+  }
 }
 
 function waitForPreviewFrameReady(timeoutMs = 1200) {
@@ -1377,6 +1360,7 @@ async function capturePreviewScreenshotBytes({ width = 1200, height = 550 } = {}
 async function autoUpdateScreenshotFromPreview() {
   try {
     await waitForPreviewFrameReady();
+    applyPreviewThemeDomFixes();
     const bytes = await capturePreviewScreenshotBytes({ width: 1200, height: 550 });
     if (!bytes?.length) return false;
     state.files.set("screenshot.png", bytes);
