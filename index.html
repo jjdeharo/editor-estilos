@@ -148,10 +148,13 @@
               <label>Tamaño título iDevice (rem) <input id="boxTitleSize" data-quick="boxTitleSize" type="number" min="1" max="2.4" step="0.05" /></label>
               <label>Separación icono/título (px) <input id="boxTitleGap" data-quick="boxTitleGap" type="number" min="0" max="28" step="1" /></label>
             </div>
-            <label class="checkbox-row">
-              <input id="pageTitleUppercase" data-quick="pageTitleUppercase" type="checkbox" />
-              Título de página en mayúsculas
-            </label>
+            <div class="toggle-item">
+              <span class="toggle-control">
+                <input id="pageTitleUppercase" data-quick="pageTitleUppercase" class="toggle-input" type="checkbox" />
+                <span class="toggle-visual"></span>
+              </span>
+              <label class="toggle-label" for="pageTitleUppercase">Título de página en mayúsculas</label>
+            </div>
           </div>
         </details>
 
@@ -164,10 +167,13 @@
               <input id="addLogoInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
             </div>
             <p id="logoInfo" class="status-inline">Sin logo cargado.</p>
-            <label>
-              <input id="logoEnabled" data-quick="logoEnabled" type="checkbox" />
-              Mostrar logo
-            </label>
+            <div class="toggle-item">
+              <span class="toggle-control">
+                <input id="logoEnabled" data-quick="logoEnabled" class="toggle-input" type="checkbox" />
+                <span class="toggle-visual"></span>
+              </span>
+              <label class="toggle-label" for="logoEnabled">Mostrar logo</label>
+            </div>
             <div class="inline-three">
               <label>Tamaño logo (px) <input id="logoSize" data-quick="logoSize" type="number" min="40" max="500" step="1" /></label>
               <label>Posición
@@ -247,13 +253,82 @@
 
     <main class="preview-panel">
       <header class="preview-header">
-        <h2>Previsualización simulada (solo se verá de forma completa desde eXeLearning)</h2>
+        <div class="preview-header-top">
+          <h2>Previsualización simulada (solo se verá de forma completa desde eXeLearning)</h2>
+          <div class="preview-toolbar">
+            <button id="previewOptionsBtn" class="icon-btn" type="button" aria-expanded="false" aria-controls="previewOptionsPanel" title="Opciones de vista previa">
+              <span aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" role="img">
+                  <path d="M1.5 12C3.6 7.8 7.4 5 12 5s8.4 2.8 10.5 7c-2.1 4.2-5.9 7-10.5 7S3.6 16.2 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"></circle>
+                </svg>
+              </span>
+              <span class="sr-only">Opciones de vista previa</span>
+            </button>
+            <div id="previewOptionsPanel" class="preview-options-popover" hidden>
+              <div class="section-content quick-grid">
+                <p class="status-inline">No se exporta. Solo cambia esta vista simulada.</p>
+                <div class="preview-toggle-list">
+                  <div class="toggle-item">
+                    <span class="toggle-control">
+                      <input id="previewShowSearch" data-preview="showSearch" class="toggle-input" type="checkbox" checked />
+                      <span class="toggle-visual"></span>
+                    </span>
+                    <label class="toggle-label" for="previewShowSearch">Mostrar buscador</label>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-control">
+                      <input id="previewShowPageCounter" data-preview="showPageCounter" class="toggle-input" type="checkbox" checked />
+                      <span class="toggle-visual"></span>
+                    </span>
+                    <label class="toggle-label" for="previewShowPageCounter">Mostrar número de página</label>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-control">
+                      <input id="previewShowNavButtons" data-preview="showNavButtons" class="toggle-input" type="checkbox" checked />
+                      <span class="toggle-visual"></span>
+                    </span>
+                    <label class="toggle-label" for="previewShowNavButtons">Mostrar navegación anterior/siguiente</label>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-control">
+                      <input id="previewNavCollapsed" data-preview="navCollapsed" class="toggle-input" type="checkbox" />
+                      <span class="toggle-visual"></span>
+                    </span>
+                    <label class="toggle-label" for="previewNavCollapsed">Simular menú oculto (nav=false)</label>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-control">
+                      <input id="previewShowPackageTitle" data-preview="showPackageTitle" class="toggle-input" type="checkbox" checked />
+                      <span class="toggle-visual"></span>
+                    </span>
+                    <label class="toggle-label" for="previewShowPackageTitle">Mostrar título de curso</label>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-control">
+                      <input id="previewShowPageTitle" data-preview="showPageTitle" class="toggle-input" type="checkbox" checked />
+                      <span class="toggle-visual"></span>
+                    </span>
+                    <label class="toggle-label" for="previewShowPageTitle">Mostrar título de página</label>
+                  </div>
+                  <div class="toggle-item">
+                    <span class="toggle-control">
+                      <input id="previewCollapseIdevices" data-preview="collapseIdevices" class="toggle-input" type="checkbox" />
+                      <span class="toggle-visual"></span>
+                    </span>
+                    <label class="toggle-label" for="previewCollapseIdevices">Simular iDevices plegados</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </header>
       <iframe id="previewFrame" title="Previsualización eXe" sandbox="allow-same-origin"></iframe>
     </main>
   </div>
   <footer class="app-footer">
-    <p>v 0.0.4 · (c) <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · Licencia AGPLv3</p>
+    <p>v 0.0.4 · (c) <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">Licencia AGPLv3</a> · <a href="https://github.com/jjdeharo/editor-estilos" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a> · <a href="https://github.com/jjdeharo/editor-estilos/issues" target="_blank" rel="noopener noreferrer">Problemas y sugerencias</a></p>
   </footer>
 
   <script src="vendor/jszip.min.js"></script>

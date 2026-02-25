@@ -10,6 +10,7 @@ const QUICK_PROTECTED_PATTERNS = [
   { re: /\.nav-buttons\b/i, label: ".nav-buttons" }
 ];
 const TRIAL_NOTICE_KEY = "editor-estilos:trial-notice-dismissed";
+const PREVIEW_TOGGLES_KEY = "editor-estilos:preview-toggles";
 
 const FILE_TYPE_OPTIONS = [
   { value: "images", label: "Imágenes" },
@@ -65,6 +66,16 @@ const QUICK_DEFAULTS = {
   logoMarginY: 14
 };
 
+const PREVIEW_DEFAULTS = {
+  showSearch: true,
+  showPageCounter: true,
+  showNavButtons: true,
+  navCollapsed: false,
+  showPackageTitle: true,
+  showPageTitle: true,
+  collapseIdevices: false
+};
+
 const els = {
   trialNotice: document.getElementById("trialNotice"),
   dismissTrialNotice: document.getElementById("dismissTrialNotice"),
@@ -86,6 +97,8 @@ const els = {
   textEditor: document.getElementById("textEditor"),
   binaryPreview: document.getElementById("binaryPreview"),
   previewFrame: document.getElementById("previewFrame"),
+  previewOptionsBtn: document.getElementById("previewOptionsBtn"),
+  previewOptionsPanel: document.getElementById("previewOptionsPanel"),
   metaName: document.getElementById("metaName"),
   metaTitle: document.getElementById("metaTitle"),
   metaVersion: document.getElementById("metaVersion"),
@@ -105,7 +118,8 @@ const els = {
   addIdeviceIconsBtn: document.getElementById("addIdeviceIconsBtn"),
   addIdeviceIconsInput: document.getElementById("addIdeviceIconsInput"),
   logoInfo: document.getElementById("logoInfo"),
-  quickInputs: Array.from(document.querySelectorAll("[data-quick]"))
+  quickInputs: Array.from(document.querySelectorAll("[data-quick]")),
+  previewInputs: Array.from(document.querySelectorAll("[data-preview]"))
 };
 
 const state = {
@@ -118,6 +132,7 @@ const state = {
   activePath: "style.css",
   blobUrls: new Map(),
   quick: { ...QUICK_DEFAULTS },
+  preview: { ...PREVIEW_DEFAULTS },
   isDirty: false
 };
 
@@ -628,6 +643,83 @@ function quickToUI(values) {
   updateBgImageInfo();
 }
 
+function previewFromUI() {
+  const next = { ...state.preview };
+  for (const input of els.previewInputs) {
+    const key = input.dataset.preview;
+    if (!key || !(key in next)) continue;
+    next[key] = Boolean(input.checked);
+  }
+  return next;
+}
+
+function previewToUI(values) {
+  for (const input of els.previewInputs) {
+    const key = input.dataset.preview;
+    if (!key || !(key in values)) continue;
+    input.checked = Boolean(values[key]);
+  }
+}
+
+function loadPreviewToggles() {
+  try {
+    const raw = window.localStorage.getItem(PREVIEW_TOGGLES_KEY);
+    if (!raw) return { ...PREVIEW_DEFAULTS };
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return { ...PREVIEW_DEFAULTS };
+    return { ...PREVIEW_DEFAULTS, ...parsed };
+  } catch {
+    return { ...PREVIEW_DEFAULTS };
+  }
+}
+
+function savePreviewToggles(values) {
+  try {
+    window.localStorage.setItem(PREVIEW_TOGGLES_KEY, JSON.stringify(values));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function applyPreviewTogglesFromUI() {
+  state.preview = previewFromUI();
+  savePreviewToggles(state.preview);
+  renderPreview();
+  setStatus("Previsualización actualizada.");
+}
+
+function setupPreviewOptionsPopover() {
+  const btn = els.previewOptionsBtn;
+  const panel = els.previewOptionsPanel;
+  if (!btn || !panel) return;
+
+  const setOpen = (open) => {
+    panel.hidden = !open;
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+  const isOpen = () => !panel.hidden;
+
+  btn.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    setOpen(!isOpen());
+  });
+
+  panel.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+  });
+
+  document.addEventListener("click", () => {
+    if (isOpen()) setOpen(false);
+  });
+
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape" && isOpen()) {
+      setOpen(false);
+      btn.focus();
+    }
+  });
+}
+
 function ensureFontFamilyOption(fontValue, selectId) {
   const select = document.getElementById(selectId);
   if (!select || !fontValue) return;
@@ -1064,6 +1156,12 @@ function previewHtml(cssText) {
     return `<img class="exe-icon" src="${src}" alt="" aria-label="${escapeHtml(label)}" width="48" height="48" />`;
   };
   const screenshot = getBlobUrl("screenshot.png");
+  const p = { ...PREVIEW_DEFAULTS, ...state.preview };
+  const bodyClasses = ["exe-export", "exe-web-site", "js", "preview-sim"];
+  if (p.navCollapsed) bodyClasses.push("siteNav-off");
+  if (p.showSearch) bodyClasses.push("exe-search-on");
+  if (p.collapseIdevices) bodyClasses.push("preview-boxes-collapsed");
+  const boxToggleClass = p.collapseIdevices ? "box-toggle" : "box-toggle box-toggle-on";
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -1071,9 +1169,6 @@ function previewHtml(cssText) {
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>${rewriteCssUrls(cssText)}
 /* Ajustes de la maqueta para evitar artefactos visuales de simulación */
-body.preview-sim .nav-buttons {
-  display: none !important;
-}
 body.preview-sim {
   overflow-x: hidden;
 }
@@ -1089,12 +1184,6 @@ body.preview-sim #siteNav {
     padding-left: 252px !important;
   }
 }
-body.preview-sim .nav-buttons .nav-button-left {
-  right: 220px !important;
-}
-body.preview-sim .nav-buttons .nav-button-right {
-  right: 20px !important;
-}
 body.preview-sim .box-head {
   display: flex;
   align-items: center;
@@ -1105,6 +1194,9 @@ body.preview-sim .box-head .box-title {
 }
 body.preview-sim .box-head .box-toggle {
   margin-left: auto;
+}
+body.preview-sim.preview-boxes-collapsed .box-content {
+  display: none !important;
 }
 body.preview-sim .exe-icon {
   flex: 0 0 auto;
@@ -1135,7 +1227,7 @@ body.preview-sim .main-header {
 }
 </style>
 </head>
-<body class="exe-export exe-web-site js preview-sim">
+<body class="${bodyClasses.join(" ")}">
 <div class="exe-content exe-export">
   <button type="button" id="siteNavToggler" class="toggler" title="Menú"><span class="sr-av">Menú</span></button>
   <button type="button" id="searchBarTogger" class="toggler" title="Buscar"><span class="sr-av">Buscar</span></button>
@@ -1148,11 +1240,11 @@ body.preview-sim .main-header {
     </ul>
   </nav>
   <main id="preview-page" class="page">
-    <div id="exe-client-search"><input id="exe-client-search-text" type="search" placeholder="Buscar en este recurso" /></div>
+    ${p.showSearch ? `<div id="exe-client-search"><input id="exe-client-search-text" type="search" placeholder="Buscar en este recurso" /></div>` : ""}
     <header class="main-header">
-      <p class="page-counter"><span class="page-counter-label">Página </span><span class="page-counter-content"><strong class="page-counter-current-page">1</strong><span class="page-counter-sep">/</span><strong class="page-counter-total">20</strong></span></p>
-      <div class="package-header"><h1 class="package-title">Curso de ejemplo (simulado)</h1></div>
-      <div class="page-header"><h2 class="page-title">Título de página simulado</h2></div>
+      ${p.showPageCounter ? `<p class="page-counter"><span class="page-counter-label">Página </span><span class="page-counter-content"><strong class="page-counter-current-page">1</strong><span class="page-counter-sep">/</span><strong class="page-counter-total">20</strong></span></p>` : ""}
+      ${p.showPackageTitle ? `<div class="package-header"><h1 class="package-title">Curso de ejemplo (simulado)</h1></div>` : ""}
+      ${p.showPageTitle ? `<div class="page-header"><h2 class="page-title">Título de página simulado</h2></div>` : ""}
     </header>
 
     <div id="page-content-preview" class="page-content">
@@ -1160,7 +1252,7 @@ body.preview-sim .main-header {
         <header class="box-head">
           ${iconMarkup("info", "icono info")}
           <h1 class="box-title">Texto</h1>
-          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+          <button class="${boxToggleClass}" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
         </header>
         <div class="box-content">
           <p>Contenido con <a href="#">enlace de prueba</a>, listas y tabla.</p>
@@ -1173,7 +1265,7 @@ body.preview-sim .main-header {
         <header class="box-head">
           ${iconMarkup("objectives", "icono objetivos")}
           <h1 class="box-title">Objetivos</h1>
-          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+          <button class="${boxToggleClass}" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
         </header>
         <div class="box-content"><p>Objetivo 1. Objetivo 2. Objetivo 3.</p></div>
       </article>
@@ -1182,7 +1274,7 @@ body.preview-sim .main-header {
         <header class="box-head">
           ${iconMarkup("activity", "icono actividad")}
           <h1 class="box-title">Actividad</h1>
-          <button class="box-toggle box-toggle-on" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
+          <button class="${boxToggleClass}" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
         </header>
         <div class="box-content">
           <p>Enunciado de actividad con botón de ejemplo.</p>
@@ -1193,10 +1285,10 @@ body.preview-sim .main-header {
       ${screenshot ? `<article class="box"><header class="box-head"><h1 class="box-title">Screenshot del tema</h1></header><div class="box-content"><img src="${screenshot}" alt="screenshot" style="max-width:100%;height:auto" /></div></article>` : ""}
     </div>
   </main>
-  <div class="nav-buttons">
+  ${p.showNavButtons ? `<div class="nav-buttons">
     <span class="nav-button nav-button-left" aria-hidden="true"><span>Anterior</span></span>
     <a href="#" title="Siguiente" class="nav-button nav-button-right"><span>Siguiente</span></a>
-  </div>
+  </div>` : ""}
   <footer id="siteFooter"><div id="siteFooterContent">Pie de página simulado</div></footer>
 </div>
 </body>
@@ -1880,6 +1972,7 @@ function setupEvents() {
   setupTabs();
   setupPanelAccordion("io");
   setupPanelAccordion("quick");
+  setupPreviewOptionsPopover();
   els.textEditor.addEventListener("input", onEditorInput);
   const onFileTypeFilterChange = () => {
     renderFileList();
@@ -2055,6 +2148,18 @@ function setupEvents() {
     });
   }
 
+  for (const input of els.previewInputs) {
+    input.addEventListener("change", applyPreviewTogglesFromUI);
+    input.addEventListener("input", applyPreviewTogglesFromUI);
+  }
+  // Fallback delegado por si algún toggle se renderiza/reemplaza dinámicamente.
+  document.addEventListener("change", (ev) => {
+    const target = ev.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    if (!target.matches("[data-preview]")) return;
+    applyPreviewTogglesFromUI();
+  });
+
   for (const metaInput of [
     els.metaName,
     els.metaTitle,
@@ -2086,6 +2191,8 @@ function setupEvents() {
 
 (async function boot() {
   setupEvents();
+  state.preview = loadPreviewToggles();
+  previewToUI(state.preview);
   try {
     await loadOfficialStylesCatalog();
     await loadOfficialStyle(state.selectedOfficialStyleId, { showStatus: false });
