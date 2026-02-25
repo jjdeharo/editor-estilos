@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Previsualización de estilo eXe</title>
+  <style id="previewThemeStyle"></style>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: #fff;
+    }
+
+    body.preview-sim.preview-boxes-collapsed .box-content {
+      display: none !important;
+    }
+
+    body.preview-sim .sr-av {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      border: 0 !important;
+    }
+  </style>
+</head>
+<body class="preview-sim exe-export exe-web-site js">
+  <div id="previewRoot"></div>
+  <script type="module" src="./preview-runtime.js"></script>
+</body>
+</html>
