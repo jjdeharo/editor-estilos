@@ -605,8 +605,10 @@ function ensureFontFamilyOption(fontValue, selectId) {
 function quickFromCss(cssText) {
   const q = { ...QUICK_DEFAULTS };
   const matchValue = (regex, fallback) => {
-    const m = cssText.match(regex);
-    return m ? m[1].trim() : fallback;
+    const matches = Array.from(cssText.matchAll(new RegExp(regex.source, regex.flags.includes("g") ? regex.flags : `${regex.flags}g`)));
+    if (!matches.length) return fallback;
+    const last = matches[matches.length - 1];
+    return last && last[1] ? last[1].trim() : fallback;
   };
   const bodyWebSiteDecls = (cssText.match(/body\.exe-web-site\s*\{([^}]*)\}/i)?.[1] || "");
 
@@ -958,6 +960,30 @@ function previewHtml(cssText) {
 body.preview-sim .nav-buttons {
   z-index: 3;
 }
+body.preview-sim {
+  overflow-x: hidden;
+}
+body.preview-sim .exe-content {
+  min-height: 100vh;
+}
+/* En la maqueta, forzamos menú lateral continuo para evitar cortes visuales */
+@media (min-width: 576px) {
+  body.preview-sim #siteNav {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: auto !important;
+    overflow-y: auto;
+    float: none !important;
+    z-index: 2;
+  }
+  body.preview-sim main.page,
+  body.preview-sim #siteFooter {
+    position: relative;
+    z-index: 1;
+  }
+}
 body.preview-sim .nav-buttons .nav-button-left {
   right: 220px !important;
 }
@@ -1011,7 +1037,7 @@ body.preview-sim a[href] {
     <header class="main-header">
       <p class="page-counter"><span class="page-counter-label">Página </span><span class="page-counter-content"><strong class="page-counter-current-page">1</strong><span class="page-counter-sep">/</span><strong class="page-counter-total">20</strong></span></p>
       <div class="package-header"><h1 class="package-title">Curso de ejemplo (simulado)</h1></div>
-      <div class="page-header sr-av"><h2 class="page-title">Título de página simulado</h2></div>
+      <div class="page-header"><h2 class="page-title">Título de página simulado</h2></div>
     </header>
 
     <div id="page-content-preview" class="page-content">
