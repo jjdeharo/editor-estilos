@@ -771,7 +771,12 @@ function quickFromCss(cssText) {
   };
   const bodyWebSiteDecls = lastCssPropValue("body\\.exe-web-site", "font-size|line-height") ? (Array.from(cssText.matchAll(/body\.exe-web-site\s*\{([^}]*)\}/gi)).at(-1)?.[1] || "") : "";
 
-  q.pageBgColor = normalizeHex(lastCssPropValue("body\\.exe-web-site", "background") || q.pageBgColor, q.pageBgColor);
+  q.pageBgColor = normalizeHex(
+    lastCssPropValue("body\\.exe-web-site", "background-color")
+      || lastCssPropValue("body\\.exe-web-site", "background")
+      || q.pageBgColor,
+    q.pageBgColor
+  );
   q.fontBody = matchValue(
     /\.exe-content\s*\{[\s\S]*?font-family:\s*([^;]+);/i,
     matchValue(/body(?:\.exe-web-site)?\s*\{[\s\S]*?font-family:\s*([^;]+);/i, q.fontBody)
@@ -817,12 +822,31 @@ function quickFromCss(cssText) {
   q.linkColor = normalizeHex(lastCssPropValue("\\.exe-content a", "color") || q.linkColor, q.linkColor);
   q.titleColor = normalizeHex(lastCssPropValue("\\.exe-content \\.page-title", "color") || q.titleColor, q.titleColor);
   q.textColor = normalizeHex(lastCssPropValue("\\.exe-content", "color") || q.textColor, q.textColor);
-  q.contentBgColor = normalizeHex(lastCssPropValue("\\.exe-content", "background-color") || q.contentBgColor, q.contentBgColor);
-  q.menuBgColor = normalizeHex(lastCssPropValue("#siteNav", "background") || q.menuBgColor, q.menuBgColor);
+  q.contentBgColor = normalizeHex(
+    lastCssPropValue("\\.exe-content", "background-color")
+      || lastCssPropValue("\\.exe-content", "background")
+      || q.contentBgColor,
+    q.contentBgColor
+  );
+  q.menuBgColor = normalizeHex(
+    lastCssPropValue("#siteNav", "background-color")
+      || lastCssPropValue("#siteNav", "background")
+      || q.menuBgColor,
+    q.menuBgColor
+  );
   q.menuTextColor = normalizeHex(lastCssPropValue("#siteNav a", "color") || q.menuTextColor, q.menuTextColor);
-  q.menuActiveBgColor = normalizeHex(lastCssPropValue("#siteNav a\\.active", "background") || q.menuActiveBgColor, q.menuActiveBgColor);
+  q.menuActiveBgColor = normalizeHex(
+    lastCssPropValue("#siteNav a\\.active", "background-color")
+      || lastCssPropValue("#siteNav a\\.active", "background")
+      || q.menuActiveBgColor,
+    q.menuActiveBgColor
+  );
   q.menuActiveTextColor = normalizeHex(lastCssPropValue("#siteNav a\\.active", "color") || q.menuActiveTextColor, q.menuActiveTextColor);
-  q.boxBgColor = normalizeHex(matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?background:\s*([^;]+);/i, q.boxBgColor), q.boxBgColor);
+  q.boxBgColor = normalizeHex(
+    matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?background-color:\s*([^;]+);/i, "")
+      || matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?background:\s*([^;]+);/i, q.boxBgColor),
+    q.boxBgColor
+  );
   q.boxBorderColor = normalizeHex(matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?border-color:\s*([^;]+);/i, q.boxBorderColor), q.boxBorderColor);
   q.boxTitleColor = normalizeHex(matchValue(/\.exe-content \.box-title,\s*[\s\S]*?\.exe-content \.iDeviceTitle\s*\{[\s\S]*?color:\s*([^;]+);/i, q.boxTitleColor), q.boxTitleColor);
   q.buttonBgColor = normalizeHex(
@@ -880,15 +904,19 @@ body.exe-web-site::after {
 ${logoMeta}
 ${bgMeta}
 body.exe-web-site {
-  background: ${normalizeHex(q.pageBgColor)}${bang};
-  background-image: ${q.bgImageEnabled && bgImagePath ? `url("${bgImagePath}")` : "none"}${bang};
-  background-repeat: no-repeat${bang};
-  background-position: center top${bang};
-  background-size: cover${bang};
+  background-color: ${normalizeHex(q.pageBgColor)}${bang};
   font-family: ${q.fontBody}${bang};
   font-size: ${q.baseFontSize}px${bang};
   line-height: ${q.lineHeight}${bang};
 }
+${q.bgImageEnabled && bgImagePath ? `
+body.exe-web-site {
+  background-image: url("${bgImagePath}")${bang};
+  background-repeat: no-repeat${bang};
+  background-position: center top${bang};
+  background-size: cover${bang};
+}
+` : ""}
 #node-content-container.exe-content #node-content,
 .exe-web-site .page-content,
 .exe-web-site main>header,
@@ -923,19 +951,19 @@ body.exe-web-site {
   margin-bottom: ${q.pageTitleMarginBottom}rem${bang};
 }
 #siteNav {
-  background: ${normalizeHex(q.menuBgColor)}${bang};
+  background-color: ${normalizeHex(q.menuBgColor)}${bang};
 }
 #siteNav a {
   font-family: ${q.fontMenu}${bang};
   color: ${normalizeHex(q.menuTextColor)}${bang};
 }
 #siteNav a.active {
-  background: ${normalizeHex(q.menuActiveBgColor)}${bang};
+  background-color: ${normalizeHex(q.menuActiveBgColor)}${bang};
   color: ${normalizeHex(q.menuActiveTextColor)}${bang};
 }
 .exe-content .box,
 #node-content-container.exe-content .box {
-  background: ${normalizeHex(q.boxBgColor)}${bang};
+  background-color: ${normalizeHex(q.boxBgColor)}${bang};
   border-color: ${normalizeHex(q.boxBorderColor)}${bang};
 }
 .exe-content .box-title,
@@ -947,7 +975,7 @@ body.exe-web-site {
   gap: ${q.boxTitleGap}px${bang};
 }
 .exe-content button:not(.toggler):not(.box-toggle) {
-  background: ${normalizeHex(q.buttonBgColor)}${bang};
+  background-color: ${normalizeHex(q.buttonBgColor)}${bang};
   color: ${normalizeHex(q.buttonTextColor)}${bang};
   border-color: ${normalizeHex(q.buttonBgColor)}${bang};
 }
