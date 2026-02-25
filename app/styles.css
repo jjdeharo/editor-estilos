@@ -424,6 +424,17 @@ button:hover {
   font-size: 0.9rem;
 }
 
+.quick-grid label.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick-grid label.checkbox-row input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
 .quick-grid input[type="text"],
 .quick-grid input[type="number"],
 .quick-grid input[type="url"],

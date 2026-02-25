@@ -23,9 +23,12 @@ Prioridad acordada: **compatibilidad real con eXeLearning** y cambios automátic
 - Edición de archivos (texto e imágenes) desde pestaña **Archivos**.
 - Reemplazo de iconos/imágenes y añadido de fuentes.
 - Ajustes rápidos (colores, tipografía, menú, iDevices, botones).
+- Ajustes avanzados de títulos (página, curso e iDevice) desde la UI.
 - Carga y retirada de imagen de fondo desde ajustes rápidos.
 - Carga de iconos de iDevices en lote (con reemplazo por nombre base).
 - Logotipo institucional (subida, tamaño, posición y márgenes).
+- Autocreación de obligatorios faltantes (`style.js`, `screenshot.png`) para evitar bloqueos por ZIP incompletos.
+- Intento de actualización automática de `screenshot.png` al exportar desde la previsualización (con fallback seguro).
 - Metadatos completos de `config.xml`:
   - `name`, `title`, `version`, `compatibility`, `author`, `license`, `license-url`, `description`, `downloadable`.
 - Exportación ZIP con validación automática.
@@ -38,7 +41,7 @@ Prioridad acordada: **compatibilidad real con eXeLearning** y cambios automátic
 
 ## Reglas de exportación
 - Se bloquea exportación solo por incidencias críticas:
-  - faltan archivos obligatorios (`config.xml`, `style.css`, `style.js`, `screenshot.png`), o
+  - faltan archivos obligatorios no autocorregibles (`config.xml`, `style.css`), o
   - bloque `quick-overrides` inválido.
 - Si el estilo parte de plantilla oficial, para exportar deben cambiarse **Nombre** y **Título** respecto al oficial.
 - Si `downloadable=0`, se permite editar/exportar, pero se avisa de que no será importable desde la interfaz de eXe.

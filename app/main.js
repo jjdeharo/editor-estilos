@@ -1,6 +1,8 @@
 const CORE_REQUIRED = ["config.xml", "style.css", "style.js", "screenshot.png"];
 const TEXT_EXTENSIONS = [".css", ".js", ".xml", ".txt", ".html", ".json", ".md"];
 const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
+const DEFAULT_STYLE_JS = `/* style.js autogenerado por el editor para cumplir requisitos mínimos de eXe */\n`;
+const MIN_SCREENSHOT_PNG_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+3xkAAAAASUVORK5CYII=";
 const QUICK_PROTECTED_PATTERNS = [
   { re: /\.box-toggle\b/i, label: ".box-toggle" },
   { re: /#siteNavToggler\b/i, label: "#siteNavToggler" },
@@ -34,6 +36,16 @@ const QUICK_DEFAULTS = {
   fontMenu: "Georgia, 'Times New Roman', serif",
   baseFontSize: 18,
   lineHeight: 1.45,
+  pageTitleSize: 1.7,
+  pageTitleWeight: "700",
+  pageTitleUppercase: false,
+  pageTitleLetterSpacing: 0,
+  pageTitleMarginBottom: 0.6,
+  packageTitleSize: 1.25,
+  packageTitleColor: "#333333",
+  packageTitleWeight: "400",
+  boxTitleSize: 1.5,
+  boxTitleGap: 10,
   menuBgColor: "#f6f6f6",
   menuTextColor: "#000000",
   menuActiveBgColor: "#ffffff",
@@ -183,6 +195,29 @@ function decode(bytes) {
 
 function encode(text) {
   return new TextEncoder().encode(text);
+}
+
+function base64ToBytes(base64) {
+  const binary = window.atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function ensureCoreFilesPresent({ markAsDirty: shouldMarkDirty = false } = {}) {
+  const added = [];
+  if (!state.files.has("style.js")) {
+    state.files.set("style.js", encode(DEFAULT_STYLE_JS));
+    invalidateBlob("style.js");
+    added.push("style.js");
+  }
+  if (!state.files.has("screenshot.png")) {
+    state.files.set("screenshot.png", base64ToBytes(MIN_SCREENSHOT_PNG_BASE64));
+    invalidateBlob("screenshot.png");
+    added.push("screenshot.png");
+  }
+  if (added.length && shouldMarkDirty) markDirty();
+  return added;
 }
 
 function isTextFile(path) {
@@ -567,6 +602,12 @@ function quickFromUI() {
   next.contentWidth = Math.max(640, Math.min(2000, Number(next.contentWidth) || 1280));
   next.baseFontSize = Math.max(12, Math.min(28, Number(next.baseFontSize) || QUICK_DEFAULTS.baseFontSize));
   next.lineHeight = Math.max(1, Math.min(2.2, Number(next.lineHeight) || QUICK_DEFAULTS.lineHeight));
+  next.pageTitleSize = Math.max(1.1, Math.min(3.2, Number(next.pageTitleSize) || QUICK_DEFAULTS.pageTitleSize));
+  next.pageTitleLetterSpacing = Math.max(0, Math.min(6, Number(next.pageTitleLetterSpacing) || QUICK_DEFAULTS.pageTitleLetterSpacing));
+  next.pageTitleMarginBottom = Math.max(0, Math.min(2.5, Number(next.pageTitleMarginBottom) || QUICK_DEFAULTS.pageTitleMarginBottom));
+  next.packageTitleSize = Math.max(1, Math.min(2.6, Number(next.packageTitleSize) || QUICK_DEFAULTS.packageTitleSize));
+  next.boxTitleSize = Math.max(1, Math.min(2.4, Number(next.boxTitleSize) || QUICK_DEFAULTS.boxTitleSize));
+  next.boxTitleGap = Math.max(0, Math.min(28, Number(next.boxTitleGap) || QUICK_DEFAULTS.boxTitleGap));
   next.logoSize = Math.max(40, Math.min(500, Number(next.logoSize) || QUICK_DEFAULTS.logoSize));
   next.logoMarginX = Math.max(0, Math.min(300, Number(next.logoMarginX) || QUICK_DEFAULTS.logoMarginX));
   next.logoMarginY = Math.max(0, Math.min(300, Number(next.logoMarginY) || QUICK_DEFAULTS.logoMarginY));
@@ -604,15 +645,26 @@ function ensureFontFamilyOption(fontValue, selectId) {
 
 function quickFromCss(cssText) {
   const q = { ...QUICK_DEFAULTS };
+  const lastCssPropValue = (selectorPattern, propPattern) => {
+    const blockRe = new RegExp(`${selectorPattern}\\s*\\{([^}]*)\\}`, "gi");
+    let value = "";
+    for (const m of cssText.matchAll(blockRe)) {
+      const decls = m[1] || "";
+      const propRe = new RegExp(`${propPattern}\\s*:\\s*([^;]+);`, "i");
+      const pm = decls.match(propRe);
+      if (pm && pm[1]) value = pm[1].trim();
+    }
+    return value;
+  };
   const matchValue = (regex, fallback) => {
     const matches = Array.from(cssText.matchAll(new RegExp(regex.source, regex.flags.includes("g") ? regex.flags : `${regex.flags}g`)));
     if (!matches.length) return fallback;
     const last = matches[matches.length - 1];
     return last && last[1] ? last[1].trim() : fallback;
   };
-  const bodyWebSiteDecls = (cssText.match(/body\.exe-web-site\s*\{([^}]*)\}/i)?.[1] || "");
+  const bodyWebSiteDecls = lastCssPropValue("body\\.exe-web-site", "font-size|line-height") ? (Array.from(cssText.matchAll(/body\.exe-web-site\s*\{([^}]*)\}/gi)).at(-1)?.[1] || "") : "";
 
-  q.pageBgColor = normalizeHex(matchValue(/body\.exe-web-site\s*\{[\s\S]*?background:\s*([^;]+);/i, q.pageBgColor), q.pageBgColor);
+  q.pageBgColor = normalizeHex(lastCssPropValue("body\\.exe-web-site", "background") || q.pageBgColor, q.pageBgColor);
   q.fontBody = matchValue(
     /\.exe-content\s*\{[\s\S]*?font-family:\s*([^;]+);/i,
     matchValue(/body(?:\.exe-web-site)?\s*\{[\s\S]*?font-family:\s*([^;]+);/i, q.fontBody)
@@ -629,15 +681,40 @@ function quickFromCss(cssText) {
   if (sizeMatch) q.baseFontSize = Number(sizeMatch[1]);
   const lhMatch = bodyWebSiteDecls.match(/line-height:\s*([0-9.]+)\s*;/i);
   if (lhMatch) q.lineHeight = Number(lhMatch[1]);
+  const pageTitleSizeRaw = matchValue(/\.exe-content\s*\.page-title\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
+  const pageTitleSizeMatch = pageTitleSizeRaw.match(/([0-9.]+)\s*rem/i);
+  if (pageTitleSizeMatch) q.pageTitleSize = Number(pageTitleSizeMatch[1]);
+  const pageTitleWeightRaw = matchValue(/\.exe-content\s*\.page-title\s*\{[\s\S]*?font-weight:\s*([^;]+);/i, "");
+  if (/^\d{3}$/.test(pageTitleWeightRaw)) q.pageTitleWeight = pageTitleWeightRaw;
+  const pageTitleUpperRaw = matchValue(/\.exe-content\s*\.page-title\s*\{[\s\S]*?text-transform:\s*([^;]+);/i, "");
+  if (pageTitleUpperRaw) q.pageTitleUppercase = pageTitleUpperRaw.toLowerCase().includes("upper");
+  const pageTitleLsRaw = matchValue(/\.exe-content\s*\.page-title\s*\{[\s\S]*?letter-spacing:\s*([^;]+);/i, "");
+  const pageTitleLsMatch = pageTitleLsRaw.match(/([0-9.]+)\s*px/i);
+  if (pageTitleLsMatch) q.pageTitleLetterSpacing = Number(pageTitleLsMatch[1]);
+  const pageTitleMbRaw = matchValue(/\.exe-content\s*\.page-title\s*\{[\s\S]*?margin-bottom:\s*([^;]+);/i, "");
+  const pageTitleMbMatch = pageTitleMbRaw.match(/([0-9.]+)\s*rem/i);
+  if (pageTitleMbMatch) q.pageTitleMarginBottom = Number(pageTitleMbMatch[1]);
+  const packageTitleSizeRaw = matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
+  const packageTitleSizeMatch = packageTitleSizeRaw.match(/([0-9.]+)\s*rem/i);
+  if (packageTitleSizeMatch) q.packageTitleSize = Number(packageTitleSizeMatch[1]);
+  const packageTitleWeightRaw = matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?font-weight:\s*([^;]+);/i, "");
+  if (/^\d{3}$/.test(packageTitleWeightRaw)) q.packageTitleWeight = packageTitleWeightRaw;
+  q.packageTitleColor = normalizeHex(matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?color:\s*([^;]+);/i, q.packageTitleColor), q.packageTitleColor);
+  const boxTitleSizeRaw = matchValue(/\.exe-content\s*\.box-title,\s*[\s\S]*?\.exe-content\s*\.iDeviceTitle\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
+  const boxTitleSizeMatch = boxTitleSizeRaw.match(/([0-9.]+)\s*rem/i);
+  if (boxTitleSizeMatch) q.boxTitleSize = Number(boxTitleSizeMatch[1]);
+  const boxHeadGapRaw = matchValue(/\.exe-content\s*\.box-head\s*\{[\s\S]*?gap:\s*([^;]+);/i, "");
+  const boxHeadGapMatch = boxHeadGapRaw.match(/([0-9.]+)\s*px/i);
+  if (boxHeadGapMatch) q.boxTitleGap = Number(boxHeadGapMatch[1]);
 
-  q.linkColor = normalizeHex(matchValue(/\.exe-content a\s*\{[\s\S]*?color:\s*([^;]+);/i, q.linkColor), q.linkColor);
-  q.titleColor = normalizeHex(matchValue(/\.exe-content \.page-title\s*\{[\s\S]*?color:\s*([^;]+);/i, q.titleColor), q.titleColor);
-  q.textColor = normalizeHex(matchValue(/\.exe-content\s*\{[\s\S]*?color:\s*([^;]+);/i, q.textColor), q.textColor);
-  q.contentBgColor = normalizeHex(matchValue(/\.exe-content\s*\{[\s\S]*?background-color:\s*([^;]+);/i, q.contentBgColor), q.contentBgColor);
-  q.menuBgColor = normalizeHex(matchValue(/#siteNav\s*\{[\s\S]*?background:\s*([^;]+);/i, q.menuBgColor), q.menuBgColor);
-  q.menuTextColor = normalizeHex(matchValue(/#siteNav a\s*\{[\s\S]*?color:\s*([^;]+);/i, q.menuTextColor), q.menuTextColor);
-  q.menuActiveBgColor = normalizeHex(matchValue(/#siteNav a\.active\s*\{[\s\S]*?background:\s*([^;]+);/i, q.menuActiveBgColor), q.menuActiveBgColor);
-  q.menuActiveTextColor = normalizeHex(matchValue(/#siteNav a\.active\s*\{[\s\S]*?color:\s*([^;]+);/i, q.menuActiveTextColor), q.menuActiveTextColor);
+  q.linkColor = normalizeHex(lastCssPropValue("\\.exe-content a", "color") || q.linkColor, q.linkColor);
+  q.titleColor = normalizeHex(lastCssPropValue("\\.exe-content \\.page-title", "color") || q.titleColor, q.titleColor);
+  q.textColor = normalizeHex(lastCssPropValue("\\.exe-content", "color") || q.textColor, q.textColor);
+  q.contentBgColor = normalizeHex(lastCssPropValue("\\.exe-content", "background-color") || q.contentBgColor, q.contentBgColor);
+  q.menuBgColor = normalizeHex(lastCssPropValue("#siteNav", "background") || q.menuBgColor, q.menuBgColor);
+  q.menuTextColor = normalizeHex(lastCssPropValue("#siteNav a", "color") || q.menuTextColor, q.menuTextColor);
+  q.menuActiveBgColor = normalizeHex(lastCssPropValue("#siteNav a\\.active", "background") || q.menuActiveBgColor, q.menuActiveBgColor);
+  q.menuActiveTextColor = normalizeHex(lastCssPropValue("#siteNav a\\.active", "color") || q.menuActiveTextColor, q.menuActiveTextColor);
   q.boxBgColor = normalizeHex(matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?background:\s*([^;]+);/i, q.boxBgColor), q.boxBgColor);
   q.boxBorderColor = normalizeHex(matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?border-color:\s*([^;]+);/i, q.boxBorderColor), q.boxBorderColor);
   q.boxTitleColor = normalizeHex(matchValue(/\.exe-content \.box-title,\s*[\s\S]*?\.exe-content \.iDeviceTitle\s*\{[\s\S]*?color:\s*([^;]+);/i, q.boxTitleColor), q.boxTitleColor);
@@ -722,11 +799,21 @@ body.exe-web-site {
 .exe-content .iDeviceTitle {
   font-family: ${q.fontTitles}${bang};
 }
+.exe-content .package-title {
+  color: ${normalizeHex(q.packageTitleColor)}${bang};
+  font-size: ${q.packageTitleSize}rem${bang};
+  font-weight: ${q.packageTitleWeight}${bang};
+}
 .exe-content a {
   color: ${normalizeHex(q.linkColor)}${bang};
 }
 .exe-content .page-title {
   color: ${normalizeHex(q.titleColor)}${bang};
+  font-size: ${q.pageTitleSize}rem${bang};
+  font-weight: ${q.pageTitleWeight}${bang};
+  text-transform: ${q.pageTitleUppercase ? "uppercase" : "none"}${bang};
+  letter-spacing: ${q.pageTitleLetterSpacing}px${bang};
+  margin-bottom: ${q.pageTitleMarginBottom}rem${bang};
 }
 #siteNav {
   background: ${normalizeHex(q.menuBgColor)}${bang};
@@ -747,6 +834,10 @@ body.exe-web-site {
 .exe-content .box-title,
 .exe-content .iDeviceTitle {
   color: ${normalizeHex(q.boxTitleColor)}${bang};
+  font-size: ${q.boxTitleSize}rem${bang};
+}
+.exe-content .box-head {
+  gap: ${q.boxTitleGap}px${bang};
 }
 .exe-content button:not(.toggler):not(.box-toggle) {
   background: ${normalizeHex(q.buttonBgColor)}${bang};
@@ -930,6 +1021,29 @@ function rewriteCssUrls(css) {
 }
 
 function previewHtml(cssText) {
+  const getLastCssProp = (selectorPattern, propPattern) => {
+    const blockRe = new RegExp(`${selectorPattern}\\s*\\{([^}]*)\\}`, "gi");
+    let value = "";
+    for (const m of cssText.matchAll(blockRe)) {
+      const decls = m[1] || "";
+      const propRe = new RegExp(`${propPattern}\\s*:\\s*([^;]+);`, "i");
+      const pm = decls.match(propRe);
+      if (pm && pm[1]) value = pm[1].trim();
+    }
+    return value;
+  };
+  const previewPageBg = normalizeHex(
+    getLastCssProp("body\\.exe-web-site", "background-color")
+      || getLastCssProp("body\\.exe-web-site", "background")
+      || state.quick.pageBgColor,
+    QUICK_DEFAULTS.pageBgColor
+  );
+  const previewContentBg = normalizeHex(
+    getLastCssProp("\\.exe-content", "background-color")
+      || getLastCssProp("\\.exe-content", "background")
+      || state.quick.contentBgColor,
+    QUICK_DEFAULTS.contentBgColor
+  );
   const asset = (...candidates) => {
     for (const file of candidates) {
       if (state.files.has(file)) return getBlobUrl(file);
@@ -958,7 +1072,7 @@ function previewHtml(cssText) {
 <style>${rewriteCssUrls(cssText)}
 /* Ajustes de la maqueta para evitar artefactos visuales de simulación */
 body.preview-sim .nav-buttons {
-  z-index: 3;
+  display: none !important;
 }
 body.preview-sim {
   overflow-x: hidden;
@@ -966,22 +1080,13 @@ body.preview-sim {
 body.preview-sim .exe-content {
   min-height: 100vh;
 }
-/* En la maqueta, forzamos menú lateral continuo para evitar cortes visuales */
-@media (min-width: 576px) {
-  body.preview-sim #siteNav {
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    height: auto !important;
-    overflow-y: auto;
-    float: none !important;
-    z-index: 2;
-  }
+body.preview-sim #siteNav {
+  min-height: 100vh;
+}
+@media (min-width: 576px) and (max-width: 767.98px) {
   body.preview-sim main.page,
   body.preview-sim #siteFooter {
-    position: relative;
-    z-index: 1;
+    padding-left: 252px !important;
   }
 }
 body.preview-sim .nav-buttons .nav-button-left {
@@ -1017,6 +1122,16 @@ body.preview-sim .sr-av {
 }
 body.preview-sim a[href] {
   pointer-events: none !important;
+}
+/* Fondo fiel a los ajustes actuales del editor */
+body.preview-sim {
+  background-color: ${previewPageBg} !important;
+}
+body.preview-sim .exe-content,
+body.preview-sim main.page,
+body.preview-sim .page-content,
+body.preview-sim .main-header {
+  background-color: ${previewContentBg} !important;
 }
 </style>
 </head>
@@ -1091,6 +1206,93 @@ body.preview-sim a[href] {
 function renderPreview() {
   const css = readCss();
   els.previewFrame.srcdoc = previewHtml(css);
+}
+
+function waitForPreviewFrameReady(timeoutMs = 1200) {
+  return new Promise((resolve) => {
+    const frame = els.previewFrame;
+    if (!frame) {
+      resolve(false);
+      return;
+    }
+    try {
+      const ready = frame.contentDocument?.readyState;
+      if (ready === "complete" || ready === "interactive") {
+        resolve(true);
+        return;
+      }
+    } catch {
+      // ignore and wait for load
+    }
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      frame.removeEventListener("load", onLoad);
+      clearTimeout(timer);
+      resolve(ok);
+    };
+    const onLoad = () => finish(true);
+    const timer = setTimeout(() => finish(false), Math.max(200, timeoutMs));
+    frame.addEventListener("load", onLoad, { once: true });
+  });
+}
+
+async function capturePreviewScreenshotBytes({ width = 1200, height = 550 } = {}) {
+  const frame = els.previewFrame;
+  if (!frame?.contentDocument?.documentElement) throw new Error("Previsualización no disponible");
+
+  const htmlClone = frame.contentDocument.documentElement.cloneNode(true);
+  const body = htmlClone.querySelector("body");
+  if (body) {
+    body.style.margin = "0";
+    body.style.width = `${width}px`;
+    body.style.minHeight = `${height}px`;
+  }
+  htmlClone.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+  const htmlSerialized = new XMLSerializer().serializeToString(htmlClone);
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <foreignObject x="0" y="0" width="100%" height="100%">${htmlSerialized}</foreignObject>
+</svg>`.trim();
+
+  const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.decoding = "sync";
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("No se pudo renderizar SVG de previsualización"));
+      i.src = svgUrl;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas no disponible");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) throw new Error("No se pudo generar PNG");
+    return new Uint8Array(await blob.arrayBuffer());
+  } finally {
+    URL.revokeObjectURL(svgUrl);
+  }
+}
+
+async function autoUpdateScreenshotFromPreview() {
+  try {
+    await waitForPreviewFrameReady();
+    const bytes = await capturePreviewScreenshotBytes({ width: 1200, height: 550 });
+    if (!bytes?.length) return false;
+    state.files.set("screenshot.png", bytes);
+    invalidateBlob("screenshot.png");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function commonRoot(paths) {
@@ -1181,6 +1383,8 @@ async function loadZip(file) {
     state.files.set(short, bytes);
   }
 
+  const autoAddedOnLoad = ensureCoreFilesPresent({ markAsDirty: false });
+
   let zipStatus = "";
   if (state.files.has("style.css")) {
     const originalCss = readCss();
@@ -1193,6 +1397,10 @@ async function loadZip(file) {
     } else if (sanitized !== originalCss) {
       zipStatus = `ZIP cargado: ${file.name} (${state.files.size} archivos). Se aplicaron correcciones de compatibilidad CSS.`;
     }
+  }
+  if (autoAddedOnLoad.length) {
+    const msg = `Se añadieron automáticamente obligatorios faltantes: ${autoAddedOnLoad.join(", ")}.`;
+    zipStatus = zipStatus ? `${zipStatus} ${msg}` : msg;
   }
 
   state.templateFiles = new Set(state.files.keys());
@@ -1271,6 +1479,17 @@ async function exportZip() {
     state.files.set("style.css", encode(sanitized));
     invalidateBlob("style.css");
   }
+  const screenshotUpdated = await autoUpdateScreenshotFromPreview();
+  const autoAddedOnExport = ensureCoreFilesPresent({ markAsDirty: false });
+  if (autoAddedOnExport.length) {
+    refreshFileTypeFilterOptions();
+    renderFileList();
+    if (!state.activePath || !state.files.has(state.activePath)) {
+      state.activePath = state.files.has("style.css") ? "style.css" : listFilesSorted()[0] || "";
+    }
+    syncEditorWithActiveFile();
+    renderPreview();
+  }
 
   const report = validationReport();
   if (report.missingCore.length || report.cssIssues.length) {
@@ -1298,6 +1517,8 @@ async function exportZip() {
 
   clearDirty();
   const warnings = [];
+  if (!screenshotUpdated) warnings.push("no se pudo actualizar screenshot automáticamente (se mantuvo el existente)");
+  if (autoAddedOnExport.length) warnings.push(`se crearon obligatorios: ${autoAddedOnExport.join(", ")}`);
   if (report.missingTemplate.length) warnings.push(`faltan ${report.missingTemplate.length} archivo(s) respecto a la plantilla original`);
   if (report.missingBase.length) warnings.push(`faltan ${report.missingBase.length} archivo(s) respecto a la base oficial`);
   const warningText = warnings.length ? ` con aviso: ${warnings.join(" ; ")}` : "";
