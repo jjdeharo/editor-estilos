@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Editor de estilos eXeLearning v 0.0.1 (v3 y superiores)</title>
+  <title>Editor de estilos eXeLearning (v3 y superiores)</title>
   <link rel="stylesheet" href="app/styles.css" />
 </head>
 <body>
@@ -14,7 +14,7 @@
   <div class="app-shell">
     <aside class="editor-panel">
       <header class="panel-header">
-        <h1>Editor de estilos eXeLearning v 0.0.1 (v3 y superiores)</h1>
+        <h1>Editor de estilos eXeLearning (v3 y superiores)</h1>
         <p>Carga una plantilla oficial o un ZIP, edita y exporta.</p>
       </header>
 
@@ -79,6 +79,12 @@
               <label>Fondo global <input id="pageBgColor" data-quick="pageBgColor" type="color" /></label>
             </div>
             <label>Ancho contenido <input id="contentWidth" data-quick="contentWidth" type="number" min="640" max="2000" step="10" /></label>
+            <div class="button-row">
+              <button id="addBgImageBtn" type="button">Añadir fondo</button>
+              <button id="removeBgImageBtn" type="button">Quitar fondo</button>
+              <input id="addBgImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
+            </div>
+            <p id="bgImageInfo" class="status-inline">Sin imagen de fondo.</p>
             <div class="inline-three">
               <label>Fuente general
                 <select id="fontBody" data-quick="fontBody">
@@ -165,6 +171,10 @@
             <label>Título iDevice <input id="boxTitleColor" data-quick="boxTitleColor" type="color" /></label>
             <label>Botón fondo <input id="buttonBgColor" data-quick="buttonBgColor" type="color" /></label>
             <label>Botón texto <input id="buttonTextColor" data-quick="buttonTextColor" type="color" /></label>
+            <div class="button-row">
+              <button id="addIdeviceIconsBtn" type="button">Añadir iconos iDevice</button>
+              <input id="addIdeviceIconsInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" multiple hidden />
+            </div>
           </div>
         </details>
       </section>

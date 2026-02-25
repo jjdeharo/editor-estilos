@@ -43,6 +43,8 @@ const QUICK_DEFAULTS = {
   boxTitleColor: "#054d4d",
   buttonBgColor: "#005f73",
   buttonTextColor: "#ffffff",
+  bgImageEnabled: false,
+  bgImagePath: "",
   logoEnabled: false,
   logoPath: "",
   logoSize: 130,
@@ -84,6 +86,12 @@ const els = {
   addLogoBtn: document.getElementById("addLogoBtn"),
   removeLogoBtn: document.getElementById("removeLogoBtn"),
   addLogoInput: document.getElementById("addLogoInput"),
+  addBgImageBtn: document.getElementById("addBgImageBtn"),
+  removeBgImageBtn: document.getElementById("removeBgImageBtn"),
+  addBgImageInput: document.getElementById("addBgImageInput"),
+  bgImageInfo: document.getElementById("bgImageInfo"),
+  addIdeviceIconsBtn: document.getElementById("addIdeviceIconsBtn"),
+  addIdeviceIconsInput: document.getElementById("addIdeviceIconsInput"),
   logoInfo: document.getElementById("logoInfo"),
   quickInputs: Array.from(document.querySelectorAll("[data-quick]"))
 };
@@ -236,6 +244,15 @@ function updateLogoInfo() {
     return;
   }
   els.logoInfo.textContent = `Logo actual: ${state.quick.logoPath}`;
+}
+
+function updateBgImageInfo() {
+  if (!els.bgImageInfo) return;
+  if (!state.quick.bgImagePath || !state.files.has(state.quick.bgImagePath) || !state.quick.bgImageEnabled) {
+    els.bgImageInfo.textContent = "Sin imagen de fondo.";
+    return;
+  }
+  els.bgImageInfo.textContent = `Fondo actual: ${state.quick.bgImagePath}`;
 }
 
 function applyEditorTheme() {
@@ -567,6 +584,7 @@ function quickToUI(values) {
     else input.value = String(values[key]);
   }
   updateLogoInfo();
+  updateBgImageInfo();
 }
 
 function ensureFontFamilyOption(fontValue, selectId) {
@@ -642,6 +660,11 @@ function quickFromCss(cssText) {
     q.logoMarginX = Number(logoMeta[5]) || q.logoMarginX;
     q.logoMarginY = Number(logoMeta[6]) || q.logoMarginY;
   }
+  const bgMeta = cssText.match(/\/\*\s*bg-editor:path=([^;]*);enabled=(0|1)\s*\*\//i);
+  if (bgMeta) {
+    q.bgImagePath = normalizePath(bgMeta[1].trim());
+    q.bgImageEnabled = bgMeta[2] === "1";
+  }
 
   return q;
 }
@@ -650,7 +673,9 @@ function buildQuickCss({ important = true } = {}) {
   const q = state.quick;
   const bang = important ? " !important" : "";
   const logoPath = q.logoPath && state.files.has(q.logoPath) ? q.logoPath : "";
+  const bgImagePath = q.bgImagePath && state.files.has(q.bgImagePath) ? q.bgImagePath : "";
   const logoMeta = `/* logo-editor:path=${logoPath};enabled=${q.logoEnabled ? "1" : "0"};size=${q.logoSize};position=${q.logoPosition};mx=${q.logoMarginX};my=${q.logoMarginY} */`;
+  const bgMeta = `/* bg-editor:path=${bgImagePath};enabled=${q.bgImageEnabled ? "1" : "0"} */`;
   const logoRule = q.logoEnabled && logoPath
     ? `
 body.exe-web-site::after {
@@ -667,8 +692,13 @@ body.exe-web-site::after {
     : "";
   return `
 ${logoMeta}
+${bgMeta}
 body.exe-web-site {
   background: ${normalizeHex(q.pageBgColor)}${bang};
+  background-image: ${q.bgImageEnabled && bgImagePath ? `url("${bgImagePath}")` : "none"}${bang};
+  background-repeat: no-repeat${bang};
+  background-position: center top${bang};
+  background-size: cover${bang};
   font-family: ${q.fontBody}${bang};
   font-size: ${q.baseFontSize}px${bang};
   line-height: ${q.lineHeight}${bang};
@@ -803,6 +833,10 @@ function applyQuickControls({ showStatus = true } = {}) {
 function refreshQuickControls() {
   const css = readCss();
   state.quick = { ...state.quick, ...quickFromCss(css) };
+  if (state.quick.bgImagePath && !state.files.has(state.quick.bgImagePath)) {
+    state.quick.bgImagePath = "";
+    state.quick.bgImageEnabled = false;
+  }
   if (!state.quick.logoPath) {
     state.quick.logoPath = findCustomLogoPath();
   }
@@ -901,10 +935,11 @@ function previewHtml(cssText) {
     return "";
   };
   const icon = (name) => {
-    const png = `icons/${name}.png`;
-    const svg = `icons/${name}.svg`;
-    if (state.files.has(png)) return getBlobUrl(png);
-    if (state.files.has(svg)) return getBlobUrl(svg);
+    const candidates = ["svg", "png", "gif", "jpg", "jpeg", "webp"];
+    for (const ext of candidates) {
+      const path = `icons/${name}.${ext}`;
+      if (state.files.has(path)) return getBlobUrl(path);
+    }
     return "";
   };
   const iconMarkup = (name, label) => {
@@ -1309,6 +1344,106 @@ function removeLogo() {
   setStatus("Logo eliminado.");
 }
 
+async function onAddBackgroundImageSelected(file) {
+  if (!file) return;
+  if (!isImageFile(file.name)) {
+    setStatus("La imagen de fondo debe ser un archivo de imagen válido.");
+    return;
+  }
+  const extension = (file.name.split(".").pop() || "png").toLowerCase();
+  const path = `img/custom-background.${extension}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  if (state.quick.bgImagePath && state.quick.bgImagePath !== path && state.files.has(state.quick.bgImagePath)) {
+    state.files.delete(state.quick.bgImagePath);
+    invalidateBlob(state.quick.bgImagePath);
+  }
+
+  state.files.set(path, bytes);
+  invalidateBlob(path);
+  state.quick.bgImagePath = path;
+  state.quick.bgImageEnabled = true;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  refreshFileTypeFilterOptions();
+  renderFileList();
+  renderPreview();
+  setStatus(`Imagen de fondo cargada: ${path}`);
+}
+
+function removeBackgroundImage() {
+  if (state.quick.bgImagePath && state.files.has(state.quick.bgImagePath)) {
+    state.files.delete(state.quick.bgImagePath);
+    invalidateBlob(state.quick.bgImagePath);
+  }
+  state.quick.bgImagePath = "";
+  state.quick.bgImageEnabled = false;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  refreshFileTypeFilterOptions();
+  renderFileList();
+  renderPreview();
+  setStatus("Imagen de fondo eliminada.");
+}
+
+function normalizeIconBaseName(fileName) {
+  const base = String(fileName || "")
+    .replace(/\.[^.]+$/, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .toLowerCase()
+    .trim();
+  return base;
+}
+
+async function onAddIdeviceIconsSelected(fileList) {
+  const files = Array.from(fileList || []).filter((f) => isImageFile(f.name));
+  if (!files.length) {
+    setStatus("No se seleccionaron iconos válidos (.png, .jpg, .jpeg, .gif, .webp, .svg).");
+    return;
+  }
+
+  let added = 0;
+  let replaced = 0;
+  for (const file of files) {
+    const cleanName = safeFileName(file.name);
+    const extension = (cleanName.split(".").pop() || "").toLowerCase();
+    if (!extension || !isImageFile(`x.${extension}`)) continue;
+    const baseName = normalizeIconBaseName(cleanName);
+    if (!baseName) continue;
+    const iconPath = `icons/${baseName}.${extension}`;
+
+    for (const ext of ["svg", "png", "gif", "jpg", "jpeg", "webp"]) {
+      const existingPath = `icons/${baseName}.${ext}`;
+      if (existingPath === iconPath) continue;
+      if (state.files.has(existingPath)) {
+        state.files.delete(existingPath);
+        invalidateBlob(existingPath);
+        replaced += 1;
+      }
+    }
+
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (state.files.has(iconPath)) replaced += 1;
+    else added += 1;
+    state.files.set(iconPath, bytes);
+    invalidateBlob(iconPath);
+  }
+
+  if (!added && !replaced) {
+    setStatus("No se añadieron iconos iDevice.");
+    return;
+  }
+
+  markDirty();
+  refreshFileTypeFilterOptions();
+  renderFileList();
+  renderPreview();
+  setStatus(`Iconos iDevice actualizados: ${added} añadidos, ${replaced} reemplazados.`);
+}
+
 function isFontFileName(name) {
   const lower = String(name || "").toLowerCase();
   return lower.endsWith(".woff") || lower.endsWith(".woff2") || lower.endsWith(".ttf") || lower.endsWith(".otf");
@@ -1619,6 +1754,40 @@ function setupEvents() {
 
   els.removeLogoBtn?.addEventListener("click", () => {
     removeLogo();
+  });
+
+  els.addBgImageBtn?.addEventListener("click", () => {
+    if (!els.addBgImageInput) return;
+    els.addBgImageInput.value = "";
+    els.addBgImageInput.click();
+  });
+
+  els.addBgImageInput?.addEventListener("change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      await onAddBackgroundImageSelected(file);
+    } catch (err) {
+      setStatus(`Error cargando imagen de fondo: ${err.message}`);
+    }
+  });
+
+  els.removeBgImageBtn?.addEventListener("click", () => {
+    removeBackgroundImage();
+  });
+
+  els.addIdeviceIconsBtn?.addEventListener("click", () => {
+    if (!els.addIdeviceIconsInput) return;
+    els.addIdeviceIconsInput.value = "";
+    els.addIdeviceIconsInput.click();
+  });
+
+  els.addIdeviceIconsInput?.addEventListener("change", async (ev) => {
+    try {
+      await onAddIdeviceIconsSelected(ev.target.files);
+    } catch (err) {
+      setStatus(`Error añadiendo iconos iDevice: ${err.message}`);
+    }
   });
 
   els.replaceImageInput.addEventListener("change", async (ev) => {

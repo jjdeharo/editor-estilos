@@ -11,6 +11,8 @@ Versión actual: `v 0.0.1`
 - Permite editar archivos del estilo (`style.css`, `config.xml`, imágenes, iconos, fuentes, etc.).
 - Incluye ajustes rápidos seguros (colores, tipografía, menú, iDevices, botones).
 - Permite añadir fuentes y logotipo institucional con controles básicos.
+- Permite añadir/quitar imagen de fondo desde ajustes rápidos.
+- Permite añadir/reemplazar iconos de iDevices en lote.
 - Exporta ZIP listo para importar en eXeLearning.
 - Incluye aviso inicial de fase de pruebas (se muestra una sola vez y se recuerda).
 

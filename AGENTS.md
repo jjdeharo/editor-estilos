@@ -23,6 +23,8 @@ Prioridad acordada: **compatibilidad real con eXeLearning** y cambios automátic
 - Edición de archivos (texto e imágenes) desde pestaña **Archivos**.
 - Reemplazo de iconos/imágenes y añadido de fuentes.
 - Ajustes rápidos (colores, tipografía, menú, iDevices, botones).
+- Carga y retirada de imagen de fondo desde ajustes rápidos.
+- Carga de iconos de iDevices en lote (con reemplazo por nombre base).
 - Logotipo institucional (subida, tamaño, posición y márgenes).
 - Metadatos completos de `config.xml`:
   - `name`, `title`, `version`, `compatibility`, `author`, `license`, `license-url`, `description`, `downloadable`.
