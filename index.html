@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editor de estilos eXeLearning v 0.0.1 (v3 y superiores)</title>
+  <link rel="stylesheet" href="app/styles.css" />
+</head>
+<body>
+  <div id="trialNotice" class="trial-notice" role="status" aria-live="polite">
+    <p><strong>Editor de estilos en fase de pruebas.</strong> Verifica siempre el resultado final en eXeLearning antes de publicarlo o compartirlo.</p>
+    <button id="dismissTrialNotice" type="button" aria-label="Cerrar aviso">×</button>
+  </div>
+  <div class="app-shell">
+    <aside class="editor-panel">
+      <header class="panel-header">
+        <h1>Editor de estilos eXeLearning v 0.0.1 (v3 y superiores)</h1>
+        <p>Carga una plantilla oficial o un ZIP, edita y exporta.</p>
+      </header>
+
+      <nav class="tabs" aria-label="Secciones">
+        <button class="tab active" data-tab="io" type="button">Proyecto</button>
+        <button class="tab" data-tab="quick" type="button">Ajustes</button>
+        <button class="tab" data-tab="files" type="button">Archivos</button>
+      </nav>
+
+      <section class="tab-panel active" data-panel="io">
+        <div class="panel-block">
+          <h3 class="section-title">Cargar plantilla</h3>
+          <div class="section-content">
+            <div class="load-group">
+              <label class="file-label" for="zipInput">Cargar estilo ZIP</label>
+              <input id="zipInput" type="file" accept=".zip" />
+            </div>
+            <div class="load-group">
+              <label class="file-label" for="officialStyleSelect">Estilo base oficial</label>
+              <select id="officialStyleSelect"></select>
+            </div>
+            <article id="officialPreview" class="official-preview" aria-live="polite"></article>
+          </div>
+        </div>
+
+        <div class="panel-block" id="metaDetails">
+          <h3 class="section-title">Información y exportación</h3>
+          <div class="section-content quick-grid info-grid">
+            <label>Nombre <input id="metaName" type="text" /></label>
+            <label>Título <input id="metaTitle" type="text" /></label>
+            <label>Versión <input id="metaVersion" type="text" /></label>
+            <label>Compatibilidad <input id="metaCompatibility" type="text" placeholder="3.0" /></label>
+            <label>Autor <input id="metaAuthor" type="text" /></label>
+            <label>Licencia <input id="metaLicense" type="text" placeholder="Creative Commons by-sa" /></label>
+            <label>URL licencia <input id="metaLicenseUrl" type="url" placeholder="https://..." /></label>
+            <label>Descargable
+              <select id="metaDownloadable">
+                <option value="1">Sí (1)</option>
+                <option value="0">No (0)</option>
+              </select>
+            </label>
+            <label class="full-width">Descripción
+              <textarea id="metaDescription" rows="6"></textarea>
+            </label>
+            <div class="button-row">
+              <button id="exportBtn" type="button">Exportar ZIP</button>
+            </div>
+            <p id="status" class="status"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="tab-panel" data-panel="quick">
+        <details>
+          <summary>Paleta y tipografía</summary>
+          <div class="section-content quick-grid">
+            <div class="palette-compact">
+              <label>Color enlaces <input id="linkColor" data-quick="linkColor" type="color" /></label>
+              <label>Color título página <input id="titleColor" data-quick="titleColor" type="color" /></label>
+              <label>Color texto base <input id="textColor" data-quick="textColor" type="color" /></label>
+              <label>Fondo contenido <input id="contentBgColor" data-quick="contentBgColor" type="color" /></label>
+              <label>Fondo global <input id="pageBgColor" data-quick="pageBgColor" type="color" /></label>
+            </div>
+            <label>Ancho contenido <input id="contentWidth" data-quick="contentWidth" type="number" min="640" max="2000" step="10" /></label>
+            <div class="inline-three">
+              <label>Fuente general
+                <select id="fontBody" data-quick="fontBody">
+                  <option value="Georgia, 'Times New Roman', serif">Serif (Georgia)</option>
+                  <option value="'Noto Sans', 'DejaVu Sans', sans-serif">Sans (Noto Sans)</option>
+                  <option value="'Trebuchet MS', 'DejaVu Sans', sans-serif">Trebuchet</option>
+                  <option value="'Verdana', 'DejaVu Sans', sans-serif">Verdana</option>
+                </select>
+              </label>
+              <label>Fuente títulos
+                <select id="fontTitles" data-quick="fontTitles">
+                  <option value="Georgia, 'Times New Roman', serif">Serif (Georgia)</option>
+                  <option value="'Noto Sans', 'DejaVu Sans', sans-serif">Sans (Noto Sans)</option>
+                  <option value="'Trebuchet MS', 'DejaVu Sans', sans-serif">Trebuchet</option>
+                  <option value="'Verdana', 'DejaVu Sans', sans-serif">Verdana</option>
+                </select>
+              </label>
+              <label>Fuente menú
+                <select id="fontMenu" data-quick="fontMenu">
+                  <option value="Georgia, 'Times New Roman', serif">Serif (Georgia)</option>
+                  <option value="'Noto Sans', 'DejaVu Sans', sans-serif">Sans (Noto Sans)</option>
+                  <option value="'Trebuchet MS', 'DejaVu Sans', sans-serif">Trebuchet</option>
+                  <option value="'Verdana', 'DejaVu Sans', sans-serif">Verdana</option>
+                </select>
+              </label>
+            </div>
+            <div class="button-row">
+              <button id="addFontBtn" type="button">Añadir fuentes</button>
+              <input id="addFontInput" type="file" accept=".woff,.woff2,.ttf,.otf,font/woff,font/woff2,font/ttf,font/otf" multiple hidden />
+            </div>
+            <div class="inline-two">
+              <label>Tamaño base (px) <input id="baseFontSize" data-quick="baseFontSize" type="number" min="12" max="28" step="1" /></label>
+              <label>Interlineado <input id="lineHeight" data-quick="lineHeight" type="number" min="1" max="2.2" step="0.05" /></label>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Logotipo institucional</summary>
+          <div class="section-content quick-grid">
+            <div class="button-row">
+              <button id="addLogoBtn" type="button">Añadir/reemplazar logo</button>
+              <button id="removeLogoBtn" type="button">Quitar logo</button>
+              <input id="addLogoInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
+            </div>
+            <p id="logoInfo" class="status-inline">Sin logo cargado.</p>
+            <label>
+              <input id="logoEnabled" data-quick="logoEnabled" type="checkbox" />
+              Mostrar logo
+            </label>
+            <div class="inline-three">
+              <label>Tamaño logo (px) <input id="logoSize" data-quick="logoSize" type="number" min="40" max="500" step="1" /></label>
+              <label>Posición
+                <select id="logoPosition" data-quick="logoPosition">
+                  <option value="top-left">Arriba izquierda</option>
+                  <option value="top-center">Arriba centro</option>
+                  <option value="top-right">Arriba derecha</option>
+                  <option value="bottom-left">Abajo izquierda</option>
+                  <option value="bottom-center">Abajo centro</option>
+                  <option value="bottom-right">Abajo derecha</option>
+                </select>
+              </label>
+              <label>Margen horizontal (px) <input id="logoMarginX" data-quick="logoMarginX" type="number" min="0" max="300" step="1" /></label>
+            </div>
+            <label>Margen vertical (px) <input id="logoMarginY" data-quick="logoMarginY" type="number" min="0" max="300" step="1" /></label>
+          </div>
+        </details>
+
+        <details>
+          <summary>Menú y navegación</summary>
+          <div class="section-content quick-grid palette-compact">
+            <label>Fondo menú <input id="menuBgColor" data-quick="menuBgColor" type="color" /></label>
+            <label>Texto menú <input id="menuTextColor" data-quick="menuTextColor" type="color" /></label>
+            <label>Activo fondo <input id="menuActiveBgColor" data-quick="menuActiveBgColor" type="color" /></label>
+            <label>Activo texto <input id="menuActiveTextColor" data-quick="menuActiveTextColor" type="color" /></label>
+          </div>
+        </details>
+
+        <details>
+          <summary>iDevices y botones</summary>
+          <div class="section-content quick-grid palette-compact">
+            <label>Fondo iDevice <input id="boxBgColor" data-quick="boxBgColor" type="color" /></label>
+            <label>Borde iDevice <input id="boxBorderColor" data-quick="boxBorderColor" type="color" /></label>
+            <label>Título iDevice <input id="boxTitleColor" data-quick="boxTitleColor" type="color" /></label>
+            <label>Botón fondo <input id="buttonBgColor" data-quick="buttonBgColor" type="color" /></label>
+            <label>Botón texto <input id="buttonTextColor" data-quick="buttonTextColor" type="color" /></label>
+          </div>
+        </details>
+      </section>
+
+      <section class="tab-panel" data-panel="files">
+        <div class="section-content">
+          <h3 class="section-title">Lista de archivos</h3>
+          <label class="file-label" for="fileTypeFilter">Tipo de archivo</label>
+          <select id="fileTypeFilter">
+            <option value="all">Todos</option>
+            <option value="images">Imágenes</option>
+            <option value="css">CSS</option>
+            <option value="js">JavaScript</option>
+            <option value="xml">XML</option>
+            <option value="json">JSON</option>
+            <option value="html">HTML</option>
+            <option value="markdown">Markdown</option>
+            <option value="fonts">Fuentes</option>
+            <option value="text">Texto</option>
+            <option value="other">Otros</option>
+          </select>
+          <div id="fileList" class="file-list"></div>
+        </div>
+
+        <div class="section-content">
+          <h3 class="section-title">Editor de archivo</h3>
+          <p id="editorPath" class="editor-path">Selecciona un archivo de texto</p>
+          <div id="imageActions" class="button-row image-actions">
+            <button id="replaceImageBtn" type="button">Reemplazar imagen</button>
+            <input id="replaceImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
+          </div>
+          <textarea id="textEditor" spellcheck="false"></textarea>
+          <div id="binaryPreview" class="binary-preview"></div>
+        </div>
+      </section>
+    </aside>
+
+    <main class="preview-panel">
+      <header class="preview-header">
+        <h2>Previsualización simulada (solo se verá de forma completa desde eXeLearning)</h2>
+      </header>
+      <iframe id="previewFrame" title="Previsualización eXe" sandbox="allow-same-origin"></iframe>
+    </main>
+  </div>
+  <footer class="app-footer">
+    <p>v 0.0.1 · (c) <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · Licencia AGPLv3</p>
+  </footer>
+
+  <script src="vendor/jszip.min.js"></script>
+  <script type="module" src="app/main.js"></script>
+</body>
+</html>
