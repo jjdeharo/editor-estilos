@@ -545,20 +545,21 @@ function setStatus(text) {
 
 function setupTrialNotice() {
   if (!els.trialNotice || !els.dismissTrialNotice) return;
-  let dismissed = false;
+  const today = new Date().toISOString().slice(0, 10);
+  let dismissedToday = false;
   try {
-    dismissed = window.localStorage.getItem(TRIAL_NOTICE_KEY) === "1";
+    dismissedToday = window.localStorage.getItem(TRIAL_NOTICE_KEY) === today;
   } catch {
-    dismissed = false;
+    dismissedToday = false;
   }
-  if (dismissed) {
+  if (dismissedToday) {
     els.trialNotice.classList.add("hidden");
     return;
   }
   els.dismissTrialNotice.addEventListener("click", () => {
     els.trialNotice.classList.add("hidden");
     try {
-      window.localStorage.setItem(TRIAL_NOTICE_KEY, "1");
+      window.localStorage.setItem(TRIAL_NOTICE_KEY, today);
     } catch {
       // ignore storage errors
     }
