@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Editor de estilos eXeLearning (v3 y superiores)</title>
   <link rel="stylesheet" href="app/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css" />
 </head>
 <body>
   <div id="trialNotice" class="trial-notice" role="status" aria-live="polite">
@@ -19,21 +20,34 @@
       </header>
 
       <nav class="tabs" aria-label="Secciones">
-        <button class="tab active" data-tab="io" type="button">Proyecto</button>
-        <button class="tab" data-tab="quick" type="button">Ajustes</button>
-        <button class="tab" data-tab="files" type="button">Archivos</button>
+        <button class="tab active" data-tab="io" type="button">
+          <span class="tab-icon material-symbols-outlined" aria-hidden="true">save</span>
+          <span>Estilo</span>
+        </button>
+        <button class="tab" data-tab="quick" type="button">
+          <span class="tab-icon material-symbols-outlined" aria-hidden="true">palette</span>
+          <span>Ajustes</span>
+        </button>
+        <button class="tab" data-tab="files" type="button">
+          <span class="tab-icon material-symbols-outlined" aria-hidden="true">description</span>
+          <span>Archivos</span>
+        </button>
       </nav>
 
       <section class="tab-panel active" data-panel="io">
         <div class="panel-block">
-          <h3 class="section-title">Cargar plantilla</h3>
+          <h3 class="section-title"><span class="section-icon material-symbols-outlined" aria-hidden="true">folder_open</span>Cargar plantilla</h3>
           <div class="section-content">
             <div class="load-group">
-              <label class="file-label" for="zipInput">Cargar estilo ZIP</label>
-              <input id="zipInput" type="file" accept=".zip" />
+              <label class="file-label" for="zipInput"><span class="inline-icon material-symbols-outlined" aria-hidden="true">folder_zip</span>Cargar estilo ZIP</label>
+              <div class="file-picker-row">
+                <button id="zipPickBtn" type="button"><span class="inline-icon material-symbols-outlined" aria-hidden="true">upload_file</span>Seleccionar ZIP</button>
+                <span id="zipInputName" class="file-picked-name">Ningún archivo seleccionado</span>
+              </div>
+              <input id="zipInput" type="file" accept=".zip" class="sr-only" />
             </div>
             <div class="load-group">
-              <label class="file-label" for="officialStyleSelect">Estilo base oficial</label>
+              <label class="file-label" for="officialStyleSelect"><span class="inline-icon material-symbols-outlined" aria-hidden="true">style</span>Estilo base oficial</label>
               <select id="officialStyleSelect"></select>
             </div>
             <article id="officialPreview" class="official-preview" aria-live="polite"></article>
@@ -41,7 +55,7 @@
         </div>
 
         <div class="panel-block" id="metaDetails">
-          <h3 class="section-title">Información y exportación</h3>
+          <h3 class="section-title"><span class="section-icon material-symbols-outlined" aria-hidden="true">edit_note</span>Información y exportación</h3>
           <div class="section-content quick-grid info-grid">
             <label>Nombre <input id="metaName" type="text" /></label>
             <label>Título <input id="metaTitle" type="text" /></label>
@@ -60,7 +74,7 @@
               <textarea id="metaDescription" rows="6"></textarea>
             </label>
             <div class="button-row">
-              <button id="exportBtn" type="button">Exportar estilo</button>
+              <button id="exportBtn" type="button"><span class="inline-icon material-symbols-outlined" aria-hidden="true">download</span>Exportar estilo</button>
             </div>
             <p id="status" class="status"></p>
           </div>
@@ -69,7 +83,7 @@
 
       <section class="tab-panel" data-panel="quick">
         <details>
-          <summary>Paleta y tipografía</summary>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">palette</span>Paleta y tipografía</summary>
           <div class="section-content quick-grid">
             <div class="palette-compact">
               <label>Color enlaces <input id="linkColor" data-quick="linkColor" type="color" /></label>
@@ -77,8 +91,32 @@
               <label>Color texto base <input id="textColor" data-quick="textColor" type="color" /></label>
               <label>Fondo contenido <input id="contentBgColor" data-quick="contentBgColor" type="color" /></label>
               <label>Fondo global <input id="pageBgColor" data-quick="pageBgColor" type="color" /></label>
+              <label id="contentOuterBgWrap">Espacio lateral
+                <input id="contentOuterBgColor" data-quick="contentOuterBgColor" type="color" />
+              </label>
             </div>
-            <label>Ancho contenido <input id="contentWidth" data-quick="contentWidth" type="number" min="640" max="2000" step="10" /></label>
+            <div class="inline-three">
+              <label>Ancho contenido
+                <select id="contentWidthMode" data-quick="contentWidthMode">
+                  <option value="default">Por defecto del estilo</option>
+                  <option value="px">Ancho fijo (px)</option>
+                  <option value="percent">Ancho relativo (%)</option>
+                </select>
+              </label>
+              <label id="contentWidthPxWrap">Ancho (px)
+                <input id="contentWidth" data-quick="contentWidth" type="number" min="640" max="2000" step="10" />
+              </label>
+              <label id="contentWidthPercentWrap">Ancho (%)
+                <input id="contentWidthPercent" data-quick="contentWidthPercent" type="number" min="10" max="100" step="1" />
+              </label>
+            </div>
+            <div id="contentCenterWrap" class="toggle-item">
+              <span class="toggle-control">
+                <input id="contentCentered" data-quick="contentCentered" class="toggle-input" type="checkbox" checked />
+                <span class="toggle-visual"></span>
+              </span>
+              <label class="toggle-label" for="contentCentered">Centrar contenido</label>
+            </div>
             <div class="button-row">
               <button id="addBgImageBtn" type="button">Añadir fondo</button>
               <button id="removeBgImageBtn" type="button">Quitar fondo</button>
@@ -159,7 +197,7 @@
         </details>
 
         <details>
-          <summary>Logotipo institucional</summary>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">account_balance</span>Logotipo institucional</summary>
           <div class="section-content quick-grid">
             <div class="button-row">
               <button id="addLogoBtn" type="button">Añadir/reemplazar logo</button>
@@ -193,7 +231,7 @@
         </details>
 
         <details>
-          <summary>Cabecera y pie</summary>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">view_day</span>Cabecera y pie</summary>
           <div class="section-content quick-grid">
             <div class="inline-three">
               <div class="toggle-item">
@@ -316,7 +354,7 @@
         </details>
 
         <details>
-          <summary>Menú y navegación</summary>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">menu</span>Menú y navegación</summary>
           <div class="section-content quick-grid palette-compact">
             <label>Fondo menú <input id="menuBgColor" data-quick="menuBgColor" type="color" /></label>
             <label>Texto menú <input id="menuTextColor" data-quick="menuTextColor" type="color" /></label>
@@ -326,7 +364,7 @@
         </details>
 
         <details>
-          <summary>iDevices y botones</summary>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">smart_button</span>iDevices y botones</summary>
           <div class="section-content quick-grid">
             <div class="palette-compact">
               <label>Fondo iDevice <input id="boxBgColor" data-quick="boxBgColor" type="color" /></label>
@@ -335,15 +373,28 @@
               <label>Botón fondo <input id="buttonBgColor" data-quick="buttonBgColor" type="color" /></label>
               <label>Botón texto <input id="buttonTextColor" data-quick="buttonTextColor" type="color" /></label>
             </div>
-            <label>Alineación texto iDevice
-              <select id="boxTextAlign" data-quick="boxTextAlign">
-                <option value="inherit">Por defecto del estilo</option>
-                <option value="left">Izquierda</option>
-                <option value="center">Centrado</option>
-                <option value="right">Derecha</option>
-                <option value="justify">Justificado</option>
-              </select>
-            </label>
+            <div class="inline-two">
+              <label>Alineación texto iDevice
+                <select id="boxTextAlign" data-quick="boxTextAlign">
+                  <option value="inherit">Por defecto del estilo</option>
+                  <option value="left">Izquierda</option>
+                  <option value="center">Centrado</option>
+                  <option value="right">Derecha</option>
+                  <option value="justify">Justificado</option>
+                </select>
+              </label>
+              <label>Tamaño texto iDevice
+                <select id="boxFontSize" data-quick="boxFontSize">
+                  <option value="inherit">Por defecto del estilo</option>
+                  <option value="14px">14 px</option>
+                  <option value="16px">16 px</option>
+                  <option value="18px">18 px</option>
+                  <option value="20px">20 px</option>
+                  <option value="22px">22 px</option>
+                  <option value="24px">24 px</option>
+                </select>
+              </label>
+            </div>
             <div class="button-row">
               <button id="addIdeviceIconsBtn" type="button">Añadir iconos iDevice</button>
               <input id="addIdeviceIconsInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" multiple hidden />
@@ -381,7 +432,13 @@
             <button id="replaceImageBtn" type="button">Reemplazar imagen</button>
             <input id="replaceImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
           </div>
-          <textarea id="textEditor" spellcheck="false"></textarea>
+          <div class="button-row">
+            <button id="openDetachedEditorBtn" type="button">Editar en ventana independiente</button>
+          </div>
+          <div id="editorSurface" class="editor-surface">
+            <pre id="textHighlight" class="text-highlight" aria-hidden="true"></pre>
+            <textarea id="textEditor" spellcheck="false"></textarea>
+          </div>
           <div id="binaryPreview" class="binary-preview"></div>
         </div>
       </section>
@@ -468,6 +525,7 @@
   </footer>
 
   <script src="vendor/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
   <script type="module" src="app/main.js"></script>
 </body>
 </html>

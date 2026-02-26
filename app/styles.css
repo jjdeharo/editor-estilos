@@ -1,4 +1,46 @@
 
+:root {
+  --bg: #eef1f4;
+  --panel: #ffffff;
+  --line: #d0d5dd;
+  --line-soft: #eaecf0;
+  --ink: #1f2937;
+  --muted: #475467;
+  --action: #0ba1a1;
+  --action-dark: #107275;
+  --theme-link: #d76b4a;
+  --theme-title: #078e8e;
+  --theme-text: #333333;
+  --theme-menu-bg: #f6f6f6;
+  --theme-menu-text: #000000;
+  --theme-panel-bg: #ffffff;
+  --theme-box-bg: #ffffff;
+}
+
+@font-face {
+  font-family: "Material Symbols Outlined";
+  font-style: normal;
+  font-weight: 100 700;
+  src: url("../vendor/material-symbols/MaterialSymbolsOutlined.woff2") format("woff2");
+}
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "liga";
+}
+
 .trial-notice {
   margin: 12px 12px 0;
   border: 1px solid #e6ca75;
@@ -27,24 +69,6 @@
 
 .trial-notice.hidden {
   display: none;
-}
-
-:root {
-  --bg: #eef1f4;
-  --panel: #ffffff;
-  --line: #d0d5dd;
-  --line-soft: #eaecf0;
-  --ink: #1f2937;
-  --muted: #475467;
-  --action: #0ba1a1;
-  --action-dark: #107275;
-  --theme-link: #d76b4a;
-  --theme-title: #078e8e;
-  --theme-text: #333333;
-  --theme-menu-bg: #f6f6f6;
-  --theme-menu-text: #000000;
-  --theme-panel-bg: #ffffff;
-  --theme-box-bg: #ffffff;
 }
 
 * {
@@ -170,7 +194,7 @@ body {
   margin: 0;
   font-size: 1.02rem;
   font-weight: 700;
-  color: #1d2939;
+  color: var(--action-dark);
 }
 
 .panel-header p {
@@ -188,6 +212,9 @@ body {
 }
 
 .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid #c9ced6;
   background: #f9f9f9;
   color: #596574;
@@ -197,9 +224,20 @@ body {
   font-weight: 600;
 }
 
+.tab-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  flex: 0 0 18px;
+  font-size: 18px;
+  line-height: 1;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+  color: var(--action);
+}
+
 .tab.active {
   background: #fff;
-  color: #101828;
+  color: var(--action-dark);
   border-color: #bfc5ce;
   box-shadow: 0 1px 0 0 #fff inset;
 }
@@ -238,9 +276,17 @@ summary {
   padding: 8px 10px;
   cursor: pointer;
   font-weight: 600;
-  color: #344054;
+  color: var(--action-dark);
   background: #f8fafc;
   border-bottom: 1px solid var(--line-soft);
+}
+
+.summary-icon {
+  font-size: 18px;
+  line-height: 1;
+  margin-right: 6px;
+  vertical-align: -3px;
+  color: var(--action);
 }
 
 .section-content {
@@ -262,6 +308,23 @@ details[open] > .section-content {
 .section-title {
   margin: 0 0 8px;
   font-size: 0.95rem;
+  color: var(--action-dark);
+}
+
+.section-icon {
+  font-size: 18px;
+  line-height: 1;
+  margin-right: 6px;
+  vertical-align: -3px;
+  color: var(--action);
+}
+
+.inline-icon {
+  font-size: 18px;
+  line-height: 1;
+  margin-right: 6px;
+  vertical-align: -3px;
+  color: currentColor;
 }
 
 .button-row {
@@ -326,6 +389,7 @@ textarea:focus-visible {
   display: inline-block;
   margin-bottom: 6px;
   font-weight: 600;
+  color: var(--action-dark);
 }
 
 .load-group {
@@ -342,6 +406,29 @@ textarea:focus-visible {
 
 #zipInput {
   width: 100%;
+}
+
+.file-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#zipPickBtn {
+  background: var(--action);
+  border-color: var(--action);
+  color: #fff;
+}
+
+#zipPickBtn:hover {
+  background: var(--action-dark);
+  border-color: var(--action-dark);
+}
+
+.file-picked-name {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 #officialStyleSelect {
@@ -472,6 +559,12 @@ textarea:focus-visible {
   font-size: 0.9rem;
 }
 
+.editor-surface {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
 #textEditor {
   width: 100%;
   min-height: 260px;
@@ -480,7 +573,48 @@ textarea:focus-visible {
   border-radius: 6px;
   padding: 8px;
   font-family: "DejaVu Sans Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
   background: #fff;
+  position: relative;
+  z-index: 2;
+}
+
+.text-highlight {
+  display: none;
+  margin: 0;
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px;
+  font-family: "DejaVu Sans Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre;
+  pointer-events: none;
+  background: #f8fafc;
+}
+
+.text-highlight.hljs {
+  background: #f8fafc;
+}
+
+.editor-surface.syntax-active .text-highlight {
+  display: block;
+}
+
+.editor-surface.syntax-active #textEditor {
+  background: transparent;
+  color: transparent;
+  border-color: transparent;
+  caret-color: #111827;
+}
+
+.editor-surface.syntax-active #textEditor::selection {
+  background: rgb(15 23 42 / 0.16);
+  color: transparent;
 }
 
 .binary-preview {
