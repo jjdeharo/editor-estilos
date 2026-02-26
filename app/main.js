@@ -156,8 +156,63 @@ const LEGACY_COMPAT_STYLE_JS = `
     parent.appendChild(node);
   }
 
+  function syncMainWrapperMinHeight(host, wrapper) {
+    if (!host || !wrapper) return;
+    const nav = firstMatch(host, [":scope > #siteNav", "#siteNav"]);
+    if (!nav) return;
+    const navHeight = Math.max(
+      nav.getBoundingClientRect ? Math.round(nav.getBoundingClientRect().height) : 0,
+      nav.offsetHeight || 0,
+      nav.scrollHeight || 0
+    );
+    if (navHeight > 0) {
+      wrapper.style.minHeight = (navHeight + 25) + "px";
+    }
+  }
+
+  function rectBottom(node) {
+    if (!node || !node.getBoundingClientRect) return 0;
+    const rect = node.getBoundingClientRect();
+    return Number.isFinite(rect.bottom) ? rect.bottom : 0;
+  }
+
+  function getHeaderVisualBottom(header) {
+    if (!header) return 0;
+    let bottom = rectBottom(header);
+    const title = header.querySelector(".package-title");
+    const subtitle = header.querySelector(".package-subtitle");
+    bottom = Math.max(bottom, rectBottom(title), rectBottom(subtitle));
+    return bottom;
+  }
+
+  function ensureHeaderNavSpacing(host) {
+    if (!host) return;
+    const header = firstMatch(host, [":scope > .package-header", ".package-header"]);
+    const nav = firstMatch(host, [":scope > #siteNav", "#siteNav"]);
+    if (!header || !nav) return;
+    const navComputed = window.getComputedStyle(nav);
+    if (navComputed.display === "none") return;
+
+    let baseMarginTop = Number.parseFloat(nav.dataset.legacyBaseMarginTop || "");
+    if (!Number.isFinite(baseMarginTop)) {
+      baseMarginTop = Number.parseFloat(navComputed.marginTop || "0") || 0;
+      nav.dataset.legacyBaseMarginTop = String(baseMarginTop);
+    }
+    nav.style.marginTop = baseMarginTop + "px";
+
+    const headerBottom = getHeaderVisualBottom(header);
+    const navRect = nav.getBoundingClientRect();
+    if (!navRect) return;
+    const currentGap = navRect.top - headerBottom;
+    const minGap = 14;
+    if (Number.isFinite(currentGap) && currentGap < minGap) {
+      const extra = minGap - currentGap;
+      nav.style.marginTop = Math.max(0, baseMarginTop + extra) + "px";
+    }
+  }
+
   function relocateLegacyLayout() {
-    const mains = document.querySelectorAll(".exe-web-site .exe-content main.page");
+    const mains = document.querySelectorAll(".exe-content main.page");
     mains.forEach((main) => {
       const host = main.closest(".exe-content");
       if (!host) return;
@@ -165,7 +220,7 @@ const LEGACY_COMPAT_STYLE_JS = `
       if (!layout) return;
       const { wrapper, inner } = layout;
 
-      const nav = host.querySelector(":scope > #siteNav");
+      const nav = firstMatch(host, [":scope > #siteNav", "#siteNav"]);
       const packageHeader = firstMatch(main, [":scope > .package-header", ".package-header"])
         || firstMatch(host, [":scope > .package-header"]);
       if (packageHeader) {
@@ -203,6 +258,8 @@ const LEGACY_COMPAT_STYLE_JS = `
       if (wrapper.parentElement !== main) {
         main.appendChild(wrapper);
       }
+      syncMainWrapperMinHeight(host, wrapper);
+      ensureHeaderNavSpacing(host);
 
       const oldHeader = firstMatch(main, [":scope > header.main-header", ":scope > header.page-header", ":scope > .main-header"]);
       if (oldHeader && !oldHeader.querySelector(".package-header, .page-header, .page-counter, #exe-client-search")) {
@@ -317,6 +374,28 @@ const PREVIEW_DEFAULTS = {
   showPageTitle: true,
   collapseIdevices: false
 };
+
+const DELIVERY_MODE_BODY_SELECTORS = ["body.exe-web-site", "body.exe-ims", "body.exe-scorm"];
+const DELIVERY_MODE_SCOPE_SELECTORS = [".exe-web-site", ".exe-ims", ".exe-scorm"];
+
+function joinSelectorList(selectors = []) {
+  return selectors.filter(Boolean).join(",\n");
+}
+
+function modeBodySelectors(suffix = "") {
+  return joinSelectorList(DELIVERY_MODE_BODY_SELECTORS.map((selector) => `${selector}${suffix}`));
+}
+
+function modeScopedSelectors(targetSelectors = []) {
+  const targets = Array.isArray(targetSelectors) ? targetSelectors : [targetSelectors];
+  const scoped = [];
+  for (const target of targets) {
+    for (const scope of DELIVERY_MODE_SCOPE_SELECTORS) {
+      scoped.push(`${scope} ${target}`);
+    }
+  }
+  return joinSelectorList(scoped);
+}
 
 const els = {
   trialNotice: document.getElementById("trialNotice"),
@@ -518,9 +597,16 @@ function convertLegacyCssToV3(cssText) {
       .replace(/\.exe-content\s+\.page-content\b/g, "#main");
   }
 
+  // Header/title mappings need explicit legacy handling before generic replacements.
+  // In legacy 2.x, #headerContent wrapped the h1; in v3 the h1 itself is .package-title.
+  css = css
+    .replace(/header#header\s+#headerContent\s+h1\b/gi, ".exe-content .package-header .package-title")
+    .replace(/#headerContent\s+h1\b/gi, ".exe-content .package-header .package-title")
+    .replace(/#header\s+h1\b/gi, ".exe-content .package-header .package-title")
+    .replace(/#headerContent(?![\w-])/gi, ".exe-content .package-header");
+
   // Conservative selector translation: keep content/iDevice styles, avoid legacy layout chrome.
   const selectorMap = [
-    [/#headerContent(?![\w-])/g, ".exe-content .package-title"],
     [/#header(?![\w-])/g, ".exe-content .package-header"],
     [/#emptyHeader(?![\w-])/g, ".exe-content .package-header"],
     [/#nodeDecoration(?![\w-])/g, ".exe-content .page-header"],
@@ -540,6 +626,9 @@ function convertLegacyCssToV3(cssText) {
   for (const [pattern, replacement] of selectorMap) {
     css = css.replace(pattern, replacement);
   }
+  css = css
+    .replace(/\.exe-content\s+\.package-header\s+\.exe-content\s+\.package-header/g, ".exe-content .package-header")
+    .replace(/\.exe-content\s+\.package-header\s+\.exe-content\s+\.package-title/g, ".exe-content .package-header .package-title");
   css = css.replace(/\bno-nav\b/g, "siteNav-off");
 
   return css;
@@ -1453,17 +1542,17 @@ function quickFromCss(cssText) {
     }
     return value;
   };
-  const bodyWebSiteDecls = lastCssPropValue("body\\.exe-web-site", "font-size|line-height") ? (Array.from(cssText.matchAll(/body\.exe-web-site\s*\{([^}]*)\}/gi)).at(-1)?.[1] || "") : "";
+  const bodyModeSelectors = ["body.exe-web-site", "body.exe-ims", "body.exe-scorm", "body.exe-export", "body"];
+  const bodyFontSizeRaw = lastRulePropValue(bodyModeSelectors, ["font-size"]);
+  const bodyLineHeightRaw = lastRulePropValue(bodyModeSelectors, ["line-height"]);
 
   q.pageBgColor = normalizeHex(
-    lastCssPropValue("body\\.exe-web-site", "background-color")
-      || lastCssPropValue("body\\.exe-web-site", "background")
-      || q.pageBgColor,
+    lastRulePropValue(bodyModeSelectors, ["background-color", "background"]) || q.pageBgColor,
     q.pageBgColor
   );
   q.fontBody = matchValue(
     /\.exe-content\s*\{[\s\S]*?font-family:\s*([^;]+);/i,
-    matchValue(/body(?:\.exe-web-site)?\s*\{[\s\S]*?font-family:\s*([^;]+);/i, q.fontBody)
+    lastRulePropValue(bodyModeSelectors, ["font-family"]) || q.fontBody
   );
   q.fontTitles = matchValue(
     /\.exe-content\s*\.page-title\s*\{[\s\S]*?font-family:\s*([^;]+);/i,
@@ -1473,10 +1562,10 @@ function quickFromCss(cssText) {
     )
   );
   q.fontMenu = matchValue(/#siteNav a\s*\{[\s\S]*?font-family:\s*([^;]+);/i, q.fontBody);
-  const sizeMatch = bodyWebSiteDecls.match(/font-size:\s*([0-9.]+)px\s*;/i);
+  const sizeMatch = String(bodyFontSizeRaw || "").match(/([0-9.]+)\s*px/i);
   if (sizeMatch) q.baseFontSize = Number(sizeMatch[1]);
-  const lhMatch = bodyWebSiteDecls.match(/line-height:\s*([0-9.]+)\s*;/i);
-  if (lhMatch) q.lineHeight = Number(lhMatch[1]);
+  const lineHeightMatch = String(bodyLineHeightRaw || "").match(/([0-9.]+)/);
+  if (lineHeightMatch) q.lineHeight = Number(lineHeightMatch[1]);
   const pageTitleSizeRaw = matchValue(/\.exe-content\s*\.page-title\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
   const pageTitleSizeMatch = pageTitleSizeRaw.match(/([0-9.]+)\s*rem/i);
   if (pageTitleSizeMatch) q.pageTitleSize = Number(pageTitleSizeMatch[1]);
@@ -1657,6 +1746,21 @@ function quickFromCss(cssText) {
 function buildQuickCss({ important = true } = {}) {
   const q = state.quick;
   const bang = important ? " !important" : "";
+  const bodyModeSelectors = modeBodySelectors();
+  const bodyModeAfterSelectors = modeBodySelectors("::after");
+  const layoutWidthSelectors = joinSelectorList([
+    "#node-content-container.exe-content #node-content",
+    modeScopedSelectors(".page-content"),
+    modeScopedSelectors("main>header"),
+    modeScopedSelectors("#siteFooterContent"),
+    ".exe-export .exe-content"
+  ]);
+  const headerImageSelectors = joinSelectorList([
+    modeScopedSelectors(".exe-content .package-header"),
+    modeScopedSelectors("#header")
+  ]);
+  const headerTitleSelectors = modeScopedSelectors(["#headerContent", ".package-header .package-title"]);
+  const footerImageSelectors = modeScopedSelectors(["#siteFooter", "#siteFooterContent"]);
   const logoPath = q.logoPath && state.files.has(q.logoPath) ? q.logoPath : "";
   const bgImagePath = q.bgImagePath && state.files.has(q.bgImagePath) ? q.bgImagePath : "";
   const headerImagePath = q.headerImagePath && state.files.has(q.headerImagePath) ? q.headerImagePath : "";
@@ -1667,7 +1771,7 @@ function buildQuickCss({ important = true } = {}) {
   const footerMeta = `/* footer-image-editor:path=${footerImagePath};enabled=${q.footerImageEnabled ? "1" : "0"};height=${q.footerImageHeight};fit=${q.footerImageFit};pos=${q.footerImagePosition};repeat=${q.footerImageRepeat} */`;
   const logoRule = q.logoEnabled && logoPath
     ? `
-body.exe-web-site::after {
+${bodyModeAfterSelectors} {
   content: ""${bang};
   position: fixed${bang};
   width: ${q.logoSize}px${bang};
@@ -1681,8 +1785,7 @@ body.exe-web-site::after {
     : "";
   const headerImageRule = q.headerImageEnabled && headerImagePath
     ? `
-.exe-web-site .exe-content .package-header,
-.exe-web-site #header {
+${headerImageSelectors} {
   background-image: url("${headerImagePath}")${bang};
   background-repeat: ${q.headerImageRepeat}${bang};
   background-position: ${q.headerImagePosition}${bang};
@@ -1698,16 +1801,14 @@ body.exe-web-site::after {
     : "";
   const headerHideTitleRule = q.headerHideTitle
     ? `
-.exe-web-site #headerContent,
-.exe-web-site .package-header .package-title {
+${headerTitleSelectors} {
   display: none !important;
 }
 `
     : "";
   const footerImageRule = q.footerImageEnabled && footerImagePath
     ? `
-.exe-web-site #siteFooter,
-.exe-web-site #siteFooterContent {
+${footerImageSelectors} {
   background-image: url("${footerImagePath}")${bang};
   background-repeat: ${q.footerImageRepeat}${bang};
   background-position: ${q.footerImagePosition}${bang};
@@ -1726,25 +1827,21 @@ ${logoMeta}
 ${bgMeta}
 ${headerMeta}
 ${footerMeta}
-body.exe-web-site {
+${bodyModeSelectors} {
   background-color: ${normalizeHex(q.pageBgColor)}${bang};
   font-family: ${q.fontBody}${bang};
   font-size: ${q.baseFontSize}px${bang};
   line-height: ${q.lineHeight}${bang};
 }
 ${q.bgImageEnabled && bgImagePath ? `
-body.exe-web-site {
+${bodyModeSelectors} {
   background-image: url("${bgImagePath}")${bang};
   background-repeat: no-repeat${bang};
   background-position: center top${bang};
   background-size: cover${bang};
 }
 ` : ""}
-#node-content-container.exe-content #node-content,
-.exe-web-site .page-content,
-.exe-web-site main>header,
-.exe-web-site #siteFooterContent,
-.exe-export .exe-content {
+${layoutWidthSelectors} {
   max-width: ${q.contentWidth}px${bang};
 }
 .exe-content {
@@ -1894,7 +1991,11 @@ function quickBlockNeedsSchemaMigration(css) {
   if (!quickBlock) return false;
   const hasLegacyEmptyHeader = /(?:^|[\s,{])#emptyHeader(?:[\s,.:{]|$)/i.test(quickBlock);
   const hasLegacyHeaderContentReset = /(?:^|[\s,{])#headerContent(?:[\s,.:{]|$)[\s\S]*?(padding-top|margin-top|margin-bottom)\s*:\s*0/i.test(quickBlock);
-  return hasLegacyEmptyHeader || hasLegacyHeaderContentReset;
+  const hasWebsiteModeSelectors = /\.(?:exe-web-site)\b/i.test(quickBlock);
+  const hasImsModeSelectors = /\.(?:exe-ims)\b/i.test(quickBlock);
+  const hasScormModeSelectors = /\.(?:exe-scorm)\b/i.test(quickBlock);
+  const hasMissingDeliveryModes = hasWebsiteModeSelectors && (!hasImsModeSelectors || !hasScormModeSelectors);
+  return hasLegacyEmptyHeader || hasLegacyHeaderContentReset || hasMissingDeliveryModes;
 }
 
 function migrateQuickBlockSchemaIfNeeded() {
