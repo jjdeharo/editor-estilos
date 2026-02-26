@@ -60,7 +60,7 @@
               <textarea id="metaDescription" rows="6"></textarea>
             </label>
             <div class="button-row">
-              <button id="exportBtn" type="button">Exportar ZIP</button>
+              <button id="exportBtn" type="button">Exportar estilo</button>
             </div>
             <p id="status" class="status"></p>
           </div>
@@ -133,7 +133,7 @@
             </div>
             <div class="inline-three">
               <label>Margen inferior título (rem) <input id="pageTitleMarginBottom" data-quick="pageTitleMarginBottom" type="number" min="0" max="2.5" step="0.05" /></label>
-              <label>Tamaño título de curso (rem) <input id="packageTitleSize" data-quick="packageTitleSize" type="number" min="1" max="2.6" step="0.05" /></label>
+              <label>Tamaño título de curso (rem) <input id="packageTitleSize" data-quick="packageTitleSize" type="number" min="0" max="4" step="0.05" /></label>
               <label>Peso título de curso
                 <select id="packageTitleWeight" data-quick="packageTitleWeight">
                   <option value="400">400</option>
@@ -193,6 +193,129 @@
         </details>
 
         <details>
+          <summary>Cabecera y pie</summary>
+          <div class="section-content quick-grid">
+            <div class="inline-three">
+              <div class="toggle-item">
+                <span class="toggle-control">
+                  <input id="headerImageEnabled" data-quick="headerImageEnabled" class="toggle-input" type="checkbox" />
+                  <span class="toggle-visual"></span>
+                </span>
+                <label class="toggle-label" for="headerImageEnabled">Mostrar imagen de cabecera</label>
+              </div>
+              <div class="toggle-item">
+                <span class="toggle-control">
+                  <input id="headerHideTitle" data-quick="headerHideTitle" class="toggle-input" type="checkbox" />
+                  <span class="toggle-visual"></span>
+                </span>
+                <label class="toggle-label" for="headerHideTitle">Ocultar título en cabecera</label>
+              </div>
+              <label>Alto cabecera (px) <input id="headerImageHeight" data-quick="headerImageHeight" type="number" min="48" max="420" step="1" /></label>
+              <label>Ajuste cabecera
+                <select id="headerImageFit" data-quick="headerImageFit">
+                  <option value="contain">Contain (imagen completa)</option>
+                  <option value="cover">Cover (rellenar cabecera)</option>
+                  <option value="auto">Auto (tamaño original)</option>
+                </select>
+              </label>
+            </div>
+            <div class="inline-three">
+              <label>Posición cabecera
+                <select id="headerImagePosition" data-quick="headerImagePosition">
+                  <option value="left top">Izquierda arriba</option>
+                  <option value="center top">Centro arriba</option>
+                  <option value="right top">Derecha arriba</option>
+                  <option value="left center">Izquierda centro</option>
+                  <option value="center center">Centro</option>
+                  <option value="right center">Derecha centro</option>
+                  <option value="left bottom">Izquierda abajo</option>
+                  <option value="center bottom">Centro abajo</option>
+                  <option value="right bottom">Derecha abajo</option>
+                </select>
+              </label>
+              <label>Repetición cabecera
+                <select id="headerImageRepeat" data-quick="headerImageRepeat">
+                  <option value="no-repeat">No repetir</option>
+                  <option value="repeat-x">Repetir horizontal</option>
+                  <option value="repeat-y">Repetir vertical</option>
+                  <option value="repeat">Repetir ambos</option>
+                </select>
+              </label>
+            </div>
+            <div class="toggle-item">
+              <span class="toggle-control">
+                <input id="showAllStyleImages" class="toggle-input" type="checkbox" />
+                <span class="toggle-visual"></span>
+              </span>
+              <label class="toggle-label" for="showAllStyleImages">Mostrar todas las imágenes del estilo (incluye iconos)</label>
+            </div>
+            <label>Imagen de cabecera del estilo
+              <select id="headerImageSelect">
+                <option value="">Seleccionar imagen del estilo…</option>
+              </select>
+            </label>
+            <div class="button-row">
+              <button id="addHeaderImageBtn" type="button">Añadir/reemplazar cabecera</button>
+              <button id="removeHeaderImageBtn" type="button">Quitar cabecera</button>
+              <input id="addHeaderImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
+            </div>
+            <p id="headerImageInfo" class="status-inline">Sin imagen de cabecera.</p>
+            <div class="inline-three">
+              <div class="toggle-item">
+                <span class="toggle-control">
+                  <input id="footerImageEnabled" data-quick="footerImageEnabled" class="toggle-input" type="checkbox" />
+                  <span class="toggle-visual"></span>
+                </span>
+                <label class="toggle-label" for="footerImageEnabled">Mostrar imagen de pie</label>
+              </div>
+              <label>Alto pie (px) <input id="footerImageHeight" data-quick="footerImageHeight" type="number" min="36" max="320" step="1" /></label>
+              <label>Ajuste pie
+                <select id="footerImageFit" data-quick="footerImageFit">
+                  <option value="contain">Contain (imagen completa)</option>
+                  <option value="cover">Cover (rellenar pie)</option>
+                  <option value="auto">Auto (tamaño original)</option>
+                </select>
+              </label>
+            </div>
+            <div class="inline-three">
+              <label>Posición pie
+                <select id="footerImagePosition" data-quick="footerImagePosition">
+                  <option value="left top">Izquierda arriba</option>
+                  <option value="center top">Centro arriba</option>
+                  <option value="right top">Derecha arriba</option>
+                  <option value="left center">Izquierda centro</option>
+                  <option value="center center">Centro</option>
+                  <option value="right center">Derecha centro</option>
+                  <option value="left bottom">Izquierda abajo</option>
+                  <option value="center bottom">Centro abajo</option>
+                  <option value="right bottom">Derecha abajo</option>
+                </select>
+              </label>
+              <label>Repetición pie
+                <select id="footerImageRepeat" data-quick="footerImageRepeat">
+                  <option value="no-repeat">No repetir</option>
+                  <option value="repeat-x">Repetir horizontal</option>
+                  <option value="repeat-y">Repetir vertical</option>
+                  <option value="repeat">Repetir ambos</option>
+                </select>
+              </label>
+            </div>
+            <label>Imagen de pie del estilo
+              <select id="footerImageSelect">
+                <option value="">Seleccionar imagen del estilo…</option>
+              </select>
+            </label>
+            <div class="button-row">
+              <button id="addFooterImageBtn" type="button">Añadir/reemplazar pie</button>
+              <button id="removeFooterImageBtn" type="button">Quitar pie</button>
+              <input id="addFooterImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
+            </div>
+            <p id="footerImageInfo" class="status-inline">Sin imagen de pie.</p>
+            <p class="status-inline">Sugerencia: cabecera panorámica (p. ej. 1800x420) y pie (p. ej. 1800x220). Usa <strong>contain</strong> si no quieres recorte y <strong>cover</strong> si quieres ocupar toda la franja.</p>
+          </div>
+        </details>
+
+        <details>
           <summary>Menú y navegación</summary>
           <div class="section-content quick-grid palette-compact">
             <label>Fondo menú <input id="menuBgColor" data-quick="menuBgColor" type="color" /></label>
@@ -204,12 +327,23 @@
 
         <details>
           <summary>iDevices y botones</summary>
-          <div class="section-content quick-grid palette-compact">
-            <label>Fondo iDevice <input id="boxBgColor" data-quick="boxBgColor" type="color" /></label>
-            <label>Borde iDevice <input id="boxBorderColor" data-quick="boxBorderColor" type="color" /></label>
-            <label>Título iDevice <input id="boxTitleColor" data-quick="boxTitleColor" type="color" /></label>
-            <label>Botón fondo <input id="buttonBgColor" data-quick="buttonBgColor" type="color" /></label>
-            <label>Botón texto <input id="buttonTextColor" data-quick="buttonTextColor" type="color" /></label>
+          <div class="section-content quick-grid">
+            <div class="palette-compact">
+              <label>Fondo iDevice <input id="boxBgColor" data-quick="boxBgColor" type="color" /></label>
+              <label>Borde iDevice <input id="boxBorderColor" data-quick="boxBorderColor" type="color" /></label>
+              <label>Título iDevice <input id="boxTitleColor" data-quick="boxTitleColor" type="color" /></label>
+              <label>Botón fondo <input id="buttonBgColor" data-quick="buttonBgColor" type="color" /></label>
+              <label>Botón texto <input id="buttonTextColor" data-quick="buttonTextColor" type="color" /></label>
+            </div>
+            <label>Alineación texto iDevice
+              <select id="boxTextAlign" data-quick="boxTextAlign">
+                <option value="inherit">Por defecto del estilo</option>
+                <option value="left">Izquierda</option>
+                <option value="center">Centrado</option>
+                <option value="right">Derecha</option>
+                <option value="justify">Justificado</option>
+              </select>
+            </label>
             <div class="button-row">
               <button id="addIdeviceIconsBtn" type="button">Añadir iconos iDevice</button>
               <input id="addIdeviceIconsInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" multiple hidden />
@@ -235,6 +369,8 @@
             <option value="text">Texto</option>
             <option value="other">Otros</option>
           </select>
+          <label class="file-label" for="fileNameFilter">Buscar archivo</label>
+          <input id="fileNameFilter" type="search" placeholder="Buscar por nombre o ruta..." autocomplete="off" />
           <div id="fileList" class="file-list"></div>
         </div>
 
@@ -328,7 +464,7 @@
     </main>
   </div>
   <footer class="app-footer">
-    <p>v 0.1.1 · (c) <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">Licencia AGPLv3</a> · <a href="https://github.com/jjdeharo/editor-estilos" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a> · <a href="https://github.com/jjdeharo/editor-estilos/issues" target="_blank" rel="noopener noreferrer">Problemas y sugerencias</a></p>
+    <p>v 0.2.0 · (c) <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">Licencia AGPLv3</a> · <a href="https://github.com/jjdeharo/editor-estilos" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a> · <a href="https://github.com/jjdeharo/editor-estilos/issues" target="_blank" rel="noopener noreferrer">Problemas y sugerencias</a></p>
   </footer>
 
   <script src="vendor/jszip.min.js"></script>

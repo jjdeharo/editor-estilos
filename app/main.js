@@ -2,6 +2,233 @@ const CORE_REQUIRED = ["config.xml", "style.css", "style.js", "screenshot.png"];
 const TEXT_EXTENSIONS = [".css", ".js", ".xml", ".txt", ".html", ".json", ".md"];
 const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"];
 const DEFAULT_STYLE_JS = `/* style.js autogenerado por el editor para cumplir requisitos mínimos de eXe */\n`;
+const LEGACY_COMPAT_MARKERS = ["legacy-v2-v3-compat-v2", "legacy-v2-v3-compat-v3"];
+const LEGACY_COMPAT_MARKER = "legacy-v2-v3-compat-v3";
+const LEGACY_COMPAT_STYLE_JS = `
+/* ${LEGACY_COMPAT_MARKER}: recoloca cabecera, navegación y controles para estilos convertidos desde eXe 2.x */
+(function () {
+  const toggleBgImageInfoCache = Object.create(null);
+
+  function ensureCompatHelperStyles() {
+    if (document.getElementById("legacy-compat-helper-style")) return;
+    const style = document.createElement("style");
+    style.id = "legacy-compat-helper-style";
+    style.textContent = [
+      ".legacy-compat-controls{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem .7rem;margin:0 0 .9rem;}",
+      ".legacy-compat-controls #exe-client-search{margin:0;}",
+      ".legacy-compat-controls .page-counter{margin:0;}",
+      ".legacy-compat-controls .nav-buttons{margin-left:auto;display:inline-flex;align-items:center;gap:.5rem;}",
+      ".legacy-compat-controls .nav-buttons a{display:inline-flex;align-items:center;justify-content:center;min-width:7rem;min-height:2.1rem;padding:.35rem .8rem;}",
+      ".legacy-compat-controls .nav-buttons a span{position:static!important;width:auto!important;height:auto!important;margin:0!important;overflow:visible!important;clip:auto!important;}",
+      ".legacy-toggle-fallback{min-width:1.65em;min-height:1.65em;display:inline-flex;align-items:center;justify-content:center;border:1px solid currentColor;border-radius:999px;background:none;padding:0;line-height:1;}",
+      ".legacy-toggle-fallback::before{content:'-';font-weight:700;}",
+      ".box.minimized .legacy-toggle-fallback::before{content:'+';}",
+      ".legacy-toggle-fallback>span{position:absolute;overflow:hidden;clip:rect(0,0,0,0);height:0;width:0;}"
+    ].join("");
+    document.head.appendChild(style);
+  }
+
+  function extractBackgroundImageUrl(backgroundImage) {
+    const raw = String(backgroundImage || "").trim();
+    if (!raw || raw === "none") return "";
+    const start = raw.indexOf("url(");
+    if (start < 0) return "";
+    const end = raw.indexOf(")", start + 4);
+    if (end < 0) return "";
+    return raw.slice(start + 4, end).trim().replace(/^["']|["']$/g, "");
+  }
+
+  function hasDefaultTopLeftPosition(backgroundPosition) {
+    const pos = String(backgroundPosition || "").trim().toLowerCase().replace(/\\s+/g, " ");
+    return pos === "0% 0%" || pos === "0px 0px" || pos === "left top";
+  }
+
+  function getImageInfo(url, done) {
+    if (!url) {
+      done(null);
+      return;
+    }
+    if (Object.prototype.hasOwnProperty.call(toggleBgImageInfoCache, url)) {
+      done(toggleBgImageInfoCache[url]);
+      return;
+    }
+    const img = new Image();
+    img.onload = function () {
+      const info = { ok: true, width: img.naturalWidth || 0, height: img.naturalHeight || 0 };
+      toggleBgImageInfoCache[url] = info;
+      done(info);
+    };
+    img.onerror = function () {
+      const info = { ok: false, width: 0, height: 0 };
+      toggleBgImageInfoCache[url] = info;
+      done(info);
+    };
+    img.src = url;
+  }
+
+  function applyToggleFallbackIcons() {
+    ensureCompatHelperStyles();
+    const toggles = document.querySelectorAll(".box-toggle");
+    toggles.forEach((toggle) => {
+      const computed = window.getComputedStyle(toggle);
+      const bgImage = String(computed.backgroundImage || "").trim();
+      if (!bgImage || bgImage === "none") {
+        toggle.classList.add("legacy-toggle-fallback");
+        return;
+      }
+
+      const bgUrl = extractBackgroundImageUrl(bgImage);
+      if (!bgUrl) {
+        toggle.classList.remove("legacy-toggle-fallback");
+        return;
+      }
+
+      getImageInfo(bgUrl, function (info) {
+        if (!info || !info.ok) {
+          toggle.classList.add("legacy-toggle-fallback");
+          return;
+        }
+
+        const bgSize = String(computed.backgroundSize || "").trim().toLowerCase();
+        const hasExplicitBgSize = bgSize && bgSize !== "auto" && bgSize !== "auto auto";
+        if (hasExplicitBgSize) {
+          toggle.classList.remove("legacy-toggle-fallback");
+          return;
+        }
+
+        const width = Math.max(toggle.clientWidth, Math.round(parseFloat(computed.width) || 0), 16);
+        const height = Math.max(toggle.clientHeight, Math.round(parseFloat(computed.height) || 0), 16);
+        const looksLikeSprite = info.width >= width * 3 || info.height >= height * 3;
+        const defaultPosition = hasDefaultTopLeftPosition(computed.backgroundPosition);
+        if (looksLikeSprite && defaultPosition) {
+          toggle.classList.add("legacy-toggle-fallback");
+        } else {
+          toggle.classList.remove("legacy-toggle-fallback");
+        }
+      });
+    });
+  }
+
+  function firstMatch(root, selectors) {
+    for (const selector of selectors) {
+      const node = root.querySelector(selector);
+      if (node) return node;
+    }
+    return null;
+  }
+
+  function ensureLegacyMainWrapper(main) {
+    if (!main) return null;
+    const existingWrapper = main.querySelector(":scope > #main-wrapper");
+    if (existingWrapper) {
+      let existingMain = existingWrapper.querySelector(":scope > #main");
+      if (!existingMain) {
+        existingMain = document.createElement("div");
+        existingMain.id = "main";
+        while (existingWrapper.firstChild) {
+          existingMain.appendChild(existingWrapper.firstChild);
+        }
+        existingWrapper.appendChild(existingMain);
+      }
+      return { wrapper: existingWrapper, inner: existingMain };
+    }
+    const wrapper = document.createElement("div");
+    wrapper.id = "main-wrapper";
+    const inner = document.createElement("div");
+    inner.id = "main";
+    wrapper.appendChild(inner);
+    main.appendChild(wrapper);
+    return { wrapper, inner };
+  }
+
+  function ensureControlsRow(container) {
+    let controls = container.querySelector(":scope > .legacy-compat-controls");
+    if (controls) return controls;
+    controls = document.createElement("div");
+    controls.className = "legacy-compat-controls";
+    container.insertBefore(controls, container.firstChild);
+    return controls;
+  }
+
+  function moveInto(parent, node) {
+    if (!parent || !node) return;
+    if (node.parentElement === parent) return;
+    parent.appendChild(node);
+  }
+
+  function relocateLegacyLayout() {
+    const mains = document.querySelectorAll(".exe-web-site .exe-content main.page");
+    mains.forEach((main) => {
+      const host = main.closest(".exe-content");
+      if (!host) return;
+      const layout = ensureLegacyMainWrapper(main);
+      if (!layout) return;
+      const { wrapper, inner } = layout;
+
+      const nav = host.querySelector(":scope > #siteNav");
+      const packageHeader = firstMatch(main, [":scope > .package-header", ".package-header"])
+        || firstMatch(host, [":scope > .package-header"]);
+      if (packageHeader) {
+        host.insertBefore(packageHeader, nav || main);
+      }
+
+      const controls = ensureControlsRow(inner);
+      const search = firstMatch(main, [":scope > #exe-client-search", "#exe-client-search"]);
+      const pageCounter = firstMatch(main, [":scope > .page-counter", ".page-counter"]);
+      const navButtons = firstMatch(host, [":scope > .nav-buttons", ".nav-buttons"]);
+      moveInto(controls, search);
+      moveInto(controls, pageCounter);
+      moveInto(controls, navButtons);
+      if (!controls.children.length) controls.remove();
+
+      const pageHeader = firstMatch(main, [":scope > .page-header", ".page-header"]);
+      if (pageHeader) {
+        const firstChild = inner.firstElementChild;
+        const target = (firstChild && firstChild.classList.contains("legacy-compat-controls"))
+          ? firstChild.nextSibling
+          : inner.firstChild;
+        inner.insertBefore(pageHeader, target);
+      }
+
+      const mainContent = firstMatch(main, [":scope > [id^='page-content-']", ":scope > .page-content", "[id^='page-content-']", ".page-content"]);
+      if (mainContent && mainContent.parentElement !== inner) {
+        inner.appendChild(mainContent);
+      }
+
+      const looseContent = main.querySelectorAll(":scope > .page-content, :scope > [id^='page-content-']");
+      looseContent.forEach((block) => {
+        if (block.parentElement !== inner) inner.appendChild(block);
+      });
+
+      if (wrapper.parentElement !== main) {
+        main.appendChild(wrapper);
+      }
+
+      const oldHeader = firstMatch(main, [":scope > header.main-header", ":scope > header.page-header", ":scope > .main-header"]);
+      if (oldHeader && !oldHeader.querySelector(".package-header, .page-header, .page-counter, #exe-client-search")) {
+        const text = (oldHeader.textContent || "").trim();
+        if (!text) oldHeader.remove();
+      }
+    });
+    applyToggleFallbackIcons();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", relocateLegacyLayout, { once: true });
+  } else {
+    relocateLegacyLayout();
+  }
+  window.addEventListener("load", relocateLegacyLayout, { once: true });
+  setTimeout(relocateLegacyLayout, 250);
+  setTimeout(relocateLegacyLayout, 900);
+  document.addEventListener("click", function (ev) {
+    const target = ev && ev.target;
+    if (!(target instanceof Element)) return;
+    if (!target.closest(".box-toggle")) return;
+    setTimeout(applyToggleFallbackIcons, 0);
+  });
+})();
+`.trim();
 const MIN_SCREENSHOT_PNG_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+3xkAAAAASUVORK5CYII=";
 const QUICK_PROTECTED_PATTERNS = [
   { re: /\.box-toggle\b/i, label: ".box-toggle" },
@@ -55,10 +282,24 @@ const QUICK_DEFAULTS = {
   boxBgColor: "#ffffff",
   boxBorderColor: "#dddddd",
   boxTitleColor: "#054d4d",
+  boxTextAlign: "inherit",
   buttonBgColor: "#005f73",
   buttonTextColor: "#ffffff",
   bgImageEnabled: false,
   bgImagePath: "",
+  headerImageEnabled: false,
+  headerHideTitle: false,
+  headerImagePath: "",
+  headerImageHeight: 120,
+  headerImageFit: "contain",
+  headerImagePosition: "center center",
+  headerImageRepeat: "no-repeat",
+  footerImageEnabled: false,
+  footerImagePath: "",
+  footerImageHeight: 90,
+  footerImageFit: "contain",
+  footerImagePosition: "center center",
+  footerImageRepeat: "no-repeat",
   logoEnabled: false,
   logoPath: "",
   logoSize: 130,
@@ -89,6 +330,7 @@ const els = {
   status: document.getElementById("status"),
   fileList: document.getElementById("fileList"),
   fileTypeFilter: document.getElementById("fileTypeFilter"),
+  fileNameFilter: document.getElementById("fileNameFilter"),
   editorPath: document.getElementById("editorPath"),
   imageActions: document.getElementById("imageActions"),
   addFontBtn: document.getElementById("addFontBtn"),
@@ -116,6 +358,17 @@ const els = {
   removeBgImageBtn: document.getElementById("removeBgImageBtn"),
   addBgImageInput: document.getElementById("addBgImageInput"),
   bgImageInfo: document.getElementById("bgImageInfo"),
+  addHeaderImageBtn: document.getElementById("addHeaderImageBtn"),
+  removeHeaderImageBtn: document.getElementById("removeHeaderImageBtn"),
+  addHeaderImageInput: document.getElementById("addHeaderImageInput"),
+  headerImageSelect: document.getElementById("headerImageSelect"),
+  showAllStyleImages: document.getElementById("showAllStyleImages"),
+  headerImageInfo: document.getElementById("headerImageInfo"),
+  addFooterImageBtn: document.getElementById("addFooterImageBtn"),
+  removeFooterImageBtn: document.getElementById("removeFooterImageBtn"),
+  addFooterImageInput: document.getElementById("addFooterImageInput"),
+  footerImageSelect: document.getElementById("footerImageSelect"),
+  footerImageInfo: document.getElementById("footerImageInfo"),
   addIdeviceIconsBtn: document.getElementById("addIdeviceIconsBtn"),
   addIdeviceIconsInput: document.getElementById("addIdeviceIconsInput"),
   logoInfo: document.getElementById("logoInfo"),
@@ -134,6 +387,8 @@ const state = {
   blobUrls: new Map(),
   quick: { ...QUICK_DEFAULTS },
   preview: { ...PREVIEW_DEFAULTS },
+  previewLayoutMode: "modern",
+  previewFromLegacyZip: false,
   previewPendingRender: false,
   isDirty: false
 };
@@ -237,6 +492,213 @@ function ensureCoreFilesPresent({ markAsDirty: shouldMarkDirty = false } = {}) {
   return added;
 }
 
+function compatibilityNumberFromConfigXml(xmlText) {
+  const m = String(xmlText || "").match(/<compatibility>\s*([^<]+)\s*<\/compatibility>/i);
+  if (!m || !m[1]) return null;
+  const n = Number.parseFloat(m[1].trim().replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+function cloneBytes(bytes) {
+  return new Uint8Array(bytes);
+}
+
+function convertLegacyCssToV3(cssText) {
+  let css = String(cssText || "");
+  if (!css.trim()) return css;
+
+  // Revert aggressive mappings from previous converter versions (only legacy-generated files).
+  if (/legacy-source-file:/i.test(css)) {
+    css = css
+      .replace(/\.exe-content\s+\.package-header\b/g, "#header")
+      .replace(/\.exe-content\s+\.package-title\b/g, "#headerContent")
+      .replace(/\.exe-content\s+\.page-header\b/g, "#nodeDecoration")
+      .replace(/\.exe-content\s+\.page-title\b/g, "#nodeTitle")
+      .replace(/\.exe-content\s+main\.page\b/g, "#main-wrapper")
+      .replace(/\.exe-content\s+\.page-content\b/g, "#main");
+  }
+
+  // Conservative selector translation: keep content/iDevice styles, avoid legacy layout chrome.
+  const selectorMap = [
+    [/#headerContent(?![\w-])/g, ".exe-content .package-title"],
+    [/#header(?![\w-])/g, ".exe-content .package-header"],
+    [/#emptyHeader(?![\w-])/g, ".exe-content .package-header"],
+    [/#nodeDecoration(?![\w-])/g, ".exe-content .page-header"],
+    [/#nodeTitle(?![\w-])/g, ".exe-content .page-title"],
+    [/\.nodeTitle\b/g, ".page-title"],
+    [/\.iDevice_wrapper\b/g, ".box"],
+    [/\.iDevice_header\b/g, ".box-head"],
+    [/\.iDeviceTitle\b/g, ".box-title"],
+    [/\.iDevice_content_wrapper\b/g, ".box-content"],
+    [/\.iDevice_content\b/g, ".box-content"],
+    [/\.iDevice_inner\b/g, ".box-content"],
+    [/\.toggle-idevice\b/g, ".box-toggle"],
+    [/\.box-toggle\s+a\b/g, ".box-toggle"],
+    [/\.toggle-em1\b/g, ".box.minimized .box-toggle"],
+    [/\.show-idevice\b/g, ".box.minimized .box-toggle"]
+  ];
+  for (const [pattern, replacement] of selectorMap) {
+    css = css.replace(pattern, replacement);
+  }
+  css = css.replace(/\bno-nav\b/g, "siteNav-off");
+
+  return css;
+}
+
+function upgradeLegacyConfigXmlToV3(xmlText) {
+  let xml = String(xmlText || "");
+  if (!xml.trim()) return { xml, changed: false, notes: [] };
+  const notes = [];
+  const before = xml;
+
+  const compat = compatibilityNumberFromConfigXml(xml);
+  if (compat === null || compat < 3) {
+    xml = writeConfigField(xml, "compatibility", "3.0");
+    notes.push("compatibility actualizada a 3.0");
+  }
+
+  const dropLegacyField = (tag) => {
+    const re = new RegExp(`\\s*<${tag}>[\\s\\S]*?<\\/${tag}>`, "i");
+    if (re.test(xml)) {
+      xml = xml.replace(re, "");
+      notes.push(`${tag} eliminado (bloque legacy)`);
+    }
+  };
+  dropLegacyField("edition-extra-head");
+  dropLegacyField("extra-body");
+
+  return { xml, changed: xml !== before, notes };
+}
+
+function upsertLegacyCompatStyleJs(styleJsText) {
+  let js = String(styleJsText || "");
+  const legacyCompatBlockRe = /\/\*\s*legacy-v2-v3-compat-v\d+:[\s\S]*?\*\/\s*\(function\s*\(\)\s*\{[\s\S]*?\}\)\(\);\s*/gi;
+  js = js.replace(legacyCompatBlockRe, "").trimEnd();
+
+  for (const marker of LEGACY_COMPAT_MARKERS) {
+    if (js.includes(marker)) {
+      js = js.replaceAll(marker, LEGACY_COMPAT_MARKER);
+    }
+  }
+
+  return js ? `${js}\n\n${LEGACY_COMPAT_STYLE_JS}\n` : `${LEGACY_COMPAT_STYLE_JS}\n`;
+}
+
+function moveThemeFile(oldPath, newPath) {
+  const from = normalizePath(oldPath);
+  const to = normalizePath(newPath);
+  if (!state.files.has(from) || from === to) return false;
+  if (state.files.has(to)) return false;
+  state.files.set(to, cloneBytes(state.files.get(from)));
+  state.files.delete(from);
+  invalidateBlob(from);
+  invalidateBlob(to);
+  return true;
+}
+
+function convertLegacyThemePackageIfNeeded() {
+  const notes = [];
+  const rootPaths = Array.from(state.files.keys()).filter((p) => !normalizePath(p).includes("/"));
+  const configXml = state.files.has("config.xml") ? decode(state.files.get("config.xml")) : "";
+  const compatibility = compatibilityNumberFromConfigXml(configXml);
+  const hasLegacyCssFiles = state.files.has("content.css") || state.files.has("nav.css");
+  const hasModernStyleCss = state.files.has("style.css");
+  const currentStyleCss = hasModernStyleCss ? decode(state.files.get("style.css")) : "";
+  const hasLegacyMarkerInStyleCss = /legacy-source-file:(?:content|nav)\.css/i.test(currentStyleCss);
+  const looksLegacy = hasLegacyCssFiles || (compatibility !== null && compatibility < 3) || hasLegacyMarkerInStyleCss;
+  if (!looksLegacy) return { converted: false, notes: [], detectedLegacy: false };
+
+  let cssCandidates = ["content.css", "nav.css"].filter((p) => state.files.has(p));
+  if (!cssCandidates.length && hasLegacyMarkerInStyleCss) {
+    cssCandidates = ["legacy/content.css", "legacy/nav.css"].filter((p) => state.files.has(p));
+  }
+  if (!cssCandidates.length && !hasModernStyleCss) {
+    cssCandidates = rootPaths
+      .filter((p) => p.toLowerCase().endsWith(".css") && p.toLowerCase() !== "style.css")
+      .sort((a, b) => a.localeCompare(b));
+  }
+  if (!hasModernStyleCss && cssCandidates.length) {
+    const mergedLegacyCss = cssCandidates
+      .map((path) => `/* legacy-source-file:${path} */\n${decode(state.files.get(path))}`)
+      .join("\n\n");
+    const convertedCss = convertLegacyCssToV3(mergedLegacyCss);
+    const generated = [
+      "/* style.css convertido automáticamente desde formato legado (eXe 2.x) a estructura v3 */",
+      "/* Archivos originales CSS movidos a la carpeta legacy/ para referencia. */",
+      "",
+      convertedCss,
+      ""
+    ].join("\n");
+    state.files.set("style.css", encode(generated));
+    invalidateBlob("style.css");
+    notes.push(`style.css convertido a v3 desde: ${cssCandidates.join(", ")}`);
+
+    for (const cssPath of cssCandidates) {
+      moveThemeFile(cssPath, `legacy/${cssPath}`);
+    }
+  }
+
+  if (hasModernStyleCss) {
+    const originalCss = decode(state.files.get("style.css"));
+    const convertedCss = convertLegacyCssToV3(originalCss);
+    if (convertedCss !== originalCss) {
+      state.files.set("style.css", encode(convertedCss));
+      invalidateBlob("style.css");
+      notes.push("style.css existente adaptado a selectores v3");
+    }
+  }
+
+  const legacyRootJs = rootPaths.filter((p) => p.toLowerCase().endsWith(".js") && p.toLowerCase() !== "style.js");
+  let movedJs = 0;
+  for (const jsPath of legacyRootJs) {
+    if (moveThemeFile(jsPath, `legacy/${jsPath}`)) movedJs += 1;
+  }
+  if (movedJs) {
+    notes.push(`JS legado movido a legacy/: ${movedJs}`);
+  }
+
+  if (!state.files.has("screenshot.png") && state.files.has("preview.png")) {
+    state.files.set("screenshot.png", cloneBytes(state.files.get("preview.png")));
+    invalidateBlob("screenshot.png");
+    notes.push("preview.png reutilizado como screenshot.png");
+  }
+
+  const iconMatches = rootPaths
+    .map((p) => {
+      const m = p.match(/^icon_([a-z0-9_-]+)\.(png|jpe?g|gif|svg|webp)$/i);
+      return m ? { source: p, name: m[1], ext: m[2].toLowerCase() } : null;
+    })
+    .filter(Boolean);
+  let copiedIcons = 0;
+  for (const icon of iconMatches) {
+    const target = `icons/${icon.name}.${icon.ext}`;
+    if (state.files.has(target)) continue;
+    state.files.set(target, cloneBytes(state.files.get(icon.source)));
+    invalidateBlob(target);
+    copiedIcons += 1;
+  }
+  if (copiedIcons) notes.push(`iconos legacy copiados a icons/: ${copiedIcons}`);
+
+  if (state.files.has("config.xml")) {
+    const upgraded = upgradeLegacyConfigXmlToV3(decode(state.files.get("config.xml")));
+    if (upgraded.changed) {
+      state.files.set("config.xml", encode(upgraded.xml));
+      invalidateBlob("config.xml");
+      notes.push(...upgraded.notes);
+    }
+  }
+
+  const currentStyleJs = state.files.has("style.js") ? decode(state.files.get("style.js")) : "";
+  const upgradedStyleJs = upsertLegacyCompatStyleJs(currentStyleJs);
+  if (upgradedStyleJs !== currentStyleJs) {
+    state.files.set("style.js", encode(upgradedStyleJs));
+    invalidateBlob("style.js");
+    notes.push("compatibilidad legacy actualizada en style.js (cabecera/navegación/controles)");
+  }
+
+  return { converted: notes.length > 0, notes, detectedLegacy: true };
+}
+
 function isTextFile(path) {
   const lower = path.toLowerCase();
   return TEXT_EXTENSIONS.some((ext) => lower.endsWith(ext));
@@ -305,6 +767,81 @@ function updateBgImageInfo() {
     return;
   }
   els.bgImageInfo.textContent = `Fondo actual: ${state.quick.bgImagePath}`;
+}
+
+function updateHeaderImageInfo() {
+  if (!els.headerImageInfo) return;
+  if (!state.quick.headerImagePath || !state.files.has(state.quick.headerImagePath)) {
+    els.headerImageInfo.textContent = "Sin imagen de cabecera.";
+    return;
+  }
+  const stateText = state.quick.headerImageEnabled ? "activa" : "cargada (desactivada)";
+  els.headerImageInfo.textContent = `Cabecera ${stateText}: ${state.quick.headerImagePath}`;
+}
+
+function updateFooterImageInfo() {
+  if (!els.footerImageInfo) return;
+  if (!state.quick.footerImagePath || !state.files.has(state.quick.footerImagePath)) {
+    els.footerImageInfo.textContent = "Sin imagen de pie.";
+    return;
+  }
+  const stateText = state.quick.footerImageEnabled ? "activa" : "cargada (desactivada)";
+  els.footerImageInfo.textContent = `Pie ${stateText}: ${state.quick.footerImagePath}`;
+}
+
+function listStyleImagePaths({ includeAll = false } = {}) {
+  return Array.from(state.files.keys())
+    .filter((path) => isImageFile(path))
+    .filter((path) => {
+      const clean = normalizePath(path);
+      const lower = clean.toLowerCase();
+      if (lower === "screenshot.png") return false;
+      if (includeAll) return true;
+      if (lower.startsWith("icons/")) return false;
+      if (/^icon_[^/]+\.(png|jpe?g|gif|webp|svg)$/i.test(clean)) return false;
+      return true;
+    })
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function refreshStyleImageSelect(selectEl, currentPath, kindLabel) {
+  if (!selectEl) return;
+  const images = listStyleImagePaths({ includeAll: Boolean(els.showAllStyleImages?.checked) });
+  const current = normalizePath(currentPath || "");
+  const hasCurrent = current && state.files.has(current) && isImageFile(current);
+  const options = hasCurrent && !images.includes(current) ? [current, ...images] : images;
+  selectEl.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = options.length
+    ? `Seleccionar imagen del estilo…`
+    : `No hay imágenes del estilo`;
+  selectEl.appendChild(placeholder);
+
+  for (const path of options) {
+    const option = document.createElement("option");
+    option.value = path;
+    option.textContent = path;
+    selectEl.appendChild(option);
+  }
+
+  selectEl.value = options.includes(current) ? current : "";
+  selectEl.disabled = options.length === 0;
+  selectEl.title = options.length ? `Selecciona una imagen del estilo para ${kindLabel}` : "";
+}
+
+function refreshHeaderFooterImageSelects() {
+  refreshStyleImageSelect(els.headerImageSelect, state.quick.headerImagePath, "cabecera");
+  refreshStyleImageSelect(els.footerImageSelect, state.quick.footerImagePath, "pie");
+}
+
+function isEditorManagedHeaderImage(path) {
+  return /^img\/custom-header\.(png|jpe?g|gif|webp|svg)$/i.test(normalizePath(path || ""));
+}
+
+function isEditorManagedFooterImage(path) {
+  return /^img\/custom-footer\.(png|jpe?g|gif|webp|svg)$/i.test(normalizePath(path || ""));
 }
 
 function applyEditorTheme() {
@@ -473,6 +1010,7 @@ function refreshFileTypeFilterOptions({ forceAll = false } = {}) {
   }
 
   els.fileTypeFilter.value = forceAll ? "all" : (previous === "all" || groupCounts.has(previous) ? previous : "all");
+  refreshHeaderFooterImageSelects();
 }
 
 function readCss() {
@@ -488,11 +1026,13 @@ function writeCss(cssText) {
 
 function renderFileList() {
   const selectedFilter = els.fileTypeFilter?.value || "all";
+  const query = String(els.fileNameFilter?.value || "").trim().toLowerCase();
   els.fileList.innerHTML = "";
   const visiblePaths = [];
   for (const path of listFilesSorted()) {
     const group = fileGroup(path);
     if (selectedFilter !== "all" && group !== selectedFilter) continue;
+    if (query && !path.toLowerCase().includes(query)) continue;
     visiblePaths.push(path);
     const btn = document.createElement("button");
     btn.className = `file-item${path === state.activePath ? " active" : ""}`;
@@ -516,7 +1056,7 @@ function renderFileList() {
   if (!els.fileList.children.length) {
     const empty = document.createElement("div");
     empty.className = "file-group-header";
-    empty.textContent = "No hay archivos para este tipo.";
+    empty.textContent = query ? "No hay coincidencias para la búsqueda en este tipo." : "No hay archivos para este tipo.";
     els.fileList.appendChild(empty);
   }
 }
@@ -619,15 +1159,36 @@ function quickFromUI() {
   next.contentWidth = Math.max(640, Math.min(2000, Number(next.contentWidth) || 1280));
   next.baseFontSize = Math.max(12, Math.min(28, Number(next.baseFontSize) || QUICK_DEFAULTS.baseFontSize));
   next.lineHeight = Math.max(1, Math.min(2.2, Number(next.lineHeight) || QUICK_DEFAULTS.lineHeight));
+  next.headerImageHeight = Math.max(48, Math.min(420, Number(next.headerImageHeight) || QUICK_DEFAULTS.headerImageHeight));
+  if (!["contain", "cover", "auto"].includes(next.headerImageFit)) next.headerImageFit = QUICK_DEFAULTS.headerImageFit;
+  if (!["left top", "center top", "right top", "left center", "center center", "right center", "left bottom", "center bottom", "right bottom"].includes(next.headerImagePosition)) {
+    next.headerImagePosition = QUICK_DEFAULTS.headerImagePosition;
+  }
+  if (!["no-repeat", "repeat-x", "repeat-y", "repeat"].includes(next.headerImageRepeat)) next.headerImageRepeat = QUICK_DEFAULTS.headerImageRepeat;
+  next.footerImageHeight = Math.max(36, Math.min(320, Number(next.footerImageHeight) || QUICK_DEFAULTS.footerImageHeight));
+  if (!["contain", "cover", "auto"].includes(next.footerImageFit)) next.footerImageFit = QUICK_DEFAULTS.footerImageFit;
+  if (!["left top", "center top", "right top", "left center", "center center", "right center", "left bottom", "center bottom", "right bottom"].includes(next.footerImagePosition)) {
+    next.footerImagePosition = QUICK_DEFAULTS.footerImagePosition;
+  }
+  if (!["no-repeat", "repeat-x", "repeat-y", "repeat"].includes(next.footerImageRepeat)) next.footerImageRepeat = QUICK_DEFAULTS.footerImageRepeat;
   next.pageTitleSize = Math.max(1.1, Math.min(3.2, Number(next.pageTitleSize) || QUICK_DEFAULTS.pageTitleSize));
   next.pageTitleLetterSpacing = Math.max(0, Math.min(6, Number(next.pageTitleLetterSpacing) || QUICK_DEFAULTS.pageTitleLetterSpacing));
   next.pageTitleMarginBottom = Math.max(0, Math.min(2.5, Number(next.pageTitleMarginBottom) || QUICK_DEFAULTS.pageTitleMarginBottom));
-  next.packageTitleSize = Math.max(1, Math.min(2.6, Number(next.packageTitleSize) || QUICK_DEFAULTS.packageTitleSize));
+  next.packageTitleSize = Math.max(0, Math.min(4, Number(next.packageTitleSize) || QUICK_DEFAULTS.packageTitleSize));
   next.boxTitleSize = Math.max(1, Math.min(2.4, Number(next.boxTitleSize) || QUICK_DEFAULTS.boxTitleSize));
   next.boxTitleGap = Math.max(0, Math.min(28, Number(next.boxTitleGap) || QUICK_DEFAULTS.boxTitleGap));
+  if (!["inherit", "left", "center", "right", "justify"].includes(next.boxTextAlign)) {
+    next.boxTextAlign = QUICK_DEFAULTS.boxTextAlign;
+  }
   next.logoSize = Math.max(40, Math.min(500, Number(next.logoSize) || QUICK_DEFAULTS.logoSize));
   next.logoMarginX = Math.max(0, Math.min(300, Number(next.logoMarginX) || QUICK_DEFAULTS.logoMarginX));
   next.logoMarginY = Math.max(0, Math.min(300, Number(next.logoMarginY) || QUICK_DEFAULTS.logoMarginY));
+  if (normalizeHex(next.menuTextColor) === normalizeHex(next.menuBgColor)) {
+    next.menuTextColor = QUICK_DEFAULTS.menuTextColor;
+  }
+  if (normalizeHex(next.menuActiveTextColor) === normalizeHex(next.menuActiveBgColor)) {
+    next.menuActiveTextColor = QUICK_DEFAULTS.menuActiveTextColor;
+  }
   return next;
 }
 
@@ -641,8 +1202,11 @@ function quickToUI(values) {
     if (input.type === "checkbox") input.checked = Boolean(values[key]);
     else input.value = String(values[key]);
   }
+  refreshHeaderFooterImageSelects();
   updateLogoInfo();
   updateBgImageInfo();
+  updateHeaderImageInfo();
+  updateFooterImageInfo();
 }
 
 function previewFromUI() {
@@ -757,7 +1321,7 @@ function quickFromCss(cssText) {
     let value = "";
     for (const m of cssText.matchAll(blockRe)) {
       const decls = m[1] || "";
-      const propRe = new RegExp(`${propPattern}\\s*:\\s*([^;]+);`, "i");
+      const propRe = new RegExp(`(?:^|[\\s;])(?:${propPattern})(?![-\\w])\\s*:\\s*([^;]+);`, "i");
       const pm = decls.match(propRe);
       if (pm && pm[1]) value = pm[1].trim();
     }
@@ -768,6 +1332,126 @@ function quickFromCss(cssText) {
     if (!matches.length) return fallback;
     const last = matches[matches.length - 1];
     return last && last[1] ? last[1].trim() : fallback;
+  };
+  const extractCssUrl = (value) => {
+    const m = String(value || "").match(/url\(\s*(["']?)([^"')]+)\1\s*\)/i);
+    if (!m || !m[2]) return "";
+    return normalizePath(m[2].trim());
+  };
+  const parseCssPx = (value, fallback) => {
+    const m = String(value || "").match(/([0-9.]+)\s*px/i);
+    if (!m) return fallback;
+    const n = Number.parseFloat(m[1]);
+    return Number.isFinite(n) ? Math.round(n) : fallback;
+  };
+  const parseCssLengthToRem = (value, fallback) => {
+    const raw = String(value || "").trim().toLowerCase();
+    if (!raw) return fallback;
+    const rem = raw.match(/^([0-9.]+)\s*rem$/);
+    if (rem) {
+      const n = Number.parseFloat(rem[1]);
+      return Number.isFinite(n) ? n : fallback;
+    }
+    const em = raw.match(/^([0-9.]+)\s*em$/);
+    if (em) {
+      const n = Number.parseFloat(em[1]);
+      return Number.isFinite(n) ? n : fallback;
+    }
+    const px = raw.match(/^([0-9.]+)\s*px$/);
+    if (px) {
+      const n = Number.parseFloat(px[1]);
+      return Number.isFinite(n) ? n / 16 : fallback;
+    }
+    const pct = raw.match(/^([0-9.]+)\s*%$/);
+    if (pct) {
+      const n = Number.parseFloat(pct[1]);
+      return Number.isFinite(n) ? n / 100 : fallback;
+    }
+    return fallback;
+  };
+  const normalizeBgFit = (value, fallback) => {
+    const v = String(value || "").trim().toLowerCase();
+    if (v === "contain" || v === "cover" || v === "auto") return v;
+    return fallback;
+  };
+  const normalizeBgPosition = (value, fallback) => {
+    const v = String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+    const allowed = new Set(["left", "center", "right", "top", "bottom"]);
+    const mapAxis = (token, axis) => {
+      const t = String(token || "").trim().toLowerCase();
+      if (axis === "x") {
+        if (t === "0" || t === "0px" || t === "0%") return "left";
+        if (t === "50%" || t === "50" || t === "center") return "center";
+        if (t === "100%" || t === "100" || t === "right") return "right";
+        if (t === "left" || t === "right") return t;
+      } else {
+        if (t === "0" || t === "0px" || t === "0%") return "top";
+        if (t === "50%" || t === "50" || t === "center") return "center";
+        if (t === "100%" || t === "100" || t === "bottom") return "bottom";
+        if (t === "top" || t === "bottom") return t;
+      }
+      return "";
+    };
+
+    const tokens = v.split(" ").filter(Boolean);
+    if (!tokens.length) return fallback;
+    if (tokens.length === 1) {
+      if (tokens[0] === "left" || tokens[0] === "center" || tokens[0] === "right") return `${tokens[0]} center`;
+      if (tokens[0] === "top" || tokens[0] === "bottom") return `center ${tokens[0]}`;
+      return fallback;
+    }
+    const x = mapAxis(tokens[0], "x");
+    const y = mapAxis(tokens[1], "y");
+    if (!allowed.has(x) || !allowed.has(y)) return fallback;
+    return `${x} ${y}`;
+  };
+  const normalizeBgRepeat = (value, fallback) => {
+    const v = String(value || "").trim().toLowerCase();
+    if (v === "no-repeat" || v === "repeat-x" || v === "repeat-y" || v === "repeat") return v;
+    return fallback;
+  };
+  const normalizeSelectorText = (selector) => String(selector || "").replace(/\s+/g, " ").trim();
+  const cssRules = Array.from(cssText.matchAll(/([^{}]+)\{([^}]*)\}/g)).map((m) => ({
+    selectors: String(m[1] || ""),
+    declarations: String(m[2] || "")
+  }));
+  const selectorListContains = (selectorsText, targetSelector) => {
+    const target = normalizeSelectorText(targetSelector);
+    if (!target) return false;
+    return selectorsText
+      .split(",")
+      .map(normalizeSelectorText)
+      .some((s) => s === target);
+  };
+  const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const lastRulePropValue = (selectors, propNames) => {
+    let value = "";
+    for (const rule of cssRules) {
+      const applies = selectors.some((s) => selectorListContains(rule.selectors, s));
+      if (!applies) continue;
+      for (const propName of propNames) {
+        const propRe = new RegExp(`(?:^|[\\s;])${escapeRegExp(propName)}(?![-\\w])\\s*:\\s*([^;]+);?`, "gi");
+        for (const pm of rule.declarations.matchAll(propRe)) {
+          if (pm && pm[1]) value = pm[1].trim();
+        }
+      }
+    }
+    return value;
+  };
+  const lastRulePropWithUrl = (selectors, propNames) => {
+    let value = "";
+    for (const rule of cssRules) {
+      const applies = selectors.some((s) => selectorListContains(rule.selectors, s));
+      if (!applies) continue;
+      for (const propName of propNames) {
+        const propRe = new RegExp(`(?:^|[\\s;])${escapeRegExp(propName)}(?![-\\w])\\s*:\\s*([^;]+);?`, "gi");
+        for (const pm of rule.declarations.matchAll(propRe)) {
+          const candidate = pm && pm[1] ? pm[1].trim() : "";
+          if (extractCssUrl(candidate)) value = candidate;
+        }
+      }
+    }
+    return value;
   };
   const bodyWebSiteDecls = lastCssPropValue("body\\.exe-web-site", "font-size|line-height") ? (Array.from(cssText.matchAll(/body\.exe-web-site\s*\{([^}]*)\}/gi)).at(-1)?.[1] || "") : "";
 
@@ -806,12 +1490,18 @@ function quickFromCss(cssText) {
   const pageTitleMbRaw = matchValue(/\.exe-content\s*\.page-title\s*\{[\s\S]*?margin-bottom:\s*([^;]+);/i, "");
   const pageTitleMbMatch = pageTitleMbRaw.match(/([0-9.]+)\s*rem/i);
   if (pageTitleMbMatch) q.pageTitleMarginBottom = Number(pageTitleMbMatch[1]);
-  const packageTitleSizeRaw = matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
-  const packageTitleSizeMatch = packageTitleSizeRaw.match(/([0-9.]+)\s*rem/i);
-  if (packageTitleSizeMatch) q.packageTitleSize = Number(packageTitleSizeMatch[1]);
-  const packageTitleWeightRaw = matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?font-weight:\s*([^;]+);/i, "");
+  const packageTitleSelectors = [".exe-content .package-title", ".package-title", "#headerContent"];
+  const packageTitleSizeRaw = lastRulePropValue(packageTitleSelectors, ["font-size"])
+    || matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
+  q.packageTitleSize = parseCssLengthToRem(packageTitleSizeRaw, q.packageTitleSize);
+  const packageTitleWeightRaw = lastRulePropValue(packageTitleSelectors, ["font-weight"])
+    || matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?font-weight:\s*([^;]+);/i, "");
   if (/^\d{3}$/.test(packageTitleWeightRaw)) q.packageTitleWeight = packageTitleWeightRaw;
-  q.packageTitleColor = normalizeHex(matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?color:\s*([^;]+);/i, q.packageTitleColor), q.packageTitleColor);
+  q.packageTitleColor = normalizeHex(
+    lastRulePropValue(packageTitleSelectors, ["color"])
+      || matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?color:\s*([^;]+);/i, q.packageTitleColor),
+    q.packageTitleColor
+  );
   const boxTitleSizeRaw = matchValue(/\.exe-content\s*\.box-title,\s*[\s\S]*?\.exe-content\s*\.iDeviceTitle\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
   const boxTitleSizeMatch = boxTitleSizeRaw.match(/([0-9.]+)\s*rem/i);
   if (boxTitleSizeMatch) q.boxTitleSize = Number(boxTitleSizeMatch[1]);
@@ -849,6 +1539,10 @@ function quickFromCss(cssText) {
   );
   q.boxBorderColor = normalizeHex(matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?border-color:\s*([^;]+);/i, q.boxBorderColor), q.boxBorderColor);
   q.boxTitleColor = normalizeHex(matchValue(/\.exe-content \.box-title,\s*[\s\S]*?\.exe-content \.iDeviceTitle\s*\{[\s\S]*?color:\s*([^;]+);/i, q.boxTitleColor), q.boxTitleColor);
+  const boxTextAlignRaw = lastRulePropValue([".exe-content .box-content", ".exe-content .iDevice_inner", ".exe-content .iDevice_content"], ["text-align"]);
+  if (["left", "center", "right", "justify", "inherit"].includes(String(boxTextAlignRaw).toLowerCase())) {
+    q.boxTextAlign = String(boxTextAlignRaw).toLowerCase();
+  }
   q.buttonBgColor = normalizeHex(
     matchValue(/\.exe-content button(?:\s*:not\(\.toggler\)(?:\s*:not\(\.box-toggle\))?)?\s*\{[\s\S]*?background:\s*([^;]+);/i, q.buttonBgColor),
     q.buttonBgColor
@@ -875,6 +1569,87 @@ function quickFromCss(cssText) {
     q.bgImagePath = normalizePath(bgMeta[1].trim());
     q.bgImageEnabled = bgMeta[2] === "1";
   }
+  const headerMetaV3 = cssText.match(/\/\*\s*header-image-editor:path=([^;]*);enabled=(0|1);hide=(0|1);height=(\d+);fit=(contain|cover|auto);pos=([^;]*);repeat=(no-repeat|repeat-x|repeat-y|repeat)\s*\*\//i);
+  const headerMetaV2 = cssText.match(/\/\*\s*header-image-editor:path=([^;]*);enabled=(0|1);height=(\d+);fit=(contain|cover|auto);pos=([^;]*);repeat=(no-repeat|repeat-x|repeat-y|repeat)\s*\*\//i);
+  const headerMetaV1 = cssText.match(/\/\*\s*header-image-editor:path=([^;]*);enabled=(0|1);height=(\d+);fit=(contain|cover|auto)\s*\*\//i);
+  if (headerMetaV3) {
+    q.headerImagePath = normalizePath(headerMetaV3[1].trim());
+    q.headerImageEnabled = headerMetaV3[2] === "1";
+    q.headerHideTitle = headerMetaV3[3] === "1";
+    q.headerImageHeight = Number(headerMetaV3[4]) || q.headerImageHeight;
+    q.headerImageFit = headerMetaV3[5] || q.headerImageFit;
+    q.headerImagePosition = normalizeBgPosition(headerMetaV3[6], q.headerImagePosition);
+    q.headerImageRepeat = normalizeBgRepeat(headerMetaV3[7], q.headerImageRepeat);
+  } else if (headerMetaV2) {
+    q.headerImagePath = normalizePath(headerMetaV2[1].trim());
+    q.headerImageEnabled = headerMetaV2[2] === "1";
+    q.headerImageHeight = Number(headerMetaV2[3]) || q.headerImageHeight;
+    q.headerImageFit = headerMetaV2[4] || q.headerImageFit;
+    q.headerImagePosition = normalizeBgPosition(headerMetaV2[5], q.headerImagePosition);
+    q.headerImageRepeat = normalizeBgRepeat(headerMetaV2[6], q.headerImageRepeat);
+  } else if (headerMetaV1) {
+    q.headerImagePath = normalizePath(headerMetaV1[1].trim());
+    q.headerImageEnabled = headerMetaV1[2] === "1";
+    q.headerImageHeight = Number(headerMetaV1[3]) || q.headerImageHeight;
+    q.headerImageFit = headerMetaV1[4] || q.headerImageFit;
+  }
+  const footerMetaV2 = cssText.match(/\/\*\s*footer-image-editor:path=([^;]*);enabled=(0|1);height=(\d+);fit=(contain|cover|auto);pos=([^;]*);repeat=(no-repeat|repeat-x|repeat-y|repeat)\s*\*\//i);
+  const footerMetaV1 = cssText.match(/\/\*\s*footer-image-editor:path=([^;]*);enabled=(0|1);height=(\d+);fit=(contain|cover|auto)\s*\*\//i);
+  if (footerMetaV2) {
+    q.footerImagePath = normalizePath(footerMetaV2[1].trim());
+    q.footerImageEnabled = footerMetaV2[2] === "1";
+    q.footerImageHeight = Number(footerMetaV2[3]) || q.footerImageHeight;
+    q.footerImageFit = footerMetaV2[4] || q.footerImageFit;
+    q.footerImagePosition = normalizeBgPosition(footerMetaV2[5], q.footerImagePosition);
+    q.footerImageRepeat = normalizeBgRepeat(footerMetaV2[6], q.footerImageRepeat);
+  } else if (footerMetaV1) {
+    q.footerImagePath = normalizePath(footerMetaV1[1].trim());
+    q.footerImageEnabled = footerMetaV1[2] === "1";
+    q.footerImageHeight = Number(footerMetaV1[3]) || q.footerImageHeight;
+    q.footerImageFit = footerMetaV1[4] || q.footerImageFit;
+  }
+
+  if (!headerMetaV1 && !headerMetaV2 && !headerMetaV3) {
+    const headerSelectors = [
+      ".exe-content .package-header",
+      ".package-header",
+      "#header",
+      "#emptyHeader"
+    ];
+    const headerBgRaw = lastRulePropWithUrl(headerSelectors, ["background-image", "background"]);
+    const headerPath = extractCssUrl(headerBgRaw);
+    if (headerPath) {
+      q.headerImagePath = headerPath;
+      q.headerImageEnabled = true;
+      const headerSizeRaw = lastRulePropValue(headerSelectors, ["background-size"]);
+      q.headerImageFit = normalizeBgFit(headerSizeRaw, q.headerImageFit);
+      const headerPosRaw = lastRulePropValue(headerSelectors, ["background-position"]);
+      q.headerImagePosition = normalizeBgPosition(headerPosRaw, q.headerImagePosition);
+      const headerRepeatRaw = lastRulePropValue(headerSelectors, ["background-repeat"]);
+      q.headerImageRepeat = normalizeBgRepeat(headerRepeatRaw, q.headerImageRepeat);
+      const headerHeightRaw = lastRulePropValue(headerSelectors, ["min-height"])
+        || lastRulePropValue(headerSelectors, ["height"]);
+      q.headerImageHeight = parseCssPx(headerHeightRaw, q.headerImageHeight);
+    }
+  }
+  if (!footerMetaV1 && !footerMetaV2) {
+    const footerSelectors = ["#siteFooterContent", "#siteFooter", "footer#siteFooter"];
+    const footerBgRaw = lastRulePropWithUrl(footerSelectors, ["background-image", "background"]);
+    const footerPath = extractCssUrl(footerBgRaw);
+    if (footerPath) {
+      q.footerImagePath = footerPath;
+      q.footerImageEnabled = true;
+      const footerSizeRaw = lastRulePropValue(footerSelectors, ["background-size"]);
+      q.footerImageFit = normalizeBgFit(footerSizeRaw, q.footerImageFit);
+      const footerPosRaw = lastRulePropValue(footerSelectors, ["background-position"]);
+      q.footerImagePosition = normalizeBgPosition(footerPosRaw, q.footerImagePosition);
+      const footerRepeatRaw = lastRulePropValue(footerSelectors, ["background-repeat"]);
+      q.footerImageRepeat = normalizeBgRepeat(footerRepeatRaw, q.footerImageRepeat);
+      const footerHeightRaw = lastRulePropValue(footerSelectors, ["min-height"])
+        || lastRulePropValue(footerSelectors, ["height"]);
+      q.footerImageHeight = parseCssPx(footerHeightRaw, q.footerImageHeight);
+    }
+  }
 
   return q;
 }
@@ -884,8 +1659,12 @@ function buildQuickCss({ important = true } = {}) {
   const bang = important ? " !important" : "";
   const logoPath = q.logoPath && state.files.has(q.logoPath) ? q.logoPath : "";
   const bgImagePath = q.bgImagePath && state.files.has(q.bgImagePath) ? q.bgImagePath : "";
+  const headerImagePath = q.headerImagePath && state.files.has(q.headerImagePath) ? q.headerImagePath : "";
+  const footerImagePath = q.footerImagePath && state.files.has(q.footerImagePath) ? q.footerImagePath : "";
   const logoMeta = `/* logo-editor:path=${logoPath};enabled=${q.logoEnabled ? "1" : "0"};size=${q.logoSize};position=${q.logoPosition};mx=${q.logoMarginX};my=${q.logoMarginY} */`;
   const bgMeta = `/* bg-editor:path=${bgImagePath};enabled=${q.bgImageEnabled ? "1" : "0"} */`;
+  const headerMeta = `/* header-image-editor:path=${headerImagePath};enabled=${q.headerImageEnabled ? "1" : "0"};hide=${q.headerHideTitle ? "1" : "0"};height=${q.headerImageHeight};fit=${q.headerImageFit};pos=${q.headerImagePosition};repeat=${q.headerImageRepeat} */`;
+  const footerMeta = `/* footer-image-editor:path=${footerImagePath};enabled=${q.footerImageEnabled ? "1" : "0"};height=${q.footerImageHeight};fit=${q.footerImageFit};pos=${q.footerImagePosition};repeat=${q.footerImageRepeat} */`;
   const logoRule = q.logoEnabled && logoPath
     ? `
 body.exe-web-site::after {
@@ -900,9 +1679,53 @@ body.exe-web-site::after {
 }
 `
     : "";
+  const headerImageRule = q.headerImageEnabled && headerImagePath
+    ? `
+.exe-web-site .exe-content .package-header,
+.exe-web-site #header {
+  background-image: url("${headerImagePath}")${bang};
+  background-repeat: ${q.headerImageRepeat}${bang};
+  background-position: ${q.headerImagePosition}${bang};
+  background-size: ${q.headerImageFit}${bang};
+  height: ${q.headerImageHeight}px !important;
+  min-height: ${q.headerImageHeight}px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+`
+    : "";
+  const headerHideTitleRule = q.headerHideTitle
+    ? `
+.exe-web-site #headerContent,
+.exe-web-site .package-header .package-title {
+  display: none !important;
+}
+`
+    : "";
+  const footerImageRule = q.footerImageEnabled && footerImagePath
+    ? `
+.exe-web-site #siteFooter,
+.exe-web-site #siteFooterContent {
+  background-image: url("${footerImagePath}")${bang};
+  background-repeat: ${q.footerImageRepeat}${bang};
+  background-position: ${q.footerImagePosition}${bang};
+  background-size: ${q.footerImageFit}${bang};
+  height: ${q.footerImageHeight}px !important;
+  min-height: ${q.footerImageHeight}px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+`
+    : "";
   return `
 ${logoMeta}
 ${bgMeta}
+${headerMeta}
+${footerMeta}
 body.exe-web-site {
   background-color: ${normalizeHex(q.pageBgColor)}${bang};
   font-family: ${q.fontBody}${bang};
@@ -974,11 +1797,19 @@ body.exe-web-site {
 .exe-content .box-head {
   gap: ${q.boxTitleGap}px${bang};
 }
+.exe-content .box-content,
+.exe-content .iDevice_content,
+.exe-content .iDevice_inner {
+  text-align: ${q.boxTextAlign}${bang};
+}
 .exe-content button:not(.toggler):not(.box-toggle) {
   background-color: ${normalizeHex(q.buttonBgColor)}${bang};
   color: ${normalizeHex(q.buttonTextColor)}${bang};
   border-color: ${normalizeHex(q.buttonBgColor)}${bang};
 }
+${headerImageRule}
+${headerHideTitleRule}
+${footerImageRule}
 ${logoRule}
 `;
 }
@@ -1058,12 +1889,38 @@ function applyQuickControls({ showStatus = true } = {}) {
   if (showStatus) setStatus("Ajustes rápidos volcados en style.css");
 }
 
+function quickBlockNeedsSchemaMigration(css) {
+  const quickBlock = getQuickBlock(css);
+  if (!quickBlock) return false;
+  const hasLegacyEmptyHeader = /(?:^|[\s,{])#emptyHeader(?:[\s,.:{]|$)/i.test(quickBlock);
+  const hasLegacyHeaderContentReset = /(?:^|[\s,{])#headerContent(?:[\s,.:{]|$)[\s\S]*?(padding-top|margin-top|margin-bottom)\s*:\s*0/i.test(quickBlock);
+  return hasLegacyEmptyHeader || hasLegacyHeaderContentReset;
+}
+
+function migrateQuickBlockSchemaIfNeeded() {
+  const currentCss = readCss();
+  if (!quickBlockNeedsSchemaMigration(currentCss)) return false;
+  const baseCss = stripQuickBlock(currentCss);
+  const rebuiltCss = `${baseCss}\n\n/* quick-overrides:start */\n${buildQuickCss({ important: false })}\n/* quick-overrides:end */\n`;
+  if (rebuiltCss === currentCss) return false;
+  writeCss(rebuiltCss);
+  return true;
+}
+
 function refreshQuickControls() {
   const css = readCss();
   state.quick = { ...state.quick, ...quickFromCss(css) };
   if (state.quick.bgImagePath && !state.files.has(state.quick.bgImagePath)) {
     state.quick.bgImagePath = "";
     state.quick.bgImageEnabled = false;
+  }
+  if (state.quick.headerImagePath && !state.files.has(state.quick.headerImagePath)) {
+    state.quick.headerImagePath = "";
+    state.quick.headerImageEnabled = false;
+  }
+  if (state.quick.footerImagePath && !state.files.has(state.quick.footerImagePath)) {
+    state.quick.footerImagePath = "";
+    state.quick.footerImageEnabled = false;
   }
   if (!state.quick.logoPath) {
     state.quick.logoPath = findCustomLogoPath();
@@ -1072,6 +1929,7 @@ function refreshQuickControls() {
     state.quick.logoPath = "";
     state.quick.logoEnabled = false;
   }
+  migrateQuickBlockSchemaIfNeeded();
   quickToUI(state.quick);
   applyEditorTheme();
 }
@@ -1114,6 +1972,20 @@ function refreshMetaFields() {
   els.metaLicenseUrl.value = data.licenseUrl;
   els.metaDescription.value = data.description;
   els.metaDownloadable.value = data.downloadable === "0" ? "0" : "1";
+}
+
+function ensureMetaTitleFromNameFallback() {
+  if (!state.files.has("config.xml")) return false;
+  const xml = decode(state.files.get("config.xml"));
+  const data = parseConfigFields(xml);
+  if (!data) return false;
+  const name = String(data.name || "").trim();
+  const title = String(data.title || "").trim();
+  if (!name || title) return false;
+  const updated = writeConfigField(xml, "title", name);
+  state.files.set("config.xml", encode(updated));
+  invalidateBlob("config.xml");
+  return true;
 }
 
 function saveMetaFields({ showStatus = true } = {}) {
@@ -1160,6 +2032,8 @@ function previewIconUrl(name) {
   for (const ext of candidates) {
     const path = `icons/${name}.${ext}`;
     if (state.files.has(path)) return getBlobUrl(path);
+    const legacyPath = `icon_${name}.${ext}`;
+    if (state.files.has(legacyPath)) return getBlobUrl(legacyPath);
   }
   return "";
 }
@@ -1168,6 +2042,8 @@ function buildPreviewPayload(cssText) {
   return {
     cssText: rewriteCssUrls(cssText),
     styleJsText: styleJsText(),
+    layoutMode: state.previewLayoutMode || "modern",
+    legacyImport: Boolean(state.previewFromLegacyZip),
     preview: { ...PREVIEW_DEFAULTS, ...state.preview },
     iconUrls: {
       info: previewIconUrl("info"),
@@ -1178,6 +2054,17 @@ function buildPreviewPayload(cssText) {
     packageTitle: "Curso de ejemplo",
     pageTitle: "Introducción"
   };
+}
+
+function detectPreviewLayoutMode() {
+  const configXml = state.files.has("config.xml") ? decode(state.files.get("config.xml")) : "";
+  const compatibility = compatibilityNumberFromConfigXml(configXml);
+  if (compatibility !== null) return compatibility < 3 ? "legacy" : "modern";
+
+  const css = readCss();
+  if (/legacy-source-file:(?:content|nav)\.css/i.test(css)) return "legacy";
+  if (/#main-wrapper\b|#nodeDecoration\b|\.iDevice_header\b/i.test(css)) return "legacy";
+  return "modern";
 }
 
 function getPreviewRuntime() {
@@ -1342,6 +2229,8 @@ async function loadOfficialStyle(styleId, { showStatus = true, resetFileFilter =
   state.baseFiles = new Set(style.files);
   state.selectedOfficialStyleId = style.id;
   state.officialSourceId = style.id;
+  state.previewLayoutMode = "modern";
+  state.previewFromLegacyZip = false;
   state.activePath = state.files.has("style.css") ? "style.css" : listFilesSorted()[0] || "";
 
   renderOfficialStylesSelect();
@@ -1376,9 +2265,15 @@ async function loadZip(file) {
     state.files.set(short, bytes);
   }
 
+  const legacyConversion = convertLegacyThemePackageIfNeeded();
   const autoAddedOnLoad = ensureCoreFilesPresent({ markAsDirty: false });
+  state.previewLayoutMode = detectPreviewLayoutMode();
+  state.previewFromLegacyZip = Boolean(legacyConversion.detectedLegacy);
 
   let zipStatus = "";
+  if (legacyConversion.converted) {
+    zipStatus = `ZIP legado convertido automáticamente: ${legacyConversion.notes.join(" | ")}`;
+  }
   if (state.files.has("style.css")) {
     const originalCss = readCss();
     const sanitized = sanitizeStyleCss(originalCss);
@@ -1405,6 +2300,8 @@ async function loadZip(file) {
   syncEditorWithActiveFile();
   refreshQuickControls();
   refreshMetaFields();
+  const titleAutofilledFromName = ensureMetaTitleFromNameFallback();
+  if (titleAutofilledFromName) refreshMetaFields();
   if (els.metaDownloadable?.value === "0") {
     window.alert(
       "Este estilo está marcado como no descargable (downloadable=0).\n\nPuedes editarlo aquí, pero en eXe no se podrá importar desde la interfaz mientras siga en 0."
@@ -1418,9 +2315,11 @@ async function loadZip(file) {
     const parts = [];
     if (importIssues.missingCore.length) parts.push(`faltan obligatorios: ${importIssues.missingCore.join(", ")}`);
     if (importIssues.cssIssues.length) parts.push(`incidencias CSS: ${importIssues.cssIssues.join(" | ")}`);
+    if (titleAutofilledFromName) parts.push("title vacío completado automáticamente con name");
     setStatus(`ZIP cargado con incidencias: ${parts.join(" ; ")}`);
   } else {
-    setStatus(zipStatus || `ZIP cargado: ${file.name} (${state.files.size} archivos)`);
+    const fallbackMsg = titleAutofilledFromName ? " Se completó automáticamente Título con Nombre." : "";
+    setStatus((zipStatus || `ZIP cargado: ${file.name} (${state.files.size} archivos)`) + fallbackMsg);
   }
 }
 
@@ -1471,6 +2370,17 @@ async function exportZip() {
     const sanitized = sanitizeStyleCss(readCss());
     state.files.set("style.css", encode(sanitized));
     invalidateBlob("style.css");
+  }
+  if (state.files.has("style.js")) {
+    const currentStyleJs = decode(state.files.get("style.js"));
+    const needsLegacyCompatRefresh = state.previewFromLegacyZip || LEGACY_COMPAT_MARKERS.some((marker) => currentStyleJs.includes(marker));
+    if (needsLegacyCompatRefresh) {
+      const upgradedStyleJs = upsertLegacyCompatStyleJs(currentStyleJs);
+      if (upgradedStyleJs !== currentStyleJs) {
+        state.files.set("style.js", encode(upgradedStyleJs));
+        invalidateBlob("style.js");
+      }
+    }
   }
   const screenshotUpdated = await autoUpdateScreenshotFromPreview();
   const autoAddedOnExport = ensureCoreFilesPresent({ markAsDirty: false });
@@ -1626,6 +2536,144 @@ function removeBackgroundImage() {
   renderFileList();
   renderPreview();
   setStatus("Imagen de fondo eliminada.");
+}
+
+async function onAddHeaderImageSelected(file) {
+  if (!file) return;
+  if (!isImageFile(file.name)) {
+    setStatus("La imagen de cabecera debe ser un archivo de imagen válido.");
+    return;
+  }
+  const extension = (file.name.split(".").pop() || "png").toLowerCase();
+  const path = `img/custom-header.${extension}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  if (
+    state.quick.headerImagePath
+    && state.quick.headerImagePath !== path
+    && state.files.has(state.quick.headerImagePath)
+    && isEditorManagedHeaderImage(state.quick.headerImagePath)
+  ) {
+    state.files.delete(state.quick.headerImagePath);
+    invalidateBlob(state.quick.headerImagePath);
+  }
+
+  state.files.set(path, bytes);
+  invalidateBlob(path);
+  state.quick.headerImagePath = path;
+  state.quick.headerImageEnabled = true;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  refreshFileTypeFilterOptions();
+  renderFileList();
+  renderPreview();
+  setStatus(`Imagen de cabecera cargada: ${path}`);
+}
+
+function selectHeaderImageFromStylePath(path) {
+  const clean = normalizePath(path || "");
+  if (!clean) return;
+  if (!state.files.has(clean) || !isImageFile(clean)) {
+    setStatus("La imagen seleccionada para cabecera no está disponible en el estilo.");
+    return;
+  }
+  state.quick.headerImagePath = clean;
+  state.quick.headerImageEnabled = true;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  renderPreview();
+  setStatus(`Imagen de cabecera seleccionada desde el estilo: ${clean}`);
+}
+
+function removeHeaderImage() {
+  if (
+    state.quick.headerImagePath
+    && state.files.has(state.quick.headerImagePath)
+    && isEditorManagedHeaderImage(state.quick.headerImagePath)
+  ) {
+    state.files.delete(state.quick.headerImagePath);
+    invalidateBlob(state.quick.headerImagePath);
+  }
+  state.quick.headerImagePath = "";
+  state.quick.headerImageEnabled = false;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  refreshFileTypeFilterOptions();
+  renderFileList();
+  renderPreview();
+  setStatus("Imagen de cabecera eliminada.");
+}
+
+async function onAddFooterImageSelected(file) {
+  if (!file) return;
+  if (!isImageFile(file.name)) {
+    setStatus("La imagen de pie debe ser un archivo de imagen válido.");
+    return;
+  }
+  const extension = (file.name.split(".").pop() || "png").toLowerCase();
+  const path = `img/custom-footer.${extension}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  if (
+    state.quick.footerImagePath
+    && state.quick.footerImagePath !== path
+    && state.files.has(state.quick.footerImagePath)
+    && isEditorManagedFooterImage(state.quick.footerImagePath)
+  ) {
+    state.files.delete(state.quick.footerImagePath);
+    invalidateBlob(state.quick.footerImagePath);
+  }
+
+  state.files.set(path, bytes);
+  invalidateBlob(path);
+  state.quick.footerImagePath = path;
+  state.quick.footerImageEnabled = true;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  refreshFileTypeFilterOptions();
+  renderFileList();
+  renderPreview();
+  setStatus(`Imagen de pie cargada: ${path}`);
+}
+
+function selectFooterImageFromStylePath(path) {
+  const clean = normalizePath(path || "");
+  if (!clean) return;
+  if (!state.files.has(clean) || !isImageFile(clean)) {
+    setStatus("La imagen seleccionada para pie no está disponible en el estilo.");
+    return;
+  }
+  state.quick.footerImagePath = clean;
+  state.quick.footerImageEnabled = true;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  renderPreview();
+  setStatus(`Imagen de pie seleccionada desde el estilo: ${clean}`);
+}
+
+function removeFooterImage() {
+  if (
+    state.quick.footerImagePath
+    && state.files.has(state.quick.footerImagePath)
+    && isEditorManagedFooterImage(state.quick.footerImagePath)
+  ) {
+    state.files.delete(state.quick.footerImagePath);
+    invalidateBlob(state.quick.footerImagePath);
+  }
+  state.quick.footerImagePath = "";
+  state.quick.footerImageEnabled = false;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  refreshFileTypeFilterOptions();
+  renderFileList();
+  renderPreview();
+  setStatus("Imagen de pie eliminada.");
 }
 
 function normalizeIconBaseName(fileName) {
@@ -1887,6 +2935,11 @@ function setupEvents() {
       requestAnimationFrame(onFileTypeFilterChange);
     }
   });
+  const onFileNameFilterChange = () => {
+    renderFileList();
+  };
+  els.fileNameFilter?.addEventListener("input", onFileNameFilterChange);
+  els.fileNameFilter?.addEventListener("search", onFileNameFilterChange);
 
   els.fileList?.addEventListener("keydown", (ev) => {
     const activeEl = document.activeElement;
@@ -2016,6 +3069,62 @@ function setupEvents() {
 
   els.removeBgImageBtn?.addEventListener("click", () => {
     removeBackgroundImage();
+  });
+
+  els.addHeaderImageBtn?.addEventListener("click", () => {
+    if (!els.addHeaderImageInput) return;
+    els.addHeaderImageInput.value = "";
+    els.addHeaderImageInput.click();
+  });
+
+  els.addHeaderImageInput?.addEventListener("change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      await onAddHeaderImageSelected(file);
+    } catch (err) {
+      setStatus(`Error cargando imagen de cabecera: ${err.message}`);
+    }
+  });
+
+  els.removeHeaderImageBtn?.addEventListener("click", () => {
+    removeHeaderImage();
+  });
+
+  els.showAllStyleImages?.addEventListener("change", () => {
+    refreshHeaderFooterImageSelects();
+  });
+
+  els.headerImageSelect?.addEventListener("change", () => {
+    const selectedPath = els.headerImageSelect.value;
+    if (!selectedPath) return;
+    selectHeaderImageFromStylePath(selectedPath);
+  });
+
+  els.addFooterImageBtn?.addEventListener("click", () => {
+    if (!els.addFooterImageInput) return;
+    els.addFooterImageInput.value = "";
+    els.addFooterImageInput.click();
+  });
+
+  els.addFooterImageInput?.addEventListener("change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      await onAddFooterImageSelected(file);
+    } catch (err) {
+      setStatus(`Error cargando imagen de pie: ${err.message}`);
+    }
+  });
+
+  els.removeFooterImageBtn?.addEventListener("click", () => {
+    removeFooterImage();
+  });
+
+  els.footerImageSelect?.addEventListener("change", () => {
+    const selectedPath = els.footerImageSelect.value;
+    if (!selectedPath) return;
+    selectFooterImageFromStylePath(selectedPath);
   });
 
   els.addIdeviceIconsBtn?.addEventListener("click", () => {

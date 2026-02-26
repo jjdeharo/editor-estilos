@@ -17,6 +17,123 @@
     body.preview-sim.preview-boxes-collapsed .box-content {
       display: none !important;
     }
+    body.preview-sim.preview-boxes-collapsed .iDevice_content_wrapper {
+      display: none !important;
+    }
+    body.preview-sim.legacy-preview .legacy-extra-sample {
+      padding: 0 20px 0 300px;
+    }
+    body.preview-sim.legacy-preview.no-nav .legacy-extra-sample {
+      padding-left: 20px;
+    }
+    body.preview-sim.legacy-import-preview .legacy-preview-controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      margin: 0 0 10px;
+    }
+    body.preview-sim.legacy-import-preview .legacy-preview-controls #exe-client-search {
+      margin: 0;
+    }
+    body.preview-sim.legacy-import-preview .legacy-preview-controls .page-counter {
+      margin: 0;
+    }
+    body.preview-sim.legacy-import-preview .legacy-preview-controls .legacy-nav-buttons {
+      display: inline-flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+    body.preview-sim.legacy-import-preview .legacy-preview-controls .legacy-nav-buttons .preview-nav-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-width: 88px !important;
+      min-height: 34px !important;
+      padding: 6px 12px !important;
+      border: 1px solid rgb(0 0 0 / 0.2) !important;
+      border-radius: 4px !important;
+      background: #f4f4f4 !important;
+      text-decoration: none !important;
+      color: inherit !important;
+      font-weight: 600 !important;
+      line-height: 1.1 !important;
+    }
+    body.preview-sim.legacy-import-preview .legacy-preview-controls .legacy-nav-buttons .preview-nav-btn span {
+      position: static !important;
+      width: auto !important;
+      height: auto !important;
+      margin: 0 !important;
+      overflow: visible !important;
+      clip: auto !important;
+    }
+    body.preview-sim.legacy-import-preview.siteNav-off #siteNav {
+      display: none !important;
+    }
+    body.preview-sim.legacy-import-preview.siteNav-off #main-wrapper {
+      padding-left: 20px !important;
+    }
+    body.preview-sim .toggler.preview-header-toggle-fallback {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 2.45rem !important;
+      height: 2.45rem !important;
+      min-width: 2.45rem !important;
+      min-height: 2.45rem !important;
+      border-radius: 999px !important;
+      border: 1px solid rgb(0 0 0 / 0.18) !important;
+      background: #0b9ea2 !important;
+      color: #fff !important;
+      line-height: 1 !important;
+      padding: 0 !important;
+      text-indent: 0 !important;
+      overflow: visible !important;
+    }
+    body.preview-sim .toggler.preview-header-toggle-fallback::before {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    body.preview-sim .toggler.preview-header-toggle-fallback.preview-header-toggle-menu::before {
+      content: "\2630";
+    }
+    body.preview-sim .toggler.preview-header-toggle-fallback.preview-header-toggle-search::before {
+      content: "\1F50E";
+      font-weight: 400;
+    }
+    body.preview-sim .box-toggle.preview-toggle-fallback {
+      min-width: 1.65em;
+      min-height: 1.65em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgb(0 0 0 / 0.35);
+      border-radius: 999px;
+      background: #fff;
+      color: #333;
+      font-size: 0.95rem;
+      line-height: 1;
+      padding: 0;
+    }
+    body.preview-sim .box-toggle.preview-toggle-fallback::before {
+      content: "-";
+      font-weight: 700;
+    }
+    body.preview-sim .box.minimized .box-toggle.preview-toggle-fallback::before {
+      content: "+";
+    }
+    body.preview-sim .box-toggle.preview-toggle-fallback > span {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      border: 0 !important;
+    }
 
     body.preview-sim .sr-av {
       position: absolute !important;

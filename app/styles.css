@@ -352,6 +352,16 @@ textarea:focus-visible {
   background: #fff;
 }
 
+#fileTypeFilter,
+#fileNameFilter {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #fff;
+  margin-bottom: 8px;
+}
+
 .official-preview {
   margin-top: 10px;
   border: 1px solid var(--line);
