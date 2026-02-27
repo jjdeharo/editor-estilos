@@ -39,16 +39,30 @@
           <h3 class="section-title"><span class="section-icon material-symbols-outlined" aria-hidden="true">folder_open</span>Cargar plantilla</h3>
           <div class="section-content">
             <div class="load-group">
-              <label class="file-label" for="zipInput"><span class="inline-icon material-symbols-outlined" aria-hidden="true">folder_zip</span>Cargar estilo ZIP</label>
+              <label class="file-label" for="elpxInput"><span class="inline-icon material-symbols-outlined" aria-hidden="true">library_books</span>Cargar proyecto ELPX</label>
               <div class="file-picker-row">
-                <button id="zipPickBtn" type="button"><span class="inline-icon material-symbols-outlined" aria-hidden="true">upload_file</span>Seleccionar ZIP</button>
-                <span id="zipInputName" class="file-picked-name">Ningún archivo seleccionado</span>
+                <button id="elpxPickBtn" type="button"><span class="inline-icon material-symbols-outlined" aria-hidden="true">upload_file</span>Seleccionar ELPX</button>
+                <span id="elpxInputName" class="file-picked-name">Ningún archivo seleccionado</span>
               </div>
-              <input id="zipInput" type="file" accept=".zip" class="sr-only" />
+              <input id="elpxInput" type="file" accept=".elpx,.zip,application/zip" class="sr-only" />
             </div>
             <div class="load-group">
-              <label class="file-label" for="officialStyleSelect"><span class="inline-icon material-symbols-outlined" aria-hidden="true">style</span>Estilo base oficial</label>
-              <select id="officialStyleSelect"></select>
+              <label class="file-label"><span class="inline-icon material-symbols-outlined" aria-hidden="true">palette</span>Elegir estilo</label>
+              <p class="status-inline">Puedes aplicar un estilo oficial o importar un ZIP personalizado.</p>
+              <div class="style-choice-grid">
+                <div class="style-choice-col">
+                  <label class="file-label" for="officialStyleSelect">Estilo base oficial</label>
+                  <select id="officialStyleSelect"></select>
+                </div>
+                <div class="style-choice-col">
+                  <label class="file-label" for="zipInput">Importar estilo</label>
+                  <div class="file-picker-row">
+                    <button id="zipPickBtn" type="button"><span class="inline-icon material-symbols-outlined" aria-hidden="true">upload_file</span>Seleccionar ZIP</button>
+                    <span id="zipInputName" class="file-picked-name">Ningún archivo seleccionado</span>
+                  </div>
+                </div>
+              </div>
+              <input id="zipInput" type="file" accept=".zip" class="sr-only" />
             </div>
             <article id="officialPreview" class="official-preview" aria-live="polite"></article>
           </div>
@@ -75,6 +89,7 @@
             </label>
             <div class="button-row">
               <button id="exportBtn" type="button"><span class="inline-icon material-symbols-outlined" aria-hidden="true">download</span>Exportar estilo</button>
+              <button id="exportElpxBtn" type="button" hidden><span class="inline-icon material-symbols-outlined" aria-hidden="true">folder_zip</span>Guardar ELPX con el estilo modificado</button>
             </div>
             <p id="status" class="status"></p>
           </div>
@@ -399,11 +414,46 @@
 
         <details>
           <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">menu</span>Navegación (menú lateral)</summary>
-          <div class="section-content quick-grid palette-compact">
-            <label>Fondo menú <input id="menuBgColor" data-quick="menuBgColor" type="color" /></label>
-            <label>Texto menú <input id="menuTextColor" data-quick="menuTextColor" type="color" /></label>
-            <label>Activo fondo <input id="menuActiveBgColor" data-quick="menuActiveBgColor" type="color" /></label>
-            <label>Activo texto <input id="menuActiveTextColor" data-quick="menuActiveTextColor" type="color" /></label>
+          <div class="section-content quick-grid">
+            <div class="palette-compact">
+              <label>Fondo menú <input id="menuBgColor" data-quick="menuBgColor" type="color" /></label>
+              <label>Texto menú <input id="menuTextColor" data-quick="menuTextColor" type="color" /></label>
+              <label>Activo fondo <input id="menuActiveBgColor" data-quick="menuActiveBgColor" type="color" /></label>
+              <label>Activo texto <input id="menuActiveTextColor" data-quick="menuActiveTextColor" type="color" /></label>
+            </div>
+            <div class="group-card">
+              <h4 class="group-title">Iconos de navegación</h4>
+              <div class="nav-icon-grid">
+                <label>Icono Anterior
+                  <select id="navPrevIconSelect">
+                    <option value="">Seleccionar imagen del estilo…</option>
+                  </select>
+                </label>
+                <div class="button-row">
+                  <button id="addNavPrevIconBtn" type="button">Subir icono</button>
+                  <input id="addNavPrevIconInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
+                </div>
+                <label>Icono Siguiente
+                  <select id="navNextIconSelect">
+                    <option value="">Seleccionar imagen del estilo…</option>
+                  </select>
+                </label>
+                <div class="button-row">
+                  <button id="addNavNextIconBtn" type="button">Subir icono</button>
+                  <input id="addNavNextIconInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
+                </div>
+                <label>Icono Menú
+                  <select id="navMenuIconSelect">
+                    <option value="">Seleccionar imagen del estilo…</option>
+                  </select>
+                </label>
+                <div class="button-row">
+                  <button id="addNavMenuIconBtn" type="button">Subir icono</button>
+                  <input id="addNavMenuIconInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
+                </div>
+              </div>
+              <p id="navIconsInfo" class="status-inline">Sin cambios en iconos de navegación.</p>
+            </div>
           </div>
         </details>
 
@@ -491,92 +541,125 @@
     <main id="previewPanel" class="preview-panel">
       <header class="preview-header">
         <div class="preview-header-top">
-          <h2>Previsualización simulada (solo se verá de forma completa desde eXeLearning)</h2>
-          <div class="preview-toolbar">
-            <button id="previewPopoutBtn" class="icon-btn" type="button" aria-pressed="false" title="Abrir espacio flotante (herramientas y previsualización)">
-              <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
-              <span class="sr-only">Abrir previsualización en ventana independiente</span>
+          <h2>Previsualización real del ELPX</h2>
+          <div class="preview-toolbar" aria-label="Acciones rápidas">
+            <button id="undoBtn" class="icon-btn" type="button" title="Deshacer último cambio" disabled>
+              <span class="material-symbols-outlined" aria-hidden="true">undo</span>
+              <span class="sr-only">Deshacer último cambio</span>
             </button>
-            <button id="previewOptionsBtn" class="icon-btn" type="button" aria-expanded="false" aria-controls="previewOptionsPanel" title="Opciones de vista previa">
-              <span aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" role="img">
-                  <path d="M1.5 12C3.6 7.8 7.4 5 12 5s8.4 2.8 10.5 7c-2.1 4.2-5.9 7-10.5 7S3.6 16.2 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-                  <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"></circle>
-                </svg>
-              </span>
-              <span class="sr-only">Opciones de vista previa</span>
+            <button id="redoBtn" class="icon-btn" type="button" title="Rehacer cambio deshecho" disabled>
+              <span class="material-symbols-outlined" aria-hidden="true">redo</span>
+              <span class="sr-only">Rehacer último cambio</span>
             </button>
-            <div id="previewOptionsPanel" class="preview-options-popover" hidden>
-              <div class="section-content quick-grid">
-                <p class="status-inline">No se exporta. Solo cambia esta vista simulada.</p>
-                <div class="preview-toggle-list">
-                  <div class="toggle-item">
-                    <span class="toggle-control">
-                      <input id="previewShowSearch" data-preview="showSearch" class="toggle-input" type="checkbox" checked />
-                      <span class="toggle-visual"></span>
-                    </span>
-                    <label class="toggle-label" for="previewShowSearch">Mostrar buscador</label>
-                  </div>
-                  <div class="toggle-item">
-                    <span class="toggle-control">
-                      <input id="previewShowPageCounter" data-preview="showPageCounter" class="toggle-input" type="checkbox" checked />
-                      <span class="toggle-visual"></span>
-                    </span>
-                    <label class="toggle-label" for="previewShowPageCounter">Mostrar número de página</label>
-                  </div>
-                  <div class="toggle-item">
-                    <span class="toggle-control">
-                      <input id="previewShowNavButtons" data-preview="showNavButtons" class="toggle-input" type="checkbox" checked />
-                      <span class="toggle-visual"></span>
-                    </span>
-                    <label class="toggle-label" for="previewShowNavButtons">Mostrar navegación anterior/siguiente</label>
-                  </div>
-                  <div class="toggle-item">
-                    <span class="toggle-control">
-                      <input id="previewNavCollapsed" data-preview="navCollapsed" class="toggle-input" type="checkbox" />
-                      <span class="toggle-visual"></span>
-                    </span>
-                    <label class="toggle-label" for="previewNavCollapsed">Simular menú oculto (nav=false)</label>
-                  </div>
-                  <div class="toggle-item">
-                    <span class="toggle-control">
-                      <input id="previewShowPackageTitle" data-preview="showPackageTitle" class="toggle-input" type="checkbox" checked />
-                      <span class="toggle-visual"></span>
-                    </span>
-                    <label class="toggle-label" for="previewShowPackageTitle">Mostrar título de proyecto</label>
-                  </div>
-                  <div class="toggle-item">
-                    <span class="toggle-control">
-                      <input id="previewShowPageTitle" data-preview="showPageTitle" class="toggle-input" type="checkbox" checked />
-                      <span class="toggle-visual"></span>
-                    </span>
-                    <label class="toggle-label" for="previewShowPageTitle">Mostrar título de página</label>
-                  </div>
-                  <div class="toggle-item">
-                    <span class="toggle-control">
-                      <input id="previewCollapseIdevices" data-preview="collapseIdevices" class="toggle-input" type="checkbox" />
-                      <span class="toggle-visual"></span>
-                    </span>
-                    <label class="toggle-label" for="previewCollapseIdevices">Simular iDevices plegados</label>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <button id="previewInspectBtn" class="icon-btn" type="button" aria-pressed="false" title="Modo edición por clic">
+              <span class="material-symbols-outlined" aria-hidden="true">ads_click</span>
+              <span class="sr-only">Activar modo edición por clic</span>
+            </button>
           </div>
         </div>
       </header>
-      <div id="floatingPreviewPlaceholder" class="floating-preview-placeholder" hidden>
-        <h3>Espacio flotante activo</h3>
-        <p>Herramientas y previsualización están abiertas en dos ventanas independientes.</p>
-        <div class="button-row">
-          <button id="restoreFloatingWorkspaceBtn" type="button">Volver a acoplar las dos ventanas</button>
+      <iframe id="previewFrame" title="Previsualización eXe" src="about:blank" sandbox="allow-same-origin allow-scripts"></iframe>
+      <div id="busyOverlay" class="busy-overlay" hidden>
+        <div class="busy-card" role="status" aria-live="polite" aria-busy="true">
+          <span class="busy-spinner" aria-hidden="true"></span>
+          <span id="busyOverlayText">Cargando…</span>
         </div>
       </div>
-      <iframe id="previewFrame" title="Previsualización eXe" src="app/preview.html" sandbox="allow-same-origin allow-scripts"></iframe>
     </main>
   </div>
+  <div id="clickEditModal" class="modal-backdrop" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="clickEditTitle">
+      <h3 id="clickEditTitle">Editar elemento</h3>
+      <p class="status-inline">Selector:</p>
+      <p id="clickEditSelector" class="click-selector"></p>
+      <div class="inline-two click-edit-grid">
+        <label id="clickTextColorWrap">Color de texto
+          <input id="clickPropColor" type="color" />
+        </label>
+        <label>Color de fondo
+          <input id="clickPropBg" type="color" />
+        </label>
+      </div>
+      <div class="inline-two click-edit-grid">
+        <label id="clickTextAlphaWrap">Transparencia texto (%)
+          <input id="clickPropColorAlpha" type="number" min="0" max="100" step="1" value="0" />
+        </label>
+        <label>Transparencia fondo (%)
+          <input id="clickPropBgAlpha" type="number" min="0" max="100" step="1" value="0" />
+        </label>
+      </div>
+      <div class="inline-two click-edit-grid">
+        <label id="clickTextSizeWrap">Tamaño texto (solo px)
+          <input id="clickPropFontSize" type="number" min="8" max="96" step="1" />
+        </label>
+        <label id="clickTextWeightWrap">Peso texto
+          <select id="clickPropFontWeight">
+            <option value="400">400 (normal)</option>
+            <option value="500">500</option>
+            <option value="600">600</option>
+            <option value="700">700 (negrita)</option>
+            <option value="800">800</option>
+          </select>
+        </label>
+      </div>
+      <div class="inline-two click-edit-grid">
+        <label>Ancho (`width`, px y %)
+          <input id="clickPropWidth" type="text" placeholder="Ej.: 320px o 80%" />
+        </label>
+        <label>Ancho máximo (`max-width`, px y %)
+          <input id="clickPropMaxWidth" type="text" placeholder="Ej.: 1100px o 90%" />
+        </label>
+      </div>
+      <div class="inline-two click-edit-grid">
+        <label>Margen inferior (`margin-bottom`, px y %)
+          <input id="clickPropMarginBottom" type="text" placeholder="Ej.: 16px o 2%" />
+        </label>
+        <label>Espaciado interno (`padding`, px y %)
+          <input id="clickPropPadding" type="text" placeholder="Ej.: 12px, 2% o 8px 2%" />
+        </label>
+      </div>
+      <div id="clickApplyInteractiveWrap" class="toggle-item click-edit-toggle" hidden>
+        <span class="toggle-control">
+          <input id="clickApplyInteractiveStates" class="toggle-input" type="checkbox" checked />
+          <span class="toggle-visual"></span>
+        </span>
+        <label class="toggle-label" for="clickApplyInteractiveStates">Aplicar también al pasar el ratón o al hacer clic</label>
+      </div>
+      <div class="button-row click-edit-actions">
+        <button id="clickEditApplyBtn" type="button">
+          <span class="inline-icon material-symbols-outlined" aria-hidden="true">check</span>Aplicar cambios
+        </button>
+        <button id="clickEditCancelBtn" type="button">
+          <span class="inline-icon material-symbols-outlined" aria-hidden="true">close</span>Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+  <div id="exportRenameModal" class="modal-backdrop" hidden>
+    <div class="modal-card modal-card-centered rename-modal-card" role="dialog" aria-modal="true" aria-labelledby="exportRenameTitle">
+      <h3 id="exportRenameTitle">Guardar ELPX: cambiar nombre del estilo</h3>
+      <p class="status-inline">Para que eXeLearning detecte este estilo como nuevo, cambia <strong>Nombre</strong> y <strong>Título</strong>.</p>
+      <div class="inline-two click-edit-grid">
+        <label>Nombre del estilo
+          <input id="exportRenameNameInput" type="text" />
+        </label>
+        <label>Título visible
+          <input id="exportRenameTitleInput" type="text" />
+        </label>
+      </div>
+      <p id="exportRenameHelp" class="status-inline"></p>
+      <div class="button-row click-edit-actions">
+        <button id="exportRenameConfirmBtn" type="button">
+          <span class="inline-icon material-symbols-outlined" aria-hidden="true">save</span>Guardar ELPX
+        </button>
+        <button id="exportRenameCancelBtn" type="button">
+          <span class="inline-icon material-symbols-outlined" aria-hidden="true">close</span>Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
   <footer class="app-footer">
-    <p>v 0.4.1 · © <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">Licencia AGPLv3</a> · <a href="https://github.com/jjdeharo/editor-estilos" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a> · <a href="https://github.com/jjdeharo/editor-estilos/issues" target="_blank" rel="noopener noreferrer">Problemas y sugerencias</a></p>
+    <p>v 1.0.0-beta.1 · © <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">Licencia AGPLv3</a> · <a href="https://github.com/jjdeharo/editor-estilos" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a> · <a href="https://github.com/jjdeharo/editor-estilos/issues" target="_blank" rel="noopener noreferrer">Problemas y sugerencias</a></p>
   </footer>
 
   <script src="vendor/jszip.min.js"></script>

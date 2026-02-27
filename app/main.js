@@ -295,9 +295,14 @@ const QUICK_PROTECTED_PATTERNS = [
 ];
 const TRIAL_NOTICE_KEY = "editor-estilos:trial-notice-dismissed";
 const PREVIEW_TOGGLES_KEY = "editor-estilos:preview-toggles";
-const PREVIEW_FRAME_URL = "app/preview.html";
-const PREVIEW_POPOUT_WINDOW_NAME = "editorEstilosPreviewPopout";
-const EDITOR_POPOUT_WINDOW_NAME = "editorEstilosToolsPopout";
+const PREVIEW_FRAME_URL = "about:blank";
+const DEFAULT_BOOT_ELPX_URL = "assets/ejemplo.elpx";
+const CLICK_OVERRIDES_START = "/* click-overrides:start */";
+const CLICK_OVERRIDES_END = "/* click-overrides:end */";
+const UNDO_STACK_LIMIT = 30;
+const ELPX_SW_URL = "elpx-sw.js";
+const ELPX_URL_PREFIX = "/__elpx/";
+const ELPX_CACHE_PREFIX = "editor-estilos:elpx:";
 
 const FILE_TYPE_OPTIONS = [
   { value: "images", label: "Imágenes" },
@@ -366,6 +371,9 @@ const QUICK_DEFAULTS = {
   footerImageFit: "contain",
   footerImagePosition: "center center",
   footerImageRepeat: "no-repeat",
+  navIconPrevPath: "",
+  navIconNextPath: "",
+  navIconMenuPath: "",
   logoEnabled: false,
   logoPath: "",
   logoSize: 130,
@@ -472,8 +480,18 @@ const CONTROL_HELP_TEXT_BY_ID = {
   footerImageSelect: "Elige una imagen existente del estilo para usarla en el pie.",
   addFooterImageBtn: "Sube una imagen personalizada para el pie.",
   removeFooterImageBtn: "Elimina la imagen de pie configurada.",
+  navPrevIconSelect: "Elige una imagen del estilo para el botón de Anterior.",
+  navNextIconSelect: "Elige una imagen del estilo para el botón de Siguiente.",
+  navMenuIconSelect: "Elige una imagen del estilo para el botón de Menú.",
+  addNavPrevIconBtn: "Sube una imagen y la aplica al botón de Anterior.",
+  addNavNextIconBtn: "Sube una imagen y la aplica al botón de Siguiente.",
+  addNavMenuIconBtn: "Sube una imagen y la aplica al botón de Menú.",
   addIdeviceIconsBtn: "Reemplaza en lote los iconos de iDevices.",
-  previewPopoutBtn: "Activa o desactiva el espacio flotante: abre herramientas y previsualización en ventanas separadas.",
+  elpxPickBtn: "Abre un proyecto ELPX para navegar sus páginas reales y aplicar el estilo en tiempo real.",
+  exportElpxBtn: "Guarda el ELPX junto con el estilo modificado para poder importarlo en eXeLearning.",
+  previewInspectBtn: "Activa un modo de edición por clic en la previsualización para ajustar sus propiedades.",
+  undoBtn: "Deshace el último cambio realizado en el estilo o archivos.",
+  redoBtn: "Rehace el último cambio que se deshizo.",
   openDetachedEditorBtn: "Abre el archivo actual en una ventana de edición separada para trabajar con más espacio."
 };
 
@@ -533,6 +551,8 @@ const els = {
   appShell: document.getElementById("appShell"),
   editorPanel: document.getElementById("editorPanel"),
   previewPanel: document.getElementById("previewPanel"),
+  busyOverlay: document.getElementById("busyOverlay"),
+  busyOverlayText: document.getElementById("busyOverlayText"),
   trialNotice: document.getElementById("trialNotice"),
   dismissTrialNotice: document.getElementById("dismissTrialNotice"),
   tabs: Array.from(document.querySelectorAll(".tab")),
@@ -542,7 +562,13 @@ const els = {
   zipPickBtn: document.getElementById("zipPickBtn"),
   zipInput: document.getElementById("zipInput"),
   zipInputName: document.getElementById("zipInputName"),
+  elpxPickBtn: document.getElementById("elpxPickBtn"),
+  elpxInput: document.getElementById("elpxInput"),
+  elpxInputName: document.getElementById("elpxInputName"),
   exportBtn: document.getElementById("exportBtn"),
+  exportElpxBtn: document.getElementById("exportElpxBtn"),
+  undoBtn: document.getElementById("undoBtn"),
+  redoBtn: document.getElementById("redoBtn"),
   status: document.getElementById("status"),
   fileList: document.getElementById("fileList"),
   fileTypeFilter: document.getElementById("fileTypeFilter"),
@@ -559,11 +585,35 @@ const els = {
   textHighlight: document.getElementById("textHighlight"),
   binaryPreview: document.getElementById("binaryPreview"),
   previewFrame: document.getElementById("previewFrame"),
-  floatingPreviewPlaceholder: document.getElementById("floatingPreviewPlaceholder"),
-  restoreFloatingWorkspaceBtn: document.getElementById("restoreFloatingWorkspaceBtn"),
-  previewPopoutBtn: document.getElementById("previewPopoutBtn"),
-  previewOptionsBtn: document.getElementById("previewOptionsBtn"),
-  previewOptionsPanel: document.getElementById("previewOptionsPanel"),
+  previewInspectBtn: document.getElementById("previewInspectBtn"),
+  clickEditModal: document.getElementById("clickEditModal"),
+  clickEditCard: document.querySelector("#clickEditModal .modal-card"),
+  clickEditTitle: document.getElementById("clickEditTitle"),
+  clickEditSelector: document.getElementById("clickEditSelector"),
+  clickPropColor: document.getElementById("clickPropColor"),
+  clickPropBg: document.getElementById("clickPropBg"),
+  clickTextColorWrap: document.getElementById("clickTextColorWrap"),
+  clickPropColorAlpha: document.getElementById("clickPropColorAlpha"),
+  clickPropBgAlpha: document.getElementById("clickPropBgAlpha"),
+  clickTextAlphaWrap: document.getElementById("clickTextAlphaWrap"),
+  clickPropFontSize: document.getElementById("clickPropFontSize"),
+  clickPropFontWeight: document.getElementById("clickPropFontWeight"),
+  clickTextSizeWrap: document.getElementById("clickTextSizeWrap"),
+  clickTextWeightWrap: document.getElementById("clickTextWeightWrap"),
+  clickPropWidth: document.getElementById("clickPropWidth"),
+  clickPropMaxWidth: document.getElementById("clickPropMaxWidth"),
+  clickPropMarginBottom: document.getElementById("clickPropMarginBottom"),
+  clickPropPadding: document.getElementById("clickPropPadding"),
+  clickApplyInteractiveWrap: document.getElementById("clickApplyInteractiveWrap"),
+  clickApplyInteractiveStates: document.getElementById("clickApplyInteractiveStates"),
+  clickEditApplyBtn: document.getElementById("clickEditApplyBtn"),
+  clickEditCancelBtn: document.getElementById("clickEditCancelBtn"),
+  exportRenameModal: document.getElementById("exportRenameModal"),
+  exportRenameNameInput: document.getElementById("exportRenameNameInput"),
+  exportRenameTitleInput: document.getElementById("exportRenameTitleInput"),
+  exportRenameHelp: document.getElementById("exportRenameHelp"),
+  exportRenameConfirmBtn: document.getElementById("exportRenameConfirmBtn"),
+  exportRenameCancelBtn: document.getElementById("exportRenameCancelBtn"),
   metaName: document.getElementById("metaName"),
   metaTitle: document.getElementById("metaTitle"),
   metaVersion: document.getElementById("metaVersion"),
@@ -592,6 +642,16 @@ const els = {
   addFooterImageInput: document.getElementById("addFooterImageInput"),
   footerImageSelect: document.getElementById("footerImageSelect"),
   footerImageInfo: document.getElementById("footerImageInfo"),
+  navPrevIconSelect: document.getElementById("navPrevIconSelect"),
+  navNextIconSelect: document.getElementById("navNextIconSelect"),
+  navMenuIconSelect: document.getElementById("navMenuIconSelect"),
+  addNavPrevIconBtn: document.getElementById("addNavPrevIconBtn"),
+  addNavNextIconBtn: document.getElementById("addNavNextIconBtn"),
+  addNavMenuIconBtn: document.getElementById("addNavMenuIconBtn"),
+  addNavPrevIconInput: document.getElementById("addNavPrevIconInput"),
+  addNavNextIconInput: document.getElementById("addNavNextIconInput"),
+  addNavMenuIconInput: document.getElementById("addNavMenuIconInput"),
+  navIconsInfo: document.getElementById("navIconsInfo"),
   addIdeviceIconsBtn: document.getElementById("addIdeviceIconsBtn"),
   addIdeviceIconsInput: document.getElementById("addIdeviceIconsInput"),
   logoInfo: document.getElementById("logoInfo"),
@@ -613,9 +673,26 @@ const state = {
   previewLayoutMode: "modern",
   previewFromLegacyZip: false,
   previewPendingRender: false,
-  previewPopoutWindow: null,
-  editorPopoutWindow: null,
-  editorPanelPlaceholder: null,
+  previewLastElpxCss: "",
+  elpxMode: false,
+  elpxSessionId: "",
+  elpxCacheName: "",
+  elpxOriginalName: "",
+  elpxFiles: new Map(),
+  elpxThemePrefix: "theme/",
+  elpxThemeFiles: new Set(),
+  elpxThemeSyncTimer: 0,
+  clickEditMode: false,
+  clickEditTargetSelector: "",
+  clickEditFrameDoc: null,
+  clickEditDragActive: false,
+  clickEditDragOffsetX: 0,
+  clickEditDragOffsetY: 0,
+  clickEditIgnoreUntil: 0,
+  clickEditHasText: true,
+  undoStack: [],
+  redoStack: [],
+  isRestoringUndo: false,
   isDirty: false
 };
 let highlightRenderRaf = 0;
@@ -630,6 +707,112 @@ function markDirty() {
 
 function clearDirty() {
   state.isDirty = false;
+}
+
+function updateHistoryButtonsState() {
+  if (!els.undoBtn) return;
+  els.undoBtn.disabled = state.undoStack.length < 1;
+  if (els.redoBtn) els.redoBtn.disabled = state.redoStack.length < 1;
+}
+
+function clearUndoHistory() {
+  state.undoStack = [];
+  state.redoStack = [];
+  updateHistoryButtonsState();
+}
+
+function snapshotFilesMap() {
+  return new Map(Array.from(state.files.entries(), ([path, bytes]) => [path, cloneBytes(bytes)]));
+}
+
+function pushUndoSnapshot() {
+  if (state.isRestoringUndo) return;
+  state.undoStack.push({
+    files: snapshotFilesMap(),
+    templateFiles: Array.from(state.templateFiles),
+    baseFiles: Array.from(state.baseFiles),
+    selectedOfficialStyleId: state.selectedOfficialStyleId,
+    officialSourceId: state.officialSourceId,
+    activePath: state.activePath
+  });
+  if (state.undoStack.length > UNDO_STACK_LIMIT) state.undoStack.shift();
+  state.redoStack = [];
+  updateHistoryButtonsState();
+}
+
+function captureEditorSnapshot() {
+  return {
+    files: snapshotFilesMap(),
+    templateFiles: Array.from(state.templateFiles),
+    baseFiles: Array.from(state.baseFiles),
+    selectedOfficialStyleId: state.selectedOfficialStyleId,
+    officialSourceId: state.officialSourceId,
+    activePath: state.activePath
+  };
+}
+
+async function restoreEditorSnapshot(snapshot) {
+  if (!snapshot) return;
+  invalidateAllBlobs();
+  state.files = new Map(Array.from(snapshot.files.entries(), ([path, bytes]) => [path, cloneBytes(bytes)]));
+  state.templateFiles = new Set(snapshot.templateFiles || []);
+  state.baseFiles = new Set(snapshot.baseFiles || []);
+  state.selectedOfficialStyleId = snapshot.selectedOfficialStyleId || state.selectedOfficialStyleId;
+  state.officialSourceId = snapshot.officialSourceId || "";
+  state.activePath = state.files.has(snapshot.activePath)
+    ? snapshot.activePath
+    : (state.files.has("style.css") ? "style.css" : listFilesSorted()[0] || "");
+
+  renderOfficialStylesSelect();
+  refreshFileTypeFilterOptions();
+  renderFileList();
+  syncEditorWithActiveFile();
+  refreshQuickControls();
+  refreshMetaFields();
+
+  if (state.elpxMode) {
+    await syncThemeFilesToElpxCache({ replaceTheme: true });
+    reloadElpxPreviewPage();
+    setElpxModeUi();
+  }
+  renderPreview();
+  markDirty();
+}
+
+async function undoLastChange() {
+  if (!state.undoStack.length) {
+    setStatus("No hay cambios para deshacer.");
+    return;
+  }
+  const previous = state.undoStack.pop();
+  state.redoStack.push(captureEditorSnapshot());
+  if (state.redoStack.length > UNDO_STACK_LIMIT) state.redoStack.shift();
+  updateHistoryButtonsState();
+  state.isRestoringUndo = true;
+  try {
+    await restoreEditorSnapshot(previous);
+    setStatus("Último cambio deshecho.");
+  } finally {
+    state.isRestoringUndo = false;
+  }
+}
+
+async function redoLastChange() {
+  if (!state.redoStack.length) {
+    setStatus("No hay cambios para rehacer.");
+    return;
+  }
+  const next = state.redoStack.pop();
+  state.undoStack.push(captureEditorSnapshot());
+  if (state.undoStack.length > UNDO_STACK_LIMIT) state.undoStack.shift();
+  updateHistoryButtonsState();
+  state.isRestoringUndo = true;
+  try {
+    await restoreEditorSnapshot(next);
+    setStatus("Cambio rehecho.");
+  } finally {
+    state.isRestoringUndo = false;
+  }
 }
 
 function confirmDiscardUnsavedChanges(contextLabel = "cargar otro estilo") {
@@ -655,19 +838,160 @@ function focusMetadataForRename({ preferTitle = false } = {}) {
 }
 
 function officialMetadataConflict() {
-  if (!state.officialSourceId) return false;
-  const currentName = String(els.metaName?.value || "").trim().toLowerCase();
-  const currentTitle = String(els.metaTitle?.value || "").trim().toLowerCase();
-  const official = getOfficialStyleById(state.officialSourceId);
-  const officialName = String(state.officialSourceId || "").trim().toLowerCase();
+  const currentNameRaw = String(els.metaName?.value || "").trim();
+  const currentTitleRaw = String(els.metaTitle?.value || "").trim();
+  const currentName = currentNameRaw.toLowerCase();
+  const currentTitle = currentTitleRaw.toLowerCase();
+
+  let officialId = state.officialSourceId;
+  if (!officialId && (currentName || currentTitle)) {
+    // Infer official source from current metadata when opening an ELPX directly.
+    const byName = state.officialStyles.find((style) => String(style.id || "").trim().toLowerCase() === currentName);
+    if (byName) officialId = byName.id;
+    else {
+      const byTitle = state.officialStyles.find((style) => {
+        const title = String(style?.meta?.title || "").trim().toLowerCase();
+        return Boolean(title && title === currentTitle);
+      });
+      if (byTitle) officialId = byTitle.id;
+    }
+  }
+  if (!officialId) return false;
+
+  const official = getOfficialStyleById(officialId);
+  const officialName = String(officialId || "").trim().toLowerCase();
   const officialTitle = String(official?.meta?.title || "").trim().toLowerCase();
   const nameEqual = Boolean(currentName && officialName && currentName === officialName);
   const titleEqual = Boolean(currentTitle && officialTitle && currentTitle === officialTitle);
-  return { nameEqual, titleEqual, hasConflict: nameEqual || titleEqual };
+  return { nameEqual, titleEqual, hasConflict: nameEqual || titleEqual, officialId };
+}
+
+function blockExportForOfficialMetadataConflict(targetLabel = "exportar") {
+  const officialConflict = officialMetadataConflict();
+  if (!officialConflict.hasConflict) return false;
+  const fields = [];
+  if (officialConflict.nameEqual) fields.push("Nombre");
+  if (officialConflict.titleEqual) fields.push("Título");
+  const fieldsText = fields.join(" y ");
+  setStatus(`Debes cambiar ${fieldsText} del estilo en Metadatos antes de ${targetLabel} para no sobrescribir la plantilla oficial.`);
+  window.alert(
+    `${String(targetLabel).charAt(0).toUpperCase()}${String(targetLabel).slice(1)} bloqueado.\n\n${fieldsText} coincide con la plantilla oficial.\nCámbialo en Estilo > Información y exportación y vuelve a intentarlo.`
+  );
+  focusMetadataForRename({ preferTitle: !officialConflict.nameEqual && officialConflict.titleEqual });
+  return true;
+}
+
+function askRenameForElpxExport(officialName, officialTitle) {
+  if (!els.exportRenameModal || !els.exportRenameNameInput || !els.exportRenameTitleInput || !els.exportRenameHelp || !els.exportRenameConfirmBtn || !els.exportRenameCancelBtn) {
+    return Promise.resolve(null);
+  }
+
+  const officialNameNorm = String(officialName || "").trim().toLowerCase();
+  const officialTitleNorm = String(officialTitle || "").trim().toLowerCase();
+  const nameInput = els.exportRenameNameInput;
+  const titleInput = els.exportRenameTitleInput;
+  const help = els.exportRenameHelp;
+  const confirmBtn = els.exportRenameConfirmBtn;
+  const cancelBtn = els.exportRenameCancelBtn;
+  const modal = els.exportRenameModal;
+
+  nameInput.value = String(els.metaName?.value || "").trim();
+  titleInput.value = String(els.metaTitle?.value || "").trim();
+
+  const updateUi = () => {
+    const nextName = String(nameInput.value || "").trim();
+    const nextTitle = String(titleInput.value || "").trim();
+    const nameChanged = nextName.toLowerCase() !== officialNameNorm;
+    const titleChanged = nextTitle.toLowerCase() !== officialTitleNorm;
+    const canSave = Boolean(nextName && nextTitle && nameChanged && titleChanged);
+    confirmBtn.disabled = !canSave;
+
+    if (!nextName || !nextTitle) {
+      help.textContent = "Completa Nombre y Título para continuar.";
+      help.classList.add("error");
+      return;
+    }
+    if (!nameChanged || !titleChanged) {
+      help.textContent = "Debes cambiar tanto el Nombre como el Título.";
+      help.classList.add("error");
+      return;
+    }
+    help.textContent = "Listo. Puedes guardar el ELPX.";
+    help.classList.remove("error");
+  };
+
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      modal.hidden = true;
+      nameInput.removeEventListener("input", onInput);
+      titleInput.removeEventListener("input", onInput);
+      confirmBtn.removeEventListener("click", onConfirm);
+      cancelBtn.removeEventListener("click", onCancel);
+      modal.removeEventListener("click", onBackdropClick);
+    };
+    const onInput = () => updateUi();
+    const onConfirm = () => {
+      const nextName = String(nameInput.value || "").trim();
+      const nextTitle = String(titleInput.value || "").trim();
+      if (!nextName || !nextTitle) return;
+      cleanup();
+      resolve({ name: nextName, title: nextTitle });
+    };
+    const onCancel = () => {
+      cleanup();
+      resolve(null);
+    };
+    const onBackdropClick = (ev) => {
+      if (ev.target !== modal) return;
+      onCancel();
+    };
+
+    nameInput.addEventListener("input", onInput);
+    titleInput.addEventListener("input", onInput);
+    confirmBtn.addEventListener("click", onConfirm);
+    cancelBtn.addEventListener("click", onCancel);
+    modal.addEventListener("click", onBackdropClick);
+
+    modal.hidden = false;
+    updateUi();
+    nameInput.focus();
+    nameInput.select();
+  });
+}
+
+async function ensureElpxRenameForOfficialStyle() {
+  const conflict = officialMetadataConflict();
+  if (!conflict.hasConflict) return true;
+
+  const official = getOfficialStyleById(conflict.officialId || state.officialSourceId);
+  const officialName = String(conflict.officialId || state.officialSourceId || "").trim();
+  const officialTitle = String(official?.meta?.title || "").trim();
+  const result = await askRenameForElpxExport(officialName, officialTitle);
+  if (!result) {
+    setStatus("Guardado de ELPX cancelado. Puedes ajustar más metadatos y volver a intentarlo.");
+    return false;
+  }
+
+  if (els.metaName) els.metaName.value = result.name;
+  if (els.metaTitle) els.metaTitle.value = result.title;
+  saveMetaFields({ showStatus: false });
+
+  const after = officialMetadataConflict();
+  if (after.hasConflict) {
+    setStatus("Debes cambiar Nombre y Título para guardar el ELPX.");
+    return false;
+  }
+  return true;
 }
 
 function setStatus(text) {
   els.status.textContent = text;
+}
+
+function setBusyOverlay(active, text = "Cargando…") {
+  if (!els.busyOverlay) return;
+  if (els.busyOverlayText) els.busyOverlayText.textContent = text;
+  els.busyOverlay.hidden = !active;
 }
 
 function setupTrialNotice() {
@@ -733,6 +1057,222 @@ function compatibilityNumberFromConfigXml(xmlText) {
 
 function cloneBytes(bytes) {
   return new Uint8Array(bytes);
+}
+
+function setElpxModeUi() {
+  if (els.exportElpxBtn) els.exportElpxBtn.hidden = !state.elpxMode;
+}
+
+function elpxSessionId() {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function elpxCacheNameFromSession(sessionId) {
+  return `${ELPX_CACHE_PREFIX}${sessionId}`;
+}
+
+function inferMimeType(filePath) {
+  const lower = String(filePath || "").toLowerCase();
+  if (lower.endsWith(".html") || lower.endsWith(".htm")) return "text/html; charset=utf-8";
+  if (lower.endsWith(".css")) return "text/css; charset=utf-8";
+  if (lower.endsWith(".js")) return "text/javascript; charset=utf-8";
+  if (lower.endsWith(".xml")) return "application/xml; charset=utf-8";
+  if (lower.endsWith(".json")) return "application/json; charset=utf-8";
+  if (lower.endsWith(".svg")) return "image/svg+xml";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".gif")) return "image/gif";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".ico")) return "image/x-icon";
+  if (lower.endsWith(".woff")) return "font/woff";
+  if (lower.endsWith(".woff2")) return "font/woff2";
+  if (lower.endsWith(".ttf")) return "font/ttf";
+  if (lower.endsWith(".otf")) return "font/otf";
+  return "application/octet-stream";
+}
+
+function elpxUrlPath(sessionId, filePath) {
+  const cleanSession = encodeURIComponent(String(sessionId || "").trim());
+  const clean = normalizePath(filePath || "");
+  const encodedPath = clean
+    .split("/")
+    .filter(Boolean)
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `${ELPX_URL_PREFIX}${cleanSession}/${encodedPath}`;
+}
+
+function currentElpxPagePath() {
+  if (!state.elpxMode || !state.elpxSessionId || !els.previewFrame?.src) return "";
+  try {
+    const url = new URL(els.previewFrame.src);
+    const prefix = `${ELPX_URL_PREFIX}${encodeURIComponent(state.elpxSessionId)}/`;
+    if (!url.pathname.startsWith(prefix)) return "";
+    const relative = decodeURIComponent(url.pathname.slice(prefix.length));
+    return normalizePath(relative || "index.html");
+  } catch {
+    return "";
+  }
+}
+
+function rewriteElpxThemeUrls(cssText) {
+  if (!state.elpxMode || !state.elpxSessionId) return String(cssText || "");
+  const themeBasePath = normalizePath(state.elpxThemePrefix || "theme/");
+  const resolveRelativeToTheme = (token) => {
+    const cleanToken = String(token || "").trim();
+    if (!cleanToken) return "";
+    if (cleanToken.startsWith("/")) return normalizePath(cleanToken.slice(1));
+    try {
+      const base = new URL(`https://editor.local/${themeBasePath}`);
+      const resolved = new URL(cleanToken, base);
+      return normalizePath(resolved.pathname.replace(/^\/+/, ""));
+    } catch {
+      return normalizePath(`${themeBasePath}${cleanToken}`);
+    }
+  };
+  return String(cssText || "").replace(/url\(([^)]+)\)/gi, (full, raw) => {
+    const token = String(raw || "").trim().replace(/^['"]|['"]$/g, "");
+    if (
+      !token
+      || token.startsWith("data:")
+      || token.startsWith("http:")
+      || token.startsWith("https:")
+      || token.startsWith("blob:")
+      || token.startsWith("#")
+    ) {
+      return full;
+    }
+    if (token.startsWith("/__elpx/")) return `url("${token}")`;
+    const resolvedRelative = resolveRelativeToTheme(token);
+    if (!resolvedRelative) return full;
+    return `url("${elpxUrlPath(state.elpxSessionId, resolvedRelative)}")`;
+  });
+}
+
+function applyLiveElpxCssToFrame() {
+  if (!state.elpxMode || !els.previewFrame?.contentDocument || !state.files.has("style.css")) return;
+  let doc;
+  try {
+    doc = els.previewFrame.contentDocument;
+  } catch {
+    return;
+  }
+  if (!doc?.head) return;
+  const cssText = rewriteElpxThemeUrls(readCss());
+  if (cssText === state.previewLastElpxCss) return;
+  let styleNode = doc.getElementById("editor-elpx-live-css");
+  if (!styleNode || String(styleNode.tagName || "").toLowerCase() !== "style") {
+    styleNode = doc.createElement("style");
+    styleNode.id = "editor-elpx-live-css";
+    doc.head.appendChild(styleNode);
+  }
+  styleNode.textContent = cssText;
+  state.previewLastElpxCss = cssText;
+}
+
+async function clearElpxCaches({ keepCacheName = "" } = {}) {
+  if (!("caches" in window)) return;
+  const keys = await window.caches.keys();
+  await Promise.all(
+    keys
+      .filter((key) => key.startsWith(ELPX_CACHE_PREFIX) && (!keepCacheName || key !== keepCacheName))
+      .map((key) => window.caches.delete(key))
+  );
+}
+
+async function registerElpxServiceWorkerIfNeeded() {
+  if (!("serviceWorker" in navigator)) throw new Error("Service Worker no disponible en este navegador.");
+  if (!window.isSecureContext) throw new Error("ELPX requiere HTTPS o localhost para usar Service Worker.");
+  await navigator.serviceWorker.register(ELPX_SW_URL);
+  await navigator.serviceWorker.ready;
+}
+
+async function writeElpxFileToCache(cache, sessionId, path, bytes) {
+  const url = elpxUrlPath(sessionId, path);
+  const response = new Response(cloneBytes(bytes), {
+    headers: {
+      "Content-Type": inferMimeType(path),
+      "Cache-Control": "no-store"
+    }
+  });
+  await cache.put(url, response);
+}
+
+async function syncThemeFilesToElpxCache({ replaceTheme = false } = {}) {
+  if (!state.elpxMode || !state.elpxCacheName || !state.elpxSessionId || !("caches" in window)) return;
+  const cache = await window.caches.open(state.elpxCacheName);
+  if (replaceTheme) {
+    const expected = new Set(
+      Array.from(state.files.keys()).map((relPath) => normalizePath(`${state.elpxThemePrefix}${relPath}`))
+    );
+    const currentThemePaths = Array.from(state.elpxFiles.keys()).filter((path) => path.startsWith(state.elpxThemePrefix));
+    for (const fullPath of currentThemePaths) {
+      if (expected.has(fullPath)) continue;
+      state.elpxFiles.delete(fullPath);
+      await cache.delete(elpxUrlPath(state.elpxSessionId, fullPath), { ignoreSearch: true });
+    }
+  }
+  for (const [relPath, bytes] of state.files.entries()) {
+    const fullPath = normalizePath(`${state.elpxThemePrefix}${relPath}`);
+    state.elpxFiles.set(fullPath, cloneBytes(bytes));
+    await writeElpxFileToCache(cache, state.elpxSessionId, fullPath, bytes);
+  }
+}
+
+function scheduleElpxThemeSync() {
+  if (!state.elpxMode) return;
+  if (state.elpxThemeSyncTimer) clearTimeout(state.elpxThemeSyncTimer);
+  state.elpxThemeSyncTimer = window.setTimeout(() => {
+    state.elpxThemeSyncTimer = 0;
+    syncThemeFilesToElpxCache().catch(() => {
+      // sync errors are surfaced on export/load operations
+    });
+  }, 220);
+}
+
+function reloadElpxPreviewPage() {
+  if (!state.elpxMode || !state.elpxSessionId || !els.previewFrame) return;
+  const pagePath = currentElpxPagePath() || "index.html";
+  state.previewLastElpxCss = "";
+  els.previewFrame.setAttribute("src", `${elpxUrlPath(state.elpxSessionId, pagePath)}?rev=${Date.now()}`);
+}
+
+function detectElpxThemePrefix(paths) {
+  const cleanPaths = Array.from(paths || []).map((p) => normalizePath(p)).filter(Boolean);
+  const preferred = cleanPaths.find((p) => /(^|\/)theme\/style\.css$/i.test(p));
+  if (preferred) return preferred.slice(0, -("style.css".length));
+
+  const cssCandidates = cleanPaths.filter((p) => p.toLowerCase().endsWith("style.css"));
+  for (const candidate of cssCandidates) {
+    const prefix = candidate.slice(0, -("style.css".length));
+    if (cleanPaths.includes(`${prefix}config.xml`)) return prefix;
+  }
+  if (cssCandidates.length) return cssCandidates[0].slice(0, -("style.css".length));
+  return "theme/";
+}
+
+async function deactivateElpxMode({ resetFrame = true } = {}) {
+  if (state.elpxThemeSyncTimer) {
+    clearTimeout(state.elpxThemeSyncTimer);
+    state.elpxThemeSyncTimer = 0;
+  }
+  state.elpxMode = false;
+  state.previewLastElpxCss = "";
+  state.elpxSessionId = "";
+  state.elpxOriginalName = "";
+  state.elpxThemePrefix = "theme/";
+  state.elpxThemeFiles.clear();
+  state.elpxFiles.clear();
+  if (state.elpxCacheName) {
+    await clearElpxCaches({ keepCacheName: "" });
+  }
+  state.elpxCacheName = "";
+  if (resetFrame && els.previewFrame) {
+    els.previewFrame.setAttribute("src", "about:blank");
+  }
+  if (els.elpxInput) els.elpxInput.value = "";
+  if (els.elpxInputName) els.elpxInputName.textContent = "Ningún archivo seleccionado";
+  setElpxModeUi();
 }
 
 function convertLegacyCssToV3(cssText) {
@@ -1046,9 +1586,9 @@ function listStyleImagePaths({ includeAll = false } = {}) {
     .sort((a, b) => a.localeCompare(b));
 }
 
-function refreshStyleImageSelect(selectEl, currentPath, kindLabel) {
+function refreshStyleImageSelect(selectEl, currentPath, kindLabel, { includeAll = false } = {}) {
   if (!selectEl) return;
-  const images = listStyleImagePaths({ includeAll: Boolean(els.showAllStyleImages?.checked) });
+  const images = listStyleImagePaths({ includeAll });
   const current = normalizePath(currentPath || "");
   const hasCurrent = current && state.files.has(current) && isImageFile(current);
   const options = hasCurrent && !images.includes(current) ? [current, ...images] : images;
@@ -1074,9 +1614,27 @@ function refreshStyleImageSelect(selectEl, currentPath, kindLabel) {
 }
 
 function refreshHeaderFooterImageSelects() {
-  refreshStyleImageSelect(els.bgImageSelect, state.quick.bgImagePath, "fondo");
-  refreshStyleImageSelect(els.headerImageSelect, state.quick.headerImagePath, "cabecera");
-  refreshStyleImageSelect(els.footerImageSelect, state.quick.footerImagePath, "pie");
+  const includeAll = Boolean(els.showAllStyleImages?.checked);
+  refreshStyleImageSelect(els.bgImageSelect, state.quick.bgImagePath, "fondo", { includeAll });
+  refreshStyleImageSelect(els.headerImageSelect, state.quick.headerImagePath, "cabecera", { includeAll });
+  refreshStyleImageSelect(els.footerImageSelect, state.quick.footerImagePath, "pie", { includeAll });
+}
+
+function refreshNavIconSelects() {
+  refreshStyleImageSelect(els.navPrevIconSelect, state.quick.navIconPrevPath, "anterior", { includeAll: true });
+  refreshStyleImageSelect(els.navNextIconSelect, state.quick.navIconNextPath, "siguiente", { includeAll: true });
+  refreshStyleImageSelect(els.navMenuIconSelect, state.quick.navIconMenuPath, "menú", { includeAll: true });
+}
+
+function updateNavIconsInfo() {
+  if (!els.navIconsInfo) return;
+  const parts = [];
+  if (state.quick.navIconPrevPath && state.files.has(state.quick.navIconPrevPath)) parts.push(`Anterior: ${state.quick.navIconPrevPath}`);
+  if (state.quick.navIconNextPath && state.files.has(state.quick.navIconNextPath)) parts.push(`Siguiente: ${state.quick.navIconNextPath}`);
+  if (state.quick.navIconMenuPath && state.files.has(state.quick.navIconMenuPath)) parts.push(`Menú: ${state.quick.navIconMenuPath}`);
+  els.navIconsInfo.textContent = parts.length
+    ? `Iconos activos. ${parts.join(" | ")}`
+    : "Sin cambios en iconos de navegación.";
 }
 
 function isEditorManagedHeaderImage(path) {
@@ -1526,11 +2084,253 @@ function readCss() {
   return state.files.has("style.css") ? decode(state.files.get("style.css")) : "";
 }
 
-function writeCss(cssText) {
+function writeCss(cssText, { recordUndo = true } = {}) {
+  const currentCss = readCss();
+  if (recordUndo && String(cssText || "") !== currentCss) pushUndoSnapshot();
   state.files.set("style.css", encode(cssText));
   invalidateBlob("style.css");
   if (state.activePath === "style.css") syncEditorWithActiveFile();
   renderPreview();
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function isDomDocument(value) {
+  return Boolean(value && typeof value === "object" && value.nodeType === 9 && value.documentElement);
+}
+
+function isDomElement(value) {
+  return Boolean(value && typeof value === "object" && value.nodeType === 1 && typeof value.tagName === "string");
+}
+
+function targetElementFromEventTarget(target) {
+  if (isDomElement(target)) return target;
+  if (target && typeof target === "object" && target.nodeType === 3 && target.parentElement) return target.parentElement;
+  return null;
+}
+
+function isTransientStateClass(name) {
+  const n = String(name || "").trim().toLowerCase();
+  if (!n) return true;
+  return (
+    n === "sfhover"
+    || n === "sffocus"
+    || n === "hover"
+    || n === "focus"
+    || n === "active"
+    || n === "visited"
+    || n === "current"
+    || n === "selected"
+    || n === "pressed"
+  );
+}
+
+function cssEscape(value) {
+  if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(String(value));
+  return String(value || "").replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+}
+
+function rgbToHex(input, fallback = "#000000") {
+  const raw = String(input || "").trim();
+  if (!raw) return fallback;
+  if (/^#[0-9a-f]{6}$/i.test(raw)) return raw.toLowerCase();
+  if (/^#[0-9a-f]{3}$/i.test(raw)) {
+    const short = raw.slice(1).toLowerCase();
+    return `#${short[0]}${short[0]}${short[1]}${short[1]}${short[2]}${short[2]}`;
+  }
+  const m = raw.match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (!m) return fallback;
+  const toHex = (n) => {
+    const v = Math.max(0, Math.min(255, Number.parseInt(n, 10) || 0));
+    return v.toString(16).padStart(2, "0");
+  };
+  return `#${toHex(m[1])}${toHex(m[2])}${toHex(m[3])}`;
+}
+
+function alphaPercentFromColor(input, fallback = 0) {
+  const raw = String(input || "").trim().toLowerCase();
+  if (!raw) return fallback;
+  if (raw === "transparent") return 100;
+  const rgba = raw.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)/i);
+  if (rgba && rgba[4]) {
+    const alpha = Math.max(0, Math.min(1, Number.parseFloat(rgba[4]) || 0));
+    return Math.round((1 - alpha) * 100);
+  }
+  const rgb = raw.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/i);
+  if (rgb) return 0;
+  return fallback;
+}
+
+function normalizePercentNumber(input, fallback = 0) {
+  const n = Number.parseFloat(String(input || "").trim());
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function hexToRgb(hex) {
+  const value = normalizeHex(hex, "#000000");
+  const clean = value.slice(1);
+  const expanded = clean.length === 3
+    ? `${clean[0]}${clean[0]}${clean[1]}${clean[1]}${clean[2]}${clean[2]}`
+    : clean;
+  return {
+    r: Number.parseInt(expanded.slice(0, 2), 16) || 0,
+    g: Number.parseInt(expanded.slice(2, 4), 16) || 0,
+    b: Number.parseInt(expanded.slice(4, 6), 16) || 0
+  };
+}
+
+function cssColorWithTransparency(hex, transparencyPercent) {
+  const { r, g, b } = hexToRgb(hex);
+  const alpha = Math.max(0, Math.min(1, 1 - (normalizePercentNumber(transparencyPercent, 0) / 100)));
+  if (alpha >= 0.999) return `rgb(${r}, ${g}, ${b})`;
+  return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+}
+
+function sanitizeCssValue(input) {
+  const raw = String(input || "").trim();
+  if (!raw) return "";
+  if (/[{};]/.test(raw)) return "";
+  return raw;
+}
+
+function normalizePxNumber(input, fallback = 16) {
+  const n = Number.parseFloat(String(input || "").replace("px", "").trim());
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(8, Math.min(96, Math.round(n)));
+}
+
+function getClickOverridesBlock(css) {
+  const re = new RegExp(`${escapeRegExp(CLICK_OVERRIDES_START)}([\\s\\S]*?)${escapeRegExp(CLICK_OVERRIDES_END)}`, "i");
+  const m = String(css || "").match(re);
+  return m ? m[1] : "";
+}
+
+function stripClickOverridesBlock(css) {
+  const re = new RegExp(`\\s*${escapeRegExp(CLICK_OVERRIDES_START)}[\\s\\S]*?${escapeRegExp(CLICK_OVERRIDES_END)}\\s*`, "gi");
+  return String(css || "").replace(re, "\n").trimEnd();
+}
+
+function writeClickOverridesBlock(css, blockText) {
+  const base = stripClickOverridesBlock(css);
+  const body = String(blockText || "").trim();
+  if (!body) return `${base}\n`;
+  return `${base}\n\n${CLICK_OVERRIDES_START}\n${body}\n${CLICK_OVERRIDES_END}\n`;
+}
+
+function upsertClickOverrideRule(css, selector, declarations) {
+  const cleanSelector = String(selector || "").trim();
+  if (!cleanSelector || !declarations || typeof declarations !== "object") return css;
+  const lines = [];
+  for (const [prop, value] of Object.entries(declarations)) {
+    if (!value) continue;
+    lines.push(`  ${prop}: ${value} !important;`);
+  }
+  if (!lines.length) return css;
+  let block = getClickOverridesBlock(css).trim();
+  const selectorRe = new RegExp(`${escapeRegExp(cleanSelector)}\\s*\\{[\\s\\S]*?\\}`, "i");
+  block = block.replace(selectorRe, "").trim();
+  const rule = `${cleanSelector} {\n${lines.join("\n")}\n}`;
+  block = block ? `${block}\n\n${rule}` : rule;
+  return writeClickOverridesBlock(css, block);
+}
+
+function normalizeSelectorForMatch(selector) {
+  return String(selector || "")
+    .trim()
+    .replace(/\s*([>+~])\s*/g, "$1")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function splitSelectorList(selectorText) {
+  return String(selectorText || "")
+    .split(",")
+    .map((token) => normalizeSelectorForMatch(token))
+    .filter(Boolean);
+}
+
+function parseCssRuleDeclarationsMap(cssText) {
+  const map = new Map();
+  const ruleRe = /([^{}]+)\{([^}]*)\}/g;
+  for (const match of String(cssText || "").matchAll(ruleRe)) {
+    const selectorRaw = String(match[1] || "").trim();
+    const declarationsRaw = String(match[2] || "");
+    if (!selectorRaw) continue;
+    const selectors = splitSelectorList(selectorRaw);
+    if (!selectors.length) continue;
+    const props = new Set();
+    for (const chunk of declarationsRaw.split(";")) {
+      const line = String(chunk || "").trim();
+      if (!line) continue;
+      const colon = line.indexOf(":");
+      if (colon <= 0) continue;
+      const prop = line.slice(0, colon).trim().toLowerCase();
+      if (prop) props.add(prop);
+    }
+    if (!props.size) continue;
+    for (const selector of selectors) {
+      const existing = map.get(selector) || new Set();
+      for (const prop of props) existing.add(prop);
+      map.set(selector, existing);
+    }
+  }
+  return map;
+}
+
+function pruneClickOverridesConflicts(baseCss, quickCssBlock) {
+  const quickRuleMap = parseCssRuleDeclarationsMap(quickCssBlock);
+  if (!quickRuleMap.size) return baseCss;
+  const clickBlock = getClickOverridesBlock(baseCss);
+  if (!clickBlock.trim()) return baseCss;
+
+  const ruleRe = /([^{}]+)\{([^}]*)\}/g;
+  const keptRules = [];
+  for (const match of clickBlock.matchAll(ruleRe)) {
+    const selectorRaw = String(match[1] || "").trim();
+    const declarationsRaw = String(match[2] || "");
+    if (!selectorRaw) continue;
+    const selectors = splitSelectorList(selectorRaw);
+    const blockedProps = new Set();
+    for (const selector of selectors) {
+      const props = quickRuleMap.get(selector);
+      if (!props) continue;
+      for (const prop of props) blockedProps.add(prop);
+    }
+    if (!blockedProps.size) {
+      keptRules.push(`${selectorRaw} {\n${declarationsRaw.trim()}\n}`);
+      continue;
+    }
+    const keptLines = declarationsRaw
+      .split(";")
+      .map((chunk) => String(chunk || "").trim())
+      .filter(Boolean)
+      .filter((line) => {
+        const colon = line.indexOf(":");
+        if (colon <= 0) return false;
+        const prop = line.slice(0, colon).trim().toLowerCase();
+        return !blockedProps.has(prop);
+      })
+      .map((line) => `  ${line};`);
+    if (keptLines.length) {
+      keptRules.push(`${selectorRaw} {\n${keptLines.join("\n")}\n}`);
+    }
+  }
+  return writeClickOverridesBlock(baseCss, keptRules.join("\n\n"));
+}
+
+function clearClickOverrides() {
+  const css = readCss();
+  const next = writeClickOverridesBlock(css, "");
+  if (next === css) {
+    setStatus("No había cambios por clic que deshacer.");
+    return;
+  }
+  writeCss(next);
+  markDirty();
+  setStatus("Cambios por clic eliminados.");
 }
 
 function renderFileList() {
@@ -1743,10 +2543,12 @@ function quickToUI(values) {
     else input.value = String(values[key]);
   }
   refreshHeaderFooterImageSelects();
+  refreshNavIconSelects();
   updateLogoInfo();
   updateBgImageInfo();
   updateHeaderImageInfo();
   updateFooterImageInfo();
+  updateNavIconsInfo();
   updateContentWidthControls(values);
 }
 
@@ -1900,49 +2702,408 @@ function applyPreviewTogglesFromUI() {
   setStatus("Previsualización actualizada.");
 }
 
-function setupPreviewOptionsPopover() {
-  const btn = els.previewOptionsBtn;
-  const panel = els.previewOptionsPanel;
-  if (!btn || !panel) return;
-
-  const setOpen = (open) => {
-    panel.hidden = !open;
-    btn.setAttribute("aria-expanded", open ? "true" : "false");
-  };
-  const isOpen = () => !panel.hidden;
-
-  btn.addEventListener("click", (ev) => {
-    ev.stopPropagation();
-    setOpen(!isOpen());
-  });
-
-  panel.addEventListener("click", (ev) => {
-    ev.stopPropagation();
-  });
-
-  document.addEventListener("click", () => {
-    if (isOpen()) setOpen(false);
-  });
-
-  document.addEventListener("keydown", (ev) => {
-    if (ev.key === "Escape" && isOpen()) {
-      setOpen(false);
-      btn.focus();
-    }
-  });
-}
-
 function setupPreviewFrame() {
   const frame = els.previewFrame;
   if (!frame) return;
 
-  const expectedSrc = PREVIEW_FRAME_URL;
-  const currentAttr = frame.getAttribute("src");
-  if (!currentAttr || currentAttr !== expectedSrc) frame.setAttribute("src", expectedSrc);
-
   frame.addEventListener("load", () => {
+    if (state.elpxMode) {
+      state.previewLastElpxCss = "";
+      applyLiveElpxCssToFrame();
+      bindClickEditFrameHandlers();
+      renderLiveClickEditPreview();
+      return;
+    }
+    bindClickEditFrameHandlers();
     if (state.previewPendingRender) renderPreview();
   });
+
+  // Fallback: if iframe was already loaded before binding events, render once.
+  window.setTimeout(() => {
+    if (state.elpxMode) return;
+    bindClickEditFrameHandlers();
+  }, 0);
+}
+
+function setClickEditButtonState() {
+  if (!els.previewInspectBtn) return;
+  els.previewInspectBtn.setAttribute("aria-pressed", state.clickEditMode ? "true" : "false");
+}
+
+function resetClickEditModalPosition() {
+  const card = els.clickEditCard;
+  if (!card) return;
+  card.style.left = "50%";
+  card.style.top = "50%";
+  card.style.transform = "translate(-50%, -50%)";
+}
+
+function removeLiveClickEditPreviewStyle() {
+  const doc = els.previewFrame?.contentDocument || null;
+  if (!doc) return;
+  const node = doc.getElementById("editor-click-live-edit-style");
+  if (node) node.remove();
+}
+
+function expandedClickEditSelector() {
+  const baseSelector = String(state.clickEditTargetSelector || "").trim();
+  if (!baseSelector) return "";
+  const withInteractiveStates = Boolean(
+    els.clickApplyInteractiveStates?.checked && !els.clickApplyInteractiveWrap?.hidden
+  );
+  return withInteractiveStates
+    ? `${baseSelector},\n${baseSelector}:hover,\n${baseSelector}:focus,\n${baseSelector}:active`
+    : baseSelector;
+}
+
+function currentClickEditDeclarations() {
+  const bgHex = normalizeHex(els.clickPropBg?.value || "");
+  const bgTransparency = normalizePercentNumber(els.clickPropBgAlpha?.value || "0", 0);
+  const declarations = {
+    "background-color": cssColorWithTransparency(bgHex, bgTransparency),
+  };
+  if (state.clickEditHasText) {
+    const textHex = normalizeHex(els.clickPropColor?.value || "");
+    const textTransparency = normalizePercentNumber(els.clickPropColorAlpha?.value || "0", 0);
+    declarations.color = cssColorWithTransparency(textHex, textTransparency);
+    declarations["font-size"] = `${normalizePxNumber(els.clickPropFontSize?.value || "16", 16)}px`;
+    declarations["font-weight"] = String(Number.parseInt(els.clickPropFontWeight?.value || "400", 10) || 400);
+  }
+  const width = sanitizeCssValue(els.clickPropWidth?.value || "");
+  const maxWidth = sanitizeCssValue(els.clickPropMaxWidth?.value || "");
+  const marginBottom = sanitizeCssValue(els.clickPropMarginBottom?.value || "");
+  const padding = sanitizeCssValue(els.clickPropPadding?.value || "");
+  if (width) declarations.width = width;
+  if (maxWidth) declarations["max-width"] = maxWidth;
+  if (marginBottom) declarations["margin-bottom"] = marginBottom;
+  if (padding) declarations.padding = padding;
+  return declarations;
+}
+
+function renderLiveClickEditPreview() {
+  if (!state.elpxMode || !els.clickEditModal || els.clickEditModal.hidden) return;
+  const selector = expandedClickEditSelector();
+  if (!selector) {
+    removeLiveClickEditPreviewStyle();
+    return;
+  }
+  const declarations = currentClickEditDeclarations();
+  const lines = [];
+  for (const [prop, value] of Object.entries(declarations)) {
+    if (!value) continue;
+    lines.push(`  ${prop}: ${value} !important;`);
+  }
+  if (!lines.length) {
+    removeLiveClickEditPreviewStyle();
+    return;
+  }
+  const doc = els.previewFrame?.contentDocument || null;
+  if (!doc?.head) return;
+  let node = doc.getElementById("editor-click-live-edit-style");
+  if (!node) {
+    node = doc.createElement("style");
+    node.id = "editor-click-live-edit-style";
+    doc.head.appendChild(node);
+  }
+  node.textContent = `${selector} {\n${lines.join("\n")}\n}\n`;
+}
+
+function openClickEditModal() {
+  if (!els.clickEditModal) return;
+  els.clickEditModal.hidden = false;
+  resetClickEditModalPosition();
+  renderLiveClickEditPreview();
+}
+
+function closeClickEditModal() {
+  if (!els.clickEditModal) return;
+  els.clickEditModal.hidden = true;
+  state.clickEditDragActive = false;
+  removeLiveClickEditPreviewStyle();
+}
+
+function onClickEditModalDragMove(ev) {
+  if (!state.clickEditDragActive || !els.clickEditCard) return;
+  ev.preventDefault();
+  const card = els.clickEditCard;
+  const viewportW = window.innerWidth || document.documentElement.clientWidth || 1200;
+  const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
+  const cardW = Math.max(260, card.offsetWidth || 520);
+  const cardH = Math.max(180, card.offsetHeight || 360);
+  let left = ev.clientX - state.clickEditDragOffsetX;
+  let top = ev.clientY - state.clickEditDragOffsetY;
+  left = Math.max(6, Math.min(viewportW - cardW - 6, left));
+  top = Math.max(6, Math.min(viewportH - cardH - 6, top));
+  card.style.transform = "none";
+  card.style.left = `${left}px`;
+  card.style.top = `${top}px`;
+}
+
+function stopClickEditModalDrag() {
+  state.clickEditDragActive = false;
+  document.removeEventListener("mousemove", onClickEditModalDragMove, true);
+  document.removeEventListener("mouseup", stopClickEditModalDrag, true);
+}
+
+function startClickEditModalDrag(ev) {
+  if (ev.button !== 0 || !els.clickEditCard || !els.clickEditModal || els.clickEditModal.hidden) return;
+  ev.preventDefault();
+  const rect = els.clickEditCard.getBoundingClientRect();
+  els.clickEditCard.style.transform = "none";
+  els.clickEditCard.style.left = `${rect.left}px`;
+  els.clickEditCard.style.top = `${rect.top}px`;
+  state.clickEditDragActive = true;
+  state.clickEditDragOffsetX = ev.clientX - rect.left;
+  state.clickEditDragOffsetY = ev.clientY - rect.top;
+  document.addEventListener("mousemove", onClickEditModalDragMove, true);
+  document.addEventListener("mouseup", stopClickEditModalDrag, true);
+}
+
+function ideviceTypeClassFromElement(el) {
+  if (!isDomElement(el)) return "";
+  let node = el;
+  while (node && isDomElement(node)) {
+    const classes = Array.from(node.classList || []);
+    const typeClass = classes.find((name) => /Idevice$/i.test(name) && !/^iDevice(?:_|$)/i.test(name));
+    if (typeClass) return typeClass;
+    node = node.parentElement;
+  }
+  return "";
+}
+
+function buildElementSelector(el) {
+  if (!isDomElement(el)) return "";
+  const tag = String(el.tagName || "").toLowerCase();
+
+  if (el.closest("#siteNav")) {
+    if (tag === "a" || el.closest("a")) return "#siteNav a";
+    return "#siteNav";
+  }
+  if (el.closest(".nav-buttons")) return ".nav-buttons a";
+  if (el.closest(".package-title")) return ".exe-content .package-title";
+  if (el.closest(".page-title")) return ".exe-content .page-title";
+  if (el.closest(".box-title, .iDeviceTitle")) return ".exe-content .box-title, .exe-content .iDeviceTitle";
+  if (el.closest(".box-content, .iDevice_content, .iDevice_inner")) {
+    const ideviceType = ideviceTypeClassFromElement(el);
+    if (ideviceType) {
+      return `.exe-content .${cssEscape(ideviceType)} .box-content, .exe-content .${cssEscape(ideviceType)} .iDevice_content, .exe-content .${cssEscape(ideviceType)} .iDevice_inner`;
+    }
+    return ".exe-content .box-content, .exe-content .iDevice_content, .exe-content .iDevice_inner";
+  }
+
+  const ideviceType = ideviceTypeClassFromElement(el);
+  if (ideviceType) {
+    if (tag === "a" || el.closest("a")) return `.exe-content .${cssEscape(ideviceType)} a`;
+    if (tag === "button" || el.closest("button")) return `.exe-content .${cssEscape(ideviceType)} button:not(.toggler):not(.box-toggle)`;
+    if (/^(h1|h2|h3|h4|h5|h6)$/.test(tag)) return `.exe-content .${cssEscape(ideviceType)} ${tag}`;
+    return `.exe-content .${cssEscape(ideviceType)}`;
+  }
+
+  if (tag === "a" || el.closest("a")) return ".exe-content a";
+  if (tag === "button" || el.closest("button")) return ".exe-content button:not(.toggler):not(.box-toggle)";
+  if (/^(h1|h2|h3|h4|h5|h6|p|li|td|th|blockquote)$/.test(tag)) return `.exe-content ${tag}`;
+  if (el.id) return `#${cssEscape(el.id)}`;
+  return ".exe-content";
+}
+
+function isInteractiveLikeElement(el, computedStyle = null) {
+  if (!isDomElement(el)) return false;
+  const tag = String(el.tagName || "").toLowerCase();
+  if (["a", "button", "summary", "input", "select", "textarea"].includes(tag)) return true;
+  if (el.closest("a, button, summary, [role='button'], #siteNav, .nav-buttons, .box-toggle, .toggler")) return true;
+  const computed = computedStyle || (el.ownerDocument?.defaultView || window).getComputedStyle(el);
+  if (String(computed?.cursor || "").toLowerCase() === "pointer") return true;
+  return false;
+}
+
+function elementHasVisibleText(el) {
+  if (!isDomElement(el)) return false;
+  const doc = el.ownerDocument || document;
+  const walker = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  while (walker.nextNode()) {
+    const text = String(walker.currentNode?.textContent || "").replace(/\s+/g, " ").trim();
+    if (text) return true;
+  }
+  return false;
+}
+
+function fillClickEditModalFromElement(el, selector) {
+  if (!isDomElement(el)) return;
+  const ownerWin = el.ownerDocument?.defaultView || window;
+  const computed = ownerWin.getComputedStyle(el);
+  if (els.clickEditSelector) els.clickEditSelector.textContent = selector || "(sin selector)";
+  if (els.clickPropColor) els.clickPropColor.value = rgbToHex(computed.color, "#333333");
+  if (els.clickPropBg) els.clickPropBg.value = rgbToHex(computed.backgroundColor, "#ffffff");
+  if (els.clickPropColorAlpha) els.clickPropColorAlpha.value = String(alphaPercentFromColor(computed.color, 0));
+  if (els.clickPropBgAlpha) els.clickPropBgAlpha.value = String(alphaPercentFromColor(computed.backgroundColor, 0));
+  if (els.clickPropFontSize) els.clickPropFontSize.value = String(normalizePxNumber(computed.fontSize, 16));
+  if (els.clickPropFontWeight) {
+    const weight = Number.parseInt(String(computed.fontWeight || "400"), 10);
+    const clamped = Number.isFinite(weight) ? Math.max(400, Math.min(800, Math.round(weight / 100) * 100)) : 400;
+    els.clickPropFontWeight.value = String(clamped);
+  }
+  if (els.clickPropWidth) {
+    const width = String(computed.width || "").trim();
+    els.clickPropWidth.value = width && width !== "auto" ? width : "";
+  }
+  if (els.clickPropMaxWidth) {
+    const maxWidth = String(computed.maxWidth || "").trim();
+    els.clickPropMaxWidth.value = maxWidth && maxWidth !== "none" ? maxWidth : "";
+  }
+  if (els.clickPropMarginBottom) {
+    const marginBottom = String(computed.marginBottom || "").trim();
+    els.clickPropMarginBottom.value = marginBottom && marginBottom !== "auto" ? marginBottom : "";
+  }
+  if (els.clickPropPadding) {
+    const padding = String(computed.padding || "").trim();
+    els.clickPropPadding.value = padding && padding !== "0px" ? padding : "";
+  }
+  const hasText = elementHasVisibleText(el);
+  state.clickEditHasText = hasText;
+  if (els.clickTextColorWrap) els.clickTextColorWrap.hidden = !hasText;
+  if (els.clickTextAlphaWrap) els.clickTextAlphaWrap.hidden = !hasText;
+  if (els.clickTextSizeWrap) els.clickTextSizeWrap.hidden = !hasText;
+  if (els.clickTextWeightWrap) els.clickTextWeightWrap.hidden = !hasText;
+  const canUseInteractiveStates = isInteractiveLikeElement(el, computed);
+  if (els.clickApplyInteractiveWrap) els.clickApplyInteractiveWrap.hidden = !canUseInteractiveStates;
+  if (els.clickApplyInteractiveStates) {
+    els.clickApplyInteractiveStates.checked = canUseInteractiveStates;
+  }
+  renderLiveClickEditPreview();
+}
+
+function injectClickEditPreviewStyle(doc) {
+  if (!isDomDocument(doc) || !doc.head) return;
+  let styleNode = doc.getElementById("editor-click-mode-style");
+  if (!styleNode) {
+    styleNode = doc.createElement("style");
+    styleNode.id = "editor-click-mode-style";
+    styleNode.textContent = `
+      html[data-editor-click-mode="1"], html[data-editor-click-mode="1"] * { cursor: crosshair !important; }
+      [data-editor-click-hover="1"] { outline: 2px dashed #0ba1a1 !important; outline-offset: 1px; }
+    `;
+    doc.head.appendChild(styleNode);
+  }
+  doc.documentElement.setAttribute("data-editor-click-mode", state.clickEditMode ? "1" : "0");
+}
+
+function removeClickEditHoverMarker(doc) {
+  if (!isDomDocument(doc)) return;
+  const prev = doc.querySelector("[data-editor-click-hover='1']");
+  if (prev) prev.removeAttribute("data-editor-click-hover");
+}
+
+function handleClickEditMouseMove(ev) {
+  if (!state.clickEditMode) return;
+  const doc = ev.currentTarget;
+  if (!isDomDocument(doc)) return;
+  const target = targetElementFromEventTarget(ev.target);
+  if (!target) return;
+  removeClickEditHoverMarker(doc);
+  target.setAttribute("data-editor-click-hover", "1");
+}
+
+function handleClickEditClick(ev) {
+  if (!state.clickEditMode) return;
+  if (Date.now() < Number(state.clickEditIgnoreUntil || 0)) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  const target = targetElementFromEventTarget(ev.target);
+  if (!target) return;
+  const selector = buildElementSelector(target);
+  if (!selector) {
+    setStatus("No se pudo identificar un selector para ese elemento.");
+    return;
+  }
+  state.clickEditTargetSelector = selector;
+  fillClickEditModalFromElement(target, selector);
+  openClickEditModal();
+}
+
+function onClickEditFrameMouseMove(ev) {
+  handleClickEditMouseMove(ev);
+}
+
+function onClickEditFrameClick(ev) {
+  handleClickEditClick(ev);
+}
+
+function unbindClickEditFrameHandlers() {
+  const doc = state.clickEditFrameDoc;
+  if (!isDomDocument(doc)) return;
+  const win = doc.defaultView;
+  if (win) win.removeEventListener("click", onClickEditFrameClick, true);
+  doc.removeEventListener("mousemove", onClickEditFrameMouseMove, true);
+  doc.removeEventListener("click", onClickEditFrameClick, true);
+  doc.documentElement.removeAttribute("data-editor-click-mode");
+  removeClickEditHoverMarker(doc);
+  state.clickEditFrameDoc = null;
+}
+
+function bindClickEditFrameHandlers() {
+  const frame = els.previewFrame;
+  let doc = null;
+  try {
+    doc = frame?.contentDocument || null;
+  } catch {
+    doc = null;
+  }
+  if (!isDomDocument(doc)) return;
+  if (state.clickEditFrameDoc !== doc) {
+    unbindClickEditFrameHandlers();
+    state.clickEditFrameDoc = doc;
+  }
+  injectClickEditPreviewStyle(doc);
+  doc.removeEventListener("mousemove", onClickEditFrameMouseMove, true);
+  doc.removeEventListener("click", onClickEditFrameClick, true);
+  if (!state.clickEditMode) return;
+  const win = doc.defaultView;
+  if (win) {
+    win.removeEventListener("click", onClickEditFrameClick, true);
+    win.addEventListener("click", onClickEditFrameClick, true);
+  }
+  doc.addEventListener("mousemove", onClickEditFrameMouseMove, true);
+  doc.addEventListener("click", onClickEditFrameClick, true);
+}
+
+function setClickEditMode(nextMode) {
+  state.clickEditMode = Boolean(nextMode);
+  setClickEditButtonState();
+  if (!state.clickEditMode) {
+    closeClickEditModal();
+    state.clickEditTargetSelector = "";
+  }
+  bindClickEditFrameHandlers();
+  setStatus(state.clickEditMode
+    ? "Modo edición por clic activo: haz clic en un elemento de la previsualización."
+    : "Modo navegación activo.");
+}
+
+function toggleClickEditMode() {
+  setClickEditMode(!state.clickEditMode);
+}
+
+function applyClickEditChanges() {
+  const baseSelector = String(state.clickEditTargetSelector || "").trim();
+  if (!baseSelector) {
+    setStatus("No hay elemento seleccionado para aplicar cambios.");
+    return;
+  }
+  const selector = expandedClickEditSelector();
+  const withInteractiveStates = selector.includes(":hover");
+  const declarations = currentClickEditDeclarations();
+  const css = readCss();
+  const nextCss = upsertClickOverrideRule(css, selector, declarations);
+  state.clickEditIgnoreUntil = Date.now() + 350;
+  if (nextCss === css) {
+    closeClickEditModal();
+    setStatus("No había cambios nuevos para aplicar.");
+    return;
+  }
+  writeCss(nextCss);
+  markDirty();
+  closeClickEditModal();
+  setStatus(`Cambios aplicados en ${baseSelector}${withInteractiveStates ? " (incluye hover/focus/active)" : ""}`);
 }
 
 function ensureFontFamilyOption(fontValue, selectId) {
@@ -2170,7 +3331,13 @@ function quickFromCss(cssText) {
       || q.menuBgColor,
     q.menuBgColor
   );
-  q.menuTextColor = normalizeHex(lastCssPropValue("#siteNav a", "color") || q.menuTextColor, q.menuTextColor);
+  q.menuTextColor = normalizeHex(
+    lastCssPropValue("#siteNav a", "color")
+      || lastCssPropValue("#siteNav ul li a", "color")
+      || lastCssPropValue("#siteNav", "color")
+      || q.menuTextColor,
+    q.menuTextColor
+  );
   q.menuActiveBgColor = normalizeHex(
     lastCssPropValue("#siteNav a\\.active", "background-color")
       || lastCssPropValue("#siteNav a\\.active", "background")
@@ -2332,6 +3499,20 @@ function quickFromCss(cssText) {
     q.footerImageFit = footerMetaV1[4] || q.footerImageFit;
   }
 
+  const navIconsMeta = cssText.match(/\/\*\s*nav-icons-editor:prev=([^;]*);next=([^;]*);menu=([^;]*)\s*\*\//i);
+  if (navIconsMeta) {
+    q.navIconPrevPath = normalizePath(navIconsMeta[1].trim());
+    q.navIconNextPath = normalizePath(navIconsMeta[2].trim());
+    q.navIconMenuPath = normalizePath(navIconsMeta[3].trim());
+  } else {
+    const prevRaw = lastRulePropWithUrl([".nav-buttons .nav-button-left"], ["background-image", "background"]);
+    const nextRaw = lastRulePropWithUrl([".nav-buttons .nav-button-right"], ["background-image", "background"]);
+    const menuRaw = lastRulePropWithUrl(["button#siteNavToggler", "#siteNavToggler"], ["background-image", "background"]);
+    q.navIconPrevPath = extractCssUrl(prevRaw);
+    q.navIconNextPath = extractCssUrl(nextRaw);
+    q.navIconMenuPath = extractCssUrl(menuRaw);
+  }
+
   if (!headerMetaV1 && !headerMetaV2 && !headerMetaV3) {
     const headerSelectors = [
       ".exe-content .package-header",
@@ -2404,6 +3585,9 @@ function buildQuickCss({ important = true } = {}) {
   const bgImagePath = q.bgImagePath && state.files.has(q.bgImagePath) ? q.bgImagePath : "";
   const headerImagePath = q.headerImagePath && state.files.has(q.headerImagePath) ? q.headerImagePath : "";
   const footerImagePath = q.footerImagePath && state.files.has(q.footerImagePath) ? q.footerImagePath : "";
+  const navPrevIconPath = q.navIconPrevPath && state.files.has(q.navIconPrevPath) ? q.navIconPrevPath : "";
+  const navNextIconPath = q.navIconNextPath && state.files.has(q.navIconNextPath) ? q.navIconNextPath : "";
+  const navMenuIconPath = q.navIconMenuPath && state.files.has(q.navIconMenuPath) ? q.navIconMenuPath : "";
   const hasLateralSpace = q.contentWidthMode === "px" || q.contentWidthMode === "mixed" || (q.contentWidthMode === "percent" && q.contentWidthPercent < 100);
   const effectivePageBgColor = hasLateralSpace
     ? normalizeHex(q.contentOuterBgColor, QUICK_DEFAULTS.contentOuterBgColor)
@@ -2413,6 +3597,7 @@ function buildQuickCss({ important = true } = {}) {
   const bgMeta = `/* bg-editor:path=${bgImagePath};enabled=${q.bgImageEnabled ? "1" : "0"};repeat=${q.bgImageRepeat};soft=${Math.max(0, Math.min(90, Number(q.bgImageSoftness) || QUICK_DEFAULTS.bgImageSoftness))} */`;
   const headerMeta = `/* header-image-editor:path=${headerImagePath};enabled=${q.headerImageEnabled ? "1" : "0"};hide=${q.headerHideTitle ? "1" : "0"};height=${q.headerImageHeight};fit=${q.headerImageFit};pos=${q.headerImagePosition};repeat=${q.headerImageRepeat} */`;
   const footerMeta = `/* footer-image-editor:path=${footerImagePath};enabled=${q.footerImageEnabled ? "1" : "0"};height=${q.footerImageHeight};fit=${q.footerImageFit};pos=${q.footerImagePosition};repeat=${q.footerImageRepeat} */`;
+  const navIconsMeta = `/* nav-icons-editor:prev=${navPrevIconPath};next=${navNextIconPath};menu=${navMenuIconPath} */`;
   const logoRule = q.logoEnabled && logoPath
     ? `
 ${bodyModeAfterSelectors} {
@@ -2466,12 +3651,37 @@ ${footerImageSelectors} {
 }
 `
     : "";
+  const navPrevIconRule = navPrevIconPath
+    ? `
+${modeScopedSelectors([".nav-buttons .nav-button-left"])} {
+  background-image: url("${navPrevIconPath}")${bang};
+}
+`
+    : "";
+  const navNextIconRule = navNextIconPath
+    ? `
+${modeScopedSelectors([".nav-buttons .nav-button-right"])} {
+  background-image: url("${navNextIconPath}")${bang};
+}
+`
+    : "";
+  const navMenuIconRule = navMenuIconPath
+    ? `
+${joinSelectorList([
+  modeScopedSelectors(["button#siteNavToggler", "#siteNavToggler"]),
+  "body.siteNav-off button#siteNavToggler"
+])} {
+  background-image: url("${navMenuIconPath}")${bang};
+}
+`
+    : "";
   return `
 ${logoMeta}
 ${widthMeta}
 ${bgMeta}
 ${headerMeta}
 ${footerMeta}
+${navIconsMeta}
 ${bodyModeSelectors} {
   background-color: ${effectivePageBgColor}${bang};
   font-family: ${q.fontBody}${bang};
@@ -2564,6 +3774,9 @@ ${layoutWidthSelectors} {
 ${headerImageRule}
 ${headerHideTitleRule}
 ${footerImageRule}
+${navPrevIconRule}
+${navNextIconRule}
+${navMenuIconRule}
 ${logoRule}
 `;
 }
@@ -2638,7 +3851,9 @@ function applyQuickControls({ showStatus = true } = {}) {
   updateContentWidthControls(state.quick);
   applyEditorTheme();
   const baseCss = stripQuickBlock(readCss());
-  const css = `${baseCss}\n\n/* quick-overrides:start */\n${buildQuickCss({ important: false })}\n/* quick-overrides:end */\n`;
+  const quickCss = buildQuickCss({ important: false });
+  const cleanedBaseCss = pruneClickOverridesConflicts(baseCss, quickCss);
+  const css = `${cleanedBaseCss}\n\n/* quick-overrides:start */\n${quickCss}\n/* quick-overrides:end */\n`;
   writeCss(css);
   markDirty();
   if (showStatus) setStatus("Ajustes rápidos volcados en style.css");
@@ -2688,6 +3903,15 @@ function refreshQuickControls() {
     state.quick.logoPath = "";
     state.quick.logoEnabled = false;
   }
+  if (state.quick.navIconPrevPath && !state.files.has(state.quick.navIconPrevPath)) {
+    state.quick.navIconPrevPath = "";
+  }
+  if (state.quick.navIconNextPath && !state.files.has(state.quick.navIconNextPath)) {
+    state.quick.navIconNextPath = "";
+  }
+  if (state.quick.navIconMenuPath && !state.files.has(state.quick.navIconMenuPath)) {
+    state.quick.navIconMenuPath = "";
+  }
   migrateQuickBlockSchemaIfNeeded();
   quickToUI(state.quick);
   applyEditorTheme();
@@ -2709,6 +3933,46 @@ function parseConfigFields(xmlText) {
     description: get("description"),
     downloadable: get("downloadable")
   };
+}
+
+function getCurrentThemeNameFromConfigXml() {
+  if (!state.files.has("config.xml")) return "";
+  const data = parseConfigFields(decode(state.files.get("config.xml")));
+  return String(data?.name || "").trim();
+}
+
+function rewriteElpxProjectThemeReference(xmlText, themeName) {
+  const nextTheme = String(themeName || "").trim();
+  if (!nextTheme) return String(xmlText || "");
+  let xml = String(xmlText || "");
+  xml = xml.replace(/(<key>\s*theme\s*<\/key>\s*<value>)([^<]*)(<\/value>)/gi, `$1${nextTheme}$3`);
+  xml = xml.replace(/(<pp_style>)([^<]*)(<\/pp_style>)/gi, `$1${nextTheme}$3`);
+  xml = xml.replace(/(<key>\s*pp_style\s*<\/key>\s*<value>)([^<]*)(<\/value>)/gi, `$1${nextTheme}$3`);
+  return xml;
+}
+
+async function syncElpxProjectThemeNameReference() {
+  if (!state.elpxMode || !state.elpxSessionId || !state.elpxCacheName) return;
+  const themeName = getCurrentThemeNameFromConfigXml();
+  if (!themeName) return;
+
+  const targets = Array.from(state.elpxFiles.keys()).filter((path) => {
+    const clean = normalizePath(path).toLowerCase();
+    return /(^|\/)content(?:v3)?\.xml$/.test(clean);
+  });
+  if (!targets.length) return;
+
+  const cache = ("caches" in window) ? await window.caches.open(state.elpxCacheName) : null;
+  for (const path of targets) {
+    const bytes = state.elpxFiles.get(path);
+    if (!bytes) continue;
+    const currentXml = decode(bytes);
+    const nextXml = rewriteElpxProjectThemeReference(currentXml, themeName);
+    if (nextXml === currentXml) continue;
+    const nextBytes = encode(nextXml);
+    state.elpxFiles.set(path, nextBytes);
+    if (cache) await writeElpxFileToCache(cache, state.elpxSessionId, path, nextBytes);
+  }
 }
 
 function writeConfigField(xml, tag, value) {
@@ -2752,6 +4016,7 @@ function saveMetaFields({ showStatus = true } = {}) {
     if (showStatus) setStatus("No existe config.xml en este estilo");
     return;
   }
+  pushUndoSnapshot();
   let xml = decode(state.files.get("config.xml"));
   xml = writeConfigField(xml, "name", els.metaName.value.trim());
   xml = writeConfigField(xml, "title", els.metaTitle.value.trim());
@@ -2838,284 +4103,14 @@ function getMainPreviewRuntime() {
   return null;
 }
 
-function cleanupPreviewPopoutWindowReference() {
-  if (state.previewPopoutWindow && state.previewPopoutWindow.closed) {
-    state.previewPopoutWindow = null;
-  }
-}
-
-function getPreviewPopoutRuntime() {
-  cleanupPreviewPopoutWindowReference();
-  const win = state.previewPopoutWindow;
-  if (!win) return null;
-  try {
-    const runtime = win.__previewRuntime;
-    if (runtime && typeof runtime.render === "function") return runtime;
-  } catch {
-    return null;
-  }
-  return null;
-}
-
-function cleanupEditorPopoutWindowReference() {
-  if (state.editorPopoutWindow && state.editorPopoutWindow.closed) {
-    state.editorPopoutWindow = null;
-  }
-}
-
-function isFloatingWorkspaceActive() {
-  cleanupPreviewPopoutWindowReference();
-  cleanupEditorPopoutWindowReference();
-  return Boolean(state.previewPopoutWindow || state.editorPopoutWindow);
-}
-
-function setPreviewPopoutButtonState() {
-  const btn = els.previewPopoutBtn;
-  if (!btn) return;
-  const active = isFloatingWorkspaceActive();
-  btn.setAttribute("aria-pressed", active ? "true" : "false");
-  btn.title = active
-    ? "Cerrar espacio flotante y volver a la vista integrada"
-    : "Abrir espacio flotante (herramientas y previsualización) en ventanas independientes";
-}
-
-function setFloatingPreviewPlaceholderVisible(visible) {
-  if (els.floatingPreviewPlaceholder) els.floatingPreviewPlaceholder.hidden = !visible;
-  if (els.previewPanel) els.previewPanel.classList.toggle("floating-preview-active", Boolean(visible));
-}
-
-function popupFeaturesString({ left, top, width, height }) {
-  const nLeft = Math.max(0, Math.round(Number(left) || 0));
-  const nTop = Math.max(0, Math.round(Number(top) || 0));
-  const nWidth = Math.max(420, Math.round(Number(width) || 1360));
-  const nHeight = Math.max(520, Math.round(Number(height) || 900));
-  return `popup=yes,resizable=yes,scrollbars=yes,left=${nLeft},top=${nTop},width=${nWidth},height=${nHeight}`;
-}
-
-function floatingWorkspaceGeometry() {
-  const screenObj = window.screen || {};
-  const availWidth = Math.max(1280, Number(screenObj.availWidth) || window.outerWidth || 1600);
-  const availHeight = Math.max(760, Number(screenObj.availHeight) || window.outerHeight || 900);
-  const availLeft = Number(screenObj.availLeft) || 0;
-  const availTop = Number(screenObj.availTop) || 0;
-  const gap = 22;
-  const margin = 20;
-
-  const usableWidth = Math.max(1100, availWidth - margin * 2);
-  const usableHeight = Math.max(620, availHeight - margin * 2);
-  const height = Math.max(620, Math.min(usableHeight, Math.round((window.outerHeight || usableHeight) * 0.92)));
-
-  let editorWidth = Math.round(usableWidth * 0.31);
-  editorWidth = Math.max(400, Math.min(560, editorWidth));
-  let previewWidth = usableWidth - editorWidth - gap;
-  if (previewWidth < 760) {
-    previewWidth = 760;
-    editorWidth = Math.max(420, usableWidth - previewWidth - gap);
-  }
-
-  const totalWidth = editorWidth + gap + previewWidth;
-  const left = availLeft + Math.max(margin, Math.floor((availWidth - totalWidth) / 2));
-  const top = availTop + Math.max(10, Math.floor((availHeight - height) / 2));
-
-  return {
-    editor: { left, top, width: editorWidth, height },
-    preview: { left: left + editorWidth + gap, top, width: previewWidth, height }
-  };
-}
-
-function openPreviewPopoutWindow(preferredBounds = null) {
-  cleanupPreviewPopoutWindowReference();
-  if (state.previewPopoutWindow) {
-    state.previewPopoutWindow.focus();
-    renderPreview();
-    setPreviewPopoutButtonState();
-    return true;
-  }
-
-  const defaultBounds = { left: 120, top: 80, width: 1360, height: 900 };
-  const popup = window.open(
-    PREVIEW_FRAME_URL,
-    PREVIEW_POPOUT_WINDOW_NAME,
-    popupFeaturesString(preferredBounds || defaultBounds)
-  );
-  if (!popup) {
-    setStatus("No se pudo abrir la ventana de previsualización (bloqueada por el navegador).");
-    setPreviewPopoutButtonState();
-    return false;
-  }
-
-  state.previewPopoutWindow = popup;
-  popup.addEventListener("load", () => {
-    renderPreview();
-    setPreviewPopoutButtonState();
-  });
-  popup.addEventListener("beforeunload", () => {
-    const editorWin = state.editorPopoutWindow;
-    state.previewPopoutWindow = null;
-    if (editorWin && !editorWin.closed) editorWin.close();
-    restoreEditorPanelToMain({ closeWindow: false });
-    setFloatingPreviewPlaceholderVisible(false);
-    setPreviewPopoutButtonState();
-  });
-  setPreviewPopoutButtonState();
-  renderPreview();
-  return true;
-}
-
-function closePreviewPopoutWindow() {
-  cleanupPreviewPopoutWindowReference();
-  const win = state.previewPopoutWindow;
-  if (win && !win.closed) win.close();
-  state.previewPopoutWindow = null;
-  setPreviewPopoutButtonState();
-}
-
-function ensureEditorFloatingPlaceholder() {
-  if (state.editorPanelPlaceholder) return state.editorPanelPlaceholder;
-  const placeholder = document.createElement("aside");
-  placeholder.className = "editor-panel floating-editor-placeholder";
-  placeholder.innerHTML = `
-    <h3>Herramientas en ventana independiente</h3>
-    <p>El panel de edición está desacoplado para trabajar con dos monitores.</p>
-    <div class="button-row">
-      <button type="button" data-action="restore-floating-workspace">Volver a acoplar las dos ventanas</button>
-    </div>
-  `;
-  const restoreBtn = placeholder.querySelector('[data-action="restore-floating-workspace"]');
-  restoreBtn?.addEventListener("click", () => {
-    closeFloatingWorkspace();
-  });
-  state.editorPanelPlaceholder = placeholder;
-  return placeholder;
-}
-
-function buildEditorPopoutHtml() {
-  const styleHref = new URL("app/styles.css", window.location.href).href;
-  return `<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Editor de herramientas</title>
-  <link rel="stylesheet" href="${styleHref}" />
-  <style>
-    html, body { margin: 0; height: 100%; background: #eef1f4; }
-    body { display: flex; min-height: 100%; overflow: hidden; }
-    #floatingEditorMount { flex: 1; min-width: 0; min-height: 0; padding: 12px; display: flex; }
-    #floatingEditorMount > .editor-panel { flex: 1; min-height: 0; }
-  </style>
-</head>
-<body>
-  <div id="floatingEditorMount"></div>
-</body>
-</html>`;
-}
-
-function openEditorPopoutWindow(preferredBounds = null) {
-  cleanupEditorPopoutWindowReference();
-  if (state.editorPopoutWindow) {
-    state.editorPopoutWindow.focus();
-    return true;
-  }
-
-  const panel = els.editorPanel;
-  const shell = els.appShell;
-  const previewPanel = els.previewPanel;
-  if (!panel || !shell || !previewPanel) return false;
-
-  const defaultBounds = { left: 40, top: 80, width: 760, height: 980 };
-  const popup = window.open(
-    "",
-    EDITOR_POPOUT_WINDOW_NAME,
-    popupFeaturesString(preferredBounds || defaultBounds)
-  );
-  if (!popup) {
-    setStatus("No se pudo abrir la ventana de herramientas (bloqueada por el navegador).");
-    return false;
-  }
-  popup.document.open();
-  popup.document.write(buildEditorPopoutHtml());
-  popup.document.close();
-  const mount = popup.document.getElementById("floatingEditorMount");
-  if (!mount) return false;
-
-  const placeholder = ensureEditorFloatingPlaceholder();
-  if (!placeholder.isConnected) shell.insertBefore(placeholder, previewPanel);
-  mount.appendChild(panel);
-  state.editorPopoutWindow = popup;
-  popup.addEventListener("beforeunload", () => {
-    restoreEditorPanelToMain({ closeWindow: false });
-    closePreviewPopoutWindow();
-    setFloatingPreviewPlaceholderVisible(false);
-    setPreviewPopoutButtonState();
-  });
-  return true;
-}
-
-function restoreEditorPanelToMain({ closeWindow = true } = {}) {
-  const panel = els.editorPanel;
-  const shell = els.appShell;
-  const previewPanel = els.previewPanel;
-  if (panel && shell && previewPanel && panel.ownerDocument !== document) {
-    shell.insertBefore(panel, previewPanel);
-  }
-  if (state.editorPanelPlaceholder?.isConnected) state.editorPanelPlaceholder.remove();
-  cleanupEditorPopoutWindowReference();
-  if (closeWindow && state.editorPopoutWindow && !state.editorPopoutWindow.closed) {
-    state.editorPopoutWindow.close();
-  }
-  state.editorPopoutWindow = null;
-}
-
-function openFloatingWorkspace() {
-  const geometry = floatingWorkspaceGeometry();
-  const editorOpened = openEditorPopoutWindow(geometry.editor);
-  const previewOpened = openPreviewPopoutWindow(geometry.preview);
-  if (!(editorOpened && previewOpened)) {
-    closeFloatingWorkspace();
+function renderPreview() {
+  if (state.elpxMode) {
+    state.previewPendingRender = false;
+    applyLiveElpxCssToFrame();
+    scheduleElpxThemeSync();
     return;
   }
-  setFloatingPreviewPlaceholderVisible(true);
-  setPreviewPopoutButtonState();
-}
-
-function closeFloatingWorkspace() {
-  closePreviewPopoutWindow();
-  restoreEditorPanelToMain({ closeWindow: true });
-  setFloatingPreviewPlaceholderVisible(false);
-  setPreviewPopoutButtonState();
-}
-
-function togglePreviewPopoutWindow() {
-  if (isFloatingWorkspaceActive()) closeFloatingWorkspace();
-  else openFloatingWorkspace();
-}
-
-function closePreviewPopoutIfOpen() {
-  cleanupPreviewPopoutWindowReference();
-  if (state.previewPopoutWindow && !state.previewPopoutWindow.closed) {
-    state.previewPopoutWindow.close();
-  }
-  state.previewPopoutWindow = null;
-  setFloatingPreviewPlaceholderVisible(false);
-}
-
-function closeEditorPopoutIfOpen() {
-  restoreEditorPanelToMain({ closeWindow: true });
-}
-
-function renderPreview() {
-  const payload = buildPreviewPayload(readCss());
-  const mainRuntime = getMainPreviewRuntime();
-  if (!mainRuntime) {
-    state.previewPendingRender = true;
-  } else {
-    mainRuntime.render(payload);
-    state.previewPendingRender = false;
-  }
-  const popoutRuntime = getPreviewPopoutRuntime();
-  if (popoutRuntime) popoutRuntime.render(payload);
-  setPreviewPopoutButtonState();
+  state.previewPendingRender = false;
 }
 
 function styleJsText() {
@@ -3131,6 +4126,13 @@ function waitForPreviewFrameReady(timeoutMs = 1200) {
   return new Promise((resolve) => {
     const deadline = Date.now() + Math.max(200, timeoutMs);
     const tick = () => {
+      if (state.elpxMode) {
+        const ready = Boolean(els.previewFrame?.contentDocument?.readyState === "complete");
+        if (ready) {
+          resolve(true);
+          return;
+        }
+      }
       if (getMainPreviewRuntime()) {
         resolve(true);
         return;
@@ -3231,6 +4233,10 @@ async function loadOfficialStylesCatalog() {
 }
 
 async function loadOfficialStyle(styleId, { showStatus = true, resetFileFilter = true } = {}) {
+  const applyOverLoadedElpx = state.elpxMode;
+  if (!applyOverLoadedElpx) {
+    await deactivateElpxMode({ resetFrame: true });
+  }
   const style = getOfficialStyleById(styleId);
   if (!style) throw new Error(`Plantilla oficial no encontrada: ${styleId}`);
 
@@ -3269,16 +4275,31 @@ async function loadOfficialStyle(styleId, { showStatus = true, resetFileFilter =
   refreshQuickControls();
   refreshMetaFields();
   warnIfNotDownloadable("estilo");
+  if (applyOverLoadedElpx) {
+    state.elpxThemeFiles = new Set(state.files.keys());
+    await syncThemeFilesToElpxCache({ replaceTheme: true });
+    reloadElpxPreviewPage();
+    setElpxModeUi();
+  }
   renderPreview();
   clearDirty();
+  clearUndoHistory();
 
   if (showStatus) {
     const label = style.meta?.title || style.id;
-    setStatus(`Plantilla oficial cargada: ${label} (${style.id})`);
+    setStatus(
+      applyOverLoadedElpx
+        ? `Plantilla oficial aplicada al ELPX actual: ${label} (${style.id})`
+        : `Plantilla oficial cargada: ${label} (${style.id})`
+    );
   }
 }
 
 async function loadZip(file) {
+  const applyOverLoadedElpx = state.elpxMode;
+  if (!applyOverLoadedElpx) {
+    await deactivateElpxMode({ resetFrame: true });
+  }
   const zip = await window.JSZip.loadAsync(file);
   const names = Object.keys(zip.files).filter((name) => !zip.files[name].dir);
   const root = commonRoot(names);
@@ -3336,19 +4357,114 @@ async function loadZip(file) {
     );
   }
   warnIfNotDownloadable("ZIP");
+  if (applyOverLoadedElpx) {
+    state.elpxThemeFiles = new Set(state.files.keys());
+    await syncThemeFilesToElpxCache({ replaceTheme: true });
+    reloadElpxPreviewPage();
+    setElpxModeUi();
+  }
   renderPreview();
   clearDirty();
+  clearUndoHistory();
   const importIssues = importValidationSummary();
   if (importIssues.missingCore.length || importIssues.cssIssues.length) {
     const parts = [];
     if (importIssues.missingCore.length) parts.push(`faltan obligatorios: ${importIssues.missingCore.join(", ")}`);
     if (importIssues.cssIssues.length) parts.push(`incidencias CSS: ${importIssues.cssIssues.join(" | ")}`);
     if (titleAutofilledFromName) parts.push("title vacío completado automáticamente con name");
-    setStatus(`ZIP cargado con incidencias: ${parts.join(" ; ")}`);
+    setStatus(
+      applyOverLoadedElpx
+        ? `ZIP aplicado al ELPX con incidencias: ${parts.join(" ; ")}`
+        : `ZIP cargado con incidencias: ${parts.join(" ; ")}`
+    );
   } else {
     const fallbackMsg = titleAutofilledFromName ? " Se completó automáticamente Título con Nombre." : "";
-    setStatus((zipStatus || `ZIP cargado: ${file.name} (${state.files.size} archivos)`) + fallbackMsg);
+    const baseMsg = zipStatus || `ZIP cargado: ${file.name} (${state.files.size} archivos)`;
+    setStatus(`${applyOverLoadedElpx ? `ZIP aplicado al ELPX: ${file.name}. ` : ""}${baseMsg}${fallbackMsg}`);
   }
+}
+
+async function loadElpx(file) {
+  await registerElpxServiceWorkerIfNeeded();
+  await deactivateElpxMode({ resetFrame: false });
+
+  const zip = await window.JSZip.loadAsync(file);
+  const names = Object.keys(zip.files).filter((name) => !zip.files[name].dir);
+  const root = commonRoot(names);
+  const packageFiles = new Map();
+  for (const rawName of names) {
+    const short = normalizePath(root ? rawName.replace(`${root}/`, "") : rawName);
+    if (!short) continue;
+    const bytes = await zip.files[rawName].async("uint8array");
+    packageFiles.set(short, bytes);
+  }
+
+  if (!packageFiles.has("index.html")) throw new Error("El ELPX no contiene index.html.");
+  if (!packageFiles.has("content.xml")) throw new Error("El ELPX no contiene content.xml.");
+
+  const themePrefixRaw = detectElpxThemePrefix(Array.from(packageFiles.keys()));
+  const themePrefix = themePrefixRaw ? (themePrefixRaw.endsWith("/") ? themePrefixRaw : `${themePrefixRaw}/`) : "";
+  const themeEntries = Array.from(packageFiles.entries()).filter(([path]) => path.startsWith(themePrefix));
+  if (!themeEntries.length) throw new Error(`No se encontró carpeta de estilo en el ELPX (${themePrefix}).`);
+
+  invalidateAllBlobs();
+  state.files.clear();
+  state.elpxFiles.clear();
+  state.elpxThemeFiles.clear();
+
+  for (const [path, bytes] of packageFiles.entries()) state.elpxFiles.set(path, cloneBytes(bytes));
+  for (const [fullPath, bytes] of themeEntries) {
+    const rel = normalizePath(fullPath.slice(themePrefix.length));
+    if (!rel) continue;
+    state.files.set(rel, cloneBytes(bytes));
+    state.elpxThemeFiles.add(rel);
+  }
+
+  if (state.files.has("style.css")) {
+    const sanitized = sanitizeStyleCss(readCss());
+    state.files.set("style.css", encode(sanitized));
+    invalidateBlob("style.css");
+  }
+  const autoAddedOnLoad = ensureCoreFilesPresent({ markAsDirty: false });
+
+  state.elpxMode = true;
+  state.elpxThemePrefix = themePrefix;
+  state.elpxOriginalName = safeFileName(file.name || "project.elpx") || "project.elpx";
+  state.elpxSessionId = elpxSessionId();
+  state.elpxCacheName = elpxCacheNameFromSession(state.elpxSessionId);
+  state.previewLastElpxCss = "";
+
+  await clearElpxCaches({ keepCacheName: "" });
+  const cache = await window.caches.open(state.elpxCacheName);
+  for (const [path, bytes] of state.elpxFiles.entries()) {
+    await writeElpxFileToCache(cache, state.elpxSessionId, path, bytes);
+  }
+  await syncThemeFilesToElpxCache();
+
+  state.templateFiles = new Set(state.files.keys());
+  state.baseFiles = new Set(state.files.keys());
+  state.officialSourceId = "";
+  state.activePath = state.files.has("style.css") ? "style.css" : listFilesSorted()[0] || "";
+  state.previewLayoutMode = "modern";
+  state.previewFromLegacyZip = false;
+  hideOfficialStylePreview();
+  renderOfficialStylesSelect();
+  refreshFileTypeFilterOptions({ forceAll: true });
+  renderFileList();
+  syncEditorWithActiveFile();
+  refreshQuickControls();
+  refreshMetaFields();
+  setElpxModeUi();
+
+  const startPath = packageFiles.has("index.html") ? "index.html" : Array.from(packageFiles.keys()).find((p) => p.endsWith(".html")) || "index.html";
+  const previewUrl = elpxUrlPath(state.elpxSessionId, startPath);
+  els.previewFrame?.setAttribute("src", previewUrl);
+  renderPreview();
+  clearDirty();
+  clearUndoHistory();
+
+  const autoAddedMsg = autoAddedOnLoad.length ? ` Se añadieron ficheros de tema faltantes: ${autoAddedOnLoad.join(", ")}.` : "";
+  setStatus(`Proyecto ELPX cargado: ${file.name} (${packageFiles.size} archivos). Navega el contenido real en la previsualización.${autoAddedMsg}`);
 }
 
 function validationReport() {
@@ -3380,19 +4496,7 @@ function importValidationSummary() {
 }
 
 async function exportZip() {
-  const officialConflict = officialMetadataConflict();
-  if (officialConflict.hasConflict) {
-    const fields = [];
-    if (officialConflict.nameEqual) fields.push("Nombre");
-    if (officialConflict.titleEqual) fields.push("Título");
-    const fieldsText = fields.join(" y ");
-    setStatus(`Debes cambiar ${fieldsText} del estilo en Metadatos antes de exportar para no sobrescribir la plantilla oficial.`);
-    window.alert(
-      `Exportación bloqueada.\n\n${fieldsText} coincide con la plantilla oficial.\nCámbialo en Estilo > Información y exportación y vuelve a exportar.`
-    );
-    focusMetadataForRename({ preferTitle: !officialConflict.nameEqual && officialConflict.titleEqual });
-    return;
-  }
+  if (blockExportForOfficialMetadataConflict("exportar")) return;
 
   if (state.files.has("style.css")) {
     const sanitized = sanitizeStyleCss(readCss());
@@ -3456,9 +4560,35 @@ async function exportZip() {
   setStatus(`ZIP exportado correctamente (${state.files.size} archivos)${warningText}`);
 }
 
+async function exportElpx() {
+  if (!state.elpxMode) {
+    setStatus("Primero carga un ELPX para poder exportarlo modificado.");
+    return;
+  }
+  if (!(await ensureElpxRenameForOfficialStyle())) return;
+  await syncElpxProjectThemeNameReference();
+  await syncThemeFilesToElpxCache();
+  const zip = new window.JSZip();
+  for (const [path, bytes] of state.elpxFiles.entries()) zip.file(path, bytes);
+  const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+  const original = String(state.elpxOriginalName || "project.elpx").replace(/\.elpx$/i, "");
+  const safe = safeFileName(original) || "project";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${safe}-mod.elpx`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 0);
+  setStatus(`ELPX exportado correctamente (${state.elpxFiles.size} archivos).`);
+}
+
 function onEditorInput() {
   const path = state.activePath;
   if (!path || !isTextFile(path)) return;
+  pushUndoSnapshot();
   state.files.set(path, encode(els.textEditor.value));
   markDirty();
   invalidateBlob(path);
@@ -3477,6 +4607,7 @@ function onEditorInput() {
 
 async function onReplaceImageSelected(file) {
   if (!file || !isImageFile(state.activePath)) return;
+  pushUndoSnapshot();
   const bytes = new Uint8Array(await file.arrayBuffer());
   state.files.set(state.activePath, bytes);
   markDirty();
@@ -3494,6 +4625,7 @@ async function onAddLogoSelected(file) {
   }
   const extension = (file.name.split(".").pop() || "png").toLowerCase();
   const path = `img/custom-logo.${extension}`;
+  pushUndoSnapshot();
   const bytes = new Uint8Array(await file.arrayBuffer());
   state.files.set(path, bytes);
   invalidateBlob(path);
@@ -3509,6 +4641,7 @@ async function onAddLogoSelected(file) {
 }
 
 function removeLogo() {
+  pushUndoSnapshot();
   if (state.quick.logoPath && state.files.has(state.quick.logoPath)) {
     state.files.delete(state.quick.logoPath);
     invalidateBlob(state.quick.logoPath);
@@ -3532,6 +4665,7 @@ async function onAddBackgroundImageSelected(file) {
   }
   const extension = (file.name.split(".").pop() || "png").toLowerCase();
   const path = `img/custom-background.${extension}`;
+  pushUndoSnapshot();
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   if (state.quick.bgImagePath && state.quick.bgImagePath !== path && state.files.has(state.quick.bgImagePath)) {
@@ -3569,6 +4703,7 @@ function selectBackgroundImageFromStylePath(path) {
 }
 
 function removeBackgroundImage() {
+  pushUndoSnapshot();
   if (state.quick.bgImagePath && state.files.has(state.quick.bgImagePath)) {
     state.files.delete(state.quick.bgImagePath);
     invalidateBlob(state.quick.bgImagePath);
@@ -3592,6 +4727,7 @@ async function onAddHeaderImageSelected(file) {
   }
   const extension = (file.name.split(".").pop() || "png").toLowerCase();
   const path = `img/custom-header.${extension}`;
+  pushUndoSnapshot();
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   if (
@@ -3634,6 +4770,7 @@ function selectHeaderImageFromStylePath(path) {
 }
 
 function removeHeaderImage() {
+  pushUndoSnapshot();
   if (
     state.quick.headerImagePath
     && state.files.has(state.quick.headerImagePath)
@@ -3661,6 +4798,7 @@ async function onAddFooterImageSelected(file) {
   }
   const extension = (file.name.split(".").pop() || "png").toLowerCase();
   const path = `img/custom-footer.${extension}`;
+  pushUndoSnapshot();
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   if (
@@ -3703,6 +4841,7 @@ function selectFooterImageFromStylePath(path) {
 }
 
 function removeFooterImage() {
+  pushUndoSnapshot();
   if (
     state.quick.footerImagePath
     && state.files.has(state.quick.footerImagePath)
@@ -3722,6 +4861,79 @@ function removeFooterImage() {
   setStatus("Imagen de pie eliminada.");
 }
 
+function navIconManagedPath(slot, extension = "svg") {
+  const safeExt = String(extension || "svg").toLowerCase().replace(/[^a-z0-9]/g, "") || "svg";
+  return `img/custom-nav-${slot}.${safeExt}`;
+}
+
+function isEditorManagedNavIcon(path, slot) {
+  return new RegExp(`^img/custom-nav-${String(slot || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\.(png|jpe?g|gif|webp|svg)$`, "i")
+    .test(normalizePath(path || ""));
+}
+
+function quickNavKeyBySlot(slot) {
+  if (slot === "prev") return "navIconPrevPath";
+  if (slot === "next") return "navIconNextPath";
+  return "navIconMenuPath";
+}
+
+function navSlotLabel(slot) {
+  if (slot === "prev") return "Anterior";
+  if (slot === "next") return "Siguiente";
+  return "Menú";
+}
+
+function selectNavIconFromStylePath(path, slot) {
+  const clean = normalizePath(path || "");
+  if (!clean) return;
+  if (!state.files.has(clean) || !isImageFile(clean)) {
+    setStatus(`La imagen seleccionada para ${navSlotLabel(slot)} no está disponible en el estilo.`);
+    return;
+  }
+  const key = quickNavKeyBySlot(slot);
+  state.quick[key] = clean;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  renderPreview();
+  setStatus(`Icono de ${navSlotLabel(slot)} seleccionado desde el estilo: ${clean}`);
+}
+
+async function onAddNavIconSelected(file, slot) {
+  if (!file) return;
+  if (!isImageFile(file.name)) {
+    setStatus(`El icono de ${navSlotLabel(slot)} debe ser un archivo de imagen válido.`);
+    return;
+  }
+  const extension = (file.name.split(".").pop() || "svg").toLowerCase();
+  const path = navIconManagedPath(slot, extension);
+  const key = quickNavKeyBySlot(slot);
+  pushUndoSnapshot();
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  const previousPath = String(state.quick[key] || "");
+  if (
+    previousPath
+    && previousPath !== path
+    && state.files.has(previousPath)
+    && isEditorManagedNavIcon(previousPath, slot)
+  ) {
+    state.files.delete(previousPath);
+    invalidateBlob(previousPath);
+  }
+
+  state.files.set(path, bytes);
+  invalidateBlob(path);
+  state.quick[key] = path;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  refreshFileTypeFilterOptions();
+  renderFileList();
+  renderPreview();
+  setStatus(`Icono de ${navSlotLabel(slot)} cargado: ${path}`);
+}
+
 function normalizeIconBaseName(fileName) {
   const base = String(fileName || "")
     .replace(/\.[^.]+$/, "")
@@ -3738,6 +4950,7 @@ async function onAddIdeviceIconsSelected(fileList) {
     setStatus("No se seleccionaron iconos válidos (.png, .jpg, .jpeg, .gif, .webp, .svg).");
     return;
   }
+  pushUndoSnapshot();
 
   let added = 0;
   let replaced = 0;
@@ -3914,6 +5127,7 @@ async function onAddFontsSelected(fileList) {
     setStatus("No se seleccionaron fuentes válidas (.woff, .woff2, .ttf, .otf).");
     return;
   }
+  pushUndoSnapshot();
 
   let added = 0;
   const addedFileNames = [];
@@ -3968,17 +5182,49 @@ function setupEvents() {
   setupTabs();
   setupPanelAccordion("io");
   setupPanelAccordion("quick");
-  setupPreviewOptionsPopover();
   setupPreviewFrame();
-  setPreviewPopoutButtonState();
+  setElpxModeUi();
+  setClickEditButtonState();
+  updateHistoryButtonsState();
   els.textEditor.addEventListener("input", onEditorInput);
   els.textEditor.addEventListener("scroll", syncHighlightedScroll);
-  els.previewPopoutBtn?.addEventListener("click", togglePreviewPopoutWindow);
-  els.restoreFloatingWorkspaceBtn?.addEventListener("click", closeFloatingWorkspace);
+  els.previewInspectBtn?.addEventListener("click", toggleClickEditMode);
+  els.undoBtn?.addEventListener("click", () => {
+    undoLastChange().catch((err) => setStatus(`No se pudo deshacer: ${err.message}`));
+  });
+  els.redoBtn?.addEventListener("click", () => {
+    redoLastChange().catch((err) => setStatus(`No se pudo rehacer: ${err.message}`));
+  });
   els.openDetachedEditorBtn?.addEventListener("click", openDetachedEditor);
+  els.clickEditTitle?.addEventListener("mousedown", startClickEditModalDrag);
+  els.clickEditApplyBtn?.addEventListener("click", applyClickEditChanges);
+  els.clickEditCancelBtn?.addEventListener("click", closeClickEditModal);
+  for (const input of [
+    els.clickPropColor,
+    els.clickPropBg,
+    els.clickPropColorAlpha,
+    els.clickPropBgAlpha,
+    els.clickPropFontSize,
+    els.clickPropFontWeight,
+    els.clickPropWidth,
+    els.clickPropMaxWidth,
+    els.clickPropMarginBottom,
+    els.clickPropPadding,
+    els.clickApplyInteractiveStates
+  ]) {
+    input?.addEventListener("input", renderLiveClickEditPreview);
+    input?.addEventListener("change", renderLiveClickEditPreview);
+  }
+  // No cerrar por clic en el fondo: evita cierres accidentales al arrastrar.
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Escape") return;
+    if (els.exportRenameModal && !els.exportRenameModal.hidden) {
+      els.exportRenameCancelBtn?.click();
+      return;
+    }
+    if (els.clickEditModal && !els.clickEditModal.hidden) closeClickEditModal();
+  });
   window.addEventListener("beforeunload", closeDetachedEditorIfOpen);
-  window.addEventListener("beforeunload", closePreviewPopoutIfOpen);
-  window.addEventListener("beforeunload", closeEditorPopoutIfOpen);
   const onFileTypeFilterChange = () => {
     renderFileList();
   };
@@ -4072,6 +5318,31 @@ function setupEvents() {
     }
   });
 
+  els.elpxPickBtn?.addEventListener("click", () => {
+    els.elpxInput?.click();
+  });
+
+  els.elpxInput?.addEventListener("change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (els.elpxInputName) els.elpxInputName.textContent = file ? file.name : "Ningún archivo seleccionado";
+    if (!file) return;
+    if (!confirmDiscardUnsavedChanges("cargar un ELPX")) {
+      ev.target.value = "";
+      if (els.elpxInputName) els.elpxInputName.textContent = "Ningún archivo seleccionado";
+      return;
+    }
+    try {
+      setBusyOverlay(true, "Cargando ELPX…");
+      await loadElpx(file);
+    } catch (err) {
+      setStatus(`Error cargando ELPX: ${err.message}`);
+      if (els.elpxInputName) els.elpxInputName.textContent = "Ningún archivo seleccionado";
+      await deactivateElpxMode({ resetFrame: true });
+    } finally {
+      setBusyOverlay(false);
+    }
+  });
+
   els.replaceImageBtn.addEventListener("click", () => {
     if (!isImageFile(state.activePath)) return;
     els.replaceImageInput.value = "";
@@ -4160,6 +5431,7 @@ function setupEvents() {
 
   els.showAllStyleImages?.addEventListener("change", () => {
     refreshHeaderFooterImageSelects();
+    refreshNavIconSelects();
   });
 
   els.headerImageSelect?.addEventListener("change", () => {
@@ -4194,6 +5466,72 @@ function setupEvents() {
     selectFooterImageFromStylePath(selectedPath);
   });
 
+  els.navPrevIconSelect?.addEventListener("change", () => {
+    const selectedPath = els.navPrevIconSelect.value;
+    if (!selectedPath) return;
+    selectNavIconFromStylePath(selectedPath, "prev");
+  });
+
+  els.navNextIconSelect?.addEventListener("change", () => {
+    const selectedPath = els.navNextIconSelect.value;
+    if (!selectedPath) return;
+    selectNavIconFromStylePath(selectedPath, "next");
+  });
+
+  els.navMenuIconSelect?.addEventListener("change", () => {
+    const selectedPath = els.navMenuIconSelect.value;
+    if (!selectedPath) return;
+    selectNavIconFromStylePath(selectedPath, "menu");
+  });
+
+  els.addNavPrevIconBtn?.addEventListener("click", () => {
+    if (!els.addNavPrevIconInput) return;
+    els.addNavPrevIconInput.value = "";
+    els.addNavPrevIconInput.click();
+  });
+
+  els.addNavNextIconBtn?.addEventListener("click", () => {
+    if (!els.addNavNextIconInput) return;
+    els.addNavNextIconInput.value = "";
+    els.addNavNextIconInput.click();
+  });
+
+  els.addNavMenuIconBtn?.addEventListener("click", () => {
+    if (!els.addNavMenuIconInput) return;
+    els.addNavMenuIconInput.value = "";
+    els.addNavMenuIconInput.click();
+  });
+
+  els.addNavPrevIconInput?.addEventListener("change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      await onAddNavIconSelected(file, "prev");
+    } catch (err) {
+      setStatus(`Error cargando icono de Anterior: ${err.message}`);
+    }
+  });
+
+  els.addNavNextIconInput?.addEventListener("change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      await onAddNavIconSelected(file, "next");
+    } catch (err) {
+      setStatus(`Error cargando icono de Siguiente: ${err.message}`);
+    }
+  });
+
+  els.addNavMenuIconInput?.addEventListener("change", async (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    try {
+      await onAddNavIconSelected(file, "menu");
+    } catch (err) {
+      setStatus(`Error cargando icono de Menú: ${err.message}`);
+    }
+  });
+
   els.addIdeviceIconsBtn?.addEventListener("click", () => {
     if (!els.addIdeviceIconsInput) return;
     els.addIdeviceIconsInput.value = "";
@@ -4219,6 +5557,7 @@ function setupEvents() {
   });
 
   els.exportBtn.addEventListener("click", exportZip);
+  els.exportElpxBtn?.addEventListener("click", exportElpx);
 
   for (const input of els.quickInputs) {
     input.addEventListener("input", () => {
@@ -4270,6 +5609,23 @@ function setupEvents() {
   });
 }
 
+async function loadDefaultBootElpx() {
+  const response = await fetch(DEFAULT_BOOT_ELPX_URL, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`No se pudo cargar ${DEFAULT_BOOT_ELPX_URL} (${response.status})`);
+  }
+  const blob = await response.blob();
+  const file = new File([blob], "ejemplo.elpx", { type: blob.type || "application/zip" });
+  setBusyOverlay(true, "Cargando ejemplo…");
+  try {
+    await loadElpx(file);
+    if (els.elpxInputName) els.elpxInputName.textContent = "ejemplo.elpx (cargado por defecto)";
+    setStatus("Ejemplo cargado por defecto.");
+  } finally {
+    setBusyOverlay(false);
+  }
+}
+
 (async function boot() {
   setupEvents();
   setDetachedEditorButtonState();
@@ -4277,9 +5633,9 @@ function setupEvents() {
   previewToUI(state.preview);
   try {
     await loadOfficialStylesCatalog();
-    await loadOfficialStyle(state.selectedOfficialStyleId, { showStatus: false });
-    setStatus("Plantilla oficial base cargada por defecto");
+    await loadDefaultBootElpx();
   } catch (err) {
-    setStatus(`Error inicializando catálogo oficial: ${err.message}`);
+    setStatus(`No se pudo cargar ejemplo.elpx por defecto: ${err.message}`);
+    setBusyOverlay(false);
   }
 })();

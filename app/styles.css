@@ -71,6 +71,46 @@
   display: none;
 }
 
+.busy-overlay {
+  position: absolute;
+  inset: 48px 0 0 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: rgb(15 23 42 / 0.18);
+  backdrop-filter: blur(1px);
+  border-radius: 0 0 8px 8px;
+}
+
+.busy-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 210px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #c9d3e1;
+  background: #fff;
+  color: #253041;
+  box-shadow: 0 10px 24px rgb(16 24 40 / 0.14);
+  font-weight: 700;
+}
+
+.busy-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid #d3dde9;
+  border-top-color: var(--action);
+  animation: busy-spin .8s linear infinite;
+}
+
+@keyframes busy-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -118,52 +158,6 @@ body {
   overflow: auto;
   padding: 12px;
   background: #f8fafc;
-}
-
-.floating-editor-placeholder {
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  padding: 14px;
-  border: 1px dashed #b7c2d2;
-  background: #f4f7fb;
-}
-
-.floating-editor-placeholder h3 {
-  margin: 0;
-  font-size: 1.02rem;
-  color: var(--action-dark);
-}
-
-.floating-editor-placeholder p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.floating-preview-placeholder {
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  padding: 14px;
-  margin: 10px 12px 0;
-  border: 1px dashed #b7c2d2;
-  background: #f4f7fb;
-  border-radius: 8px;
-}
-
-.floating-preview-placeholder h3 {
-  margin: 0;
-  font-size: 1.02rem;
-  color: var(--action-dark);
-}
-
-.floating-preview-placeholder p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.preview-panel.floating-preview-active #previewFrame {
-  display: none;
 }
 
 .preview-panel {
@@ -226,6 +220,27 @@ body {
   color: var(--action-dark);
 }
 
+#previewInspectBtn[aria-pressed="false"] {
+  animation: inspect-soft-pulse 1.9s ease-in-out infinite;
+}
+
+@keyframes inspect-soft-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(7 142 142 / 0);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgb(7 142 142 / 0.14);
+    transform: scale(1.035);
+  }
+}
+
+.icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .preview-options-popover {
   position: absolute;
   right: 0;
@@ -277,6 +292,13 @@ body {
   margin: 12px 0;
   border-bottom: 1px solid var(--line-soft);
   padding-bottom: 8px;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 10px;
 }
 
 .tab {
@@ -442,13 +464,17 @@ textarea:focus-visible {
   box-shadow: 0 0 0 2px rgb(11 161 161 / 0.24);
 }
 
-#exportBtn {
+#exportBtn,
+#elpxPickBtn,
+#exportElpxBtn {
   background: var(--action);
   border-color: var(--action);
   color: #fff;
 }
 
-#exportBtn:hover {
+#exportBtn:hover,
+#elpxPickBtn:hover,
+#exportElpxBtn:hover {
   background: var(--action-dark);
   border-color: var(--action-dark);
 }
@@ -470,6 +496,16 @@ textarea:focus-visible {
 
 .load-group:last-of-type {
   margin-bottom: 6px;
+}
+
+.style-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.style-choice-col {
+  min-width: 0;
 }
 
 #zipInput {
@@ -907,6 +943,151 @@ textarea:focus-visible {
   font-size: 0.9rem;
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 0.35);
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.modal-card {
+  position: absolute;
+  width: min(520px, 96vw);
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgb(15 23 42 / 0.24);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.modal-card-centered {
+  position: relative;
+}
+
+.modal-card h3 {
+  margin: 0;
+  color: var(--action-dark);
+  cursor: move;
+  user-select: none;
+}
+
+.modal-card-centered h3 {
+  cursor: default;
+  user-select: text;
+}
+
+.click-selector {
+  margin: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9rem;
+  color: #334155;
+  overflow-wrap: anywhere;
+}
+
+.modal-card .status-inline {
+  margin: 0;
+}
+
+.click-edit-grid {
+  gap: 12px 16px;
+}
+
+.click-edit-grid label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  color: #344054;
+}
+
+.click-edit-grid input[type="number"],
+.click-edit-grid input[type="text"],
+.click-edit-grid select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #1d2939;
+}
+
+.click-edit-grid input[type="color"] {
+  width: 100%;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px;
+  background: #fff;
+}
+
+.click-edit-toggle {
+  margin: 2px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.click-edit-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.click-edit-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  min-height: 32px;
+  border-radius: 6px;
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+#clickEditCancelBtn {
+  background: #fff;
+  border-color: #c7ced8;
+  color: #334155;
+}
+
+#clickEditCancelBtn:hover {
+  background: #f8fafc;
+  border-color: #b5beca;
+}
+
+#exportRenameHelp {
+  min-height: 1.2em;
+  color: #475467;
+}
+
+#exportRenameHelp.error {
+  color: #b42318;
+  font-weight: 600;
+}
+
+#exportRenameCancelBtn {
+  background: #fff;
+  border-color: #c7ced8;
+  color: #334155;
+}
+
+#exportRenameCancelBtn:hover {
+  background: #f8fafc;
+  border-color: #b5beca;
+}
+
 .group-card {
   border: 1px solid var(--line-soft);
   border-radius: 8px;
@@ -918,6 +1099,11 @@ textarea:focus-visible {
   margin: 0 0 8px;
   font-size: 0.95rem;
   color: var(--action-dark);
+}
+
+.nav-icon-grid {
+  display: grid;
+  gap: 8px;
 }
 
 #previewFrame {
@@ -992,5 +1178,11 @@ textarea:focus-visible {
 
   .inline-three {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .click-edit-actions button {
+    flex: 1 1 100%;
   }
 }
