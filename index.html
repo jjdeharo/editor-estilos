@@ -83,7 +83,7 @@
 
       <section class="tab-panel" data-panel="quick">
         <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">palette</span>Paleta y tipografía</summary>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">palette</span>Apariencia general</summary>
           <div class="section-content quick-grid">
             <div class="palette-compact">
               <label>Color enlaces <input id="linkColor" data-quick="linkColor" type="color" /></label>
@@ -95,34 +95,72 @@
                 <input id="contentOuterBgColor" data-quick="contentOuterBgColor" type="color" />
               </label>
             </div>
-            <div class="inline-three">
-              <label>Ancho contenido
-                <select id="contentWidthMode" data-quick="contentWidthMode">
-                  <option value="default">Por defecto del estilo</option>
-                  <option value="px">Ancho fijo (px)</option>
-                  <option value="percent">Ancho relativo (%)</option>
+          </div>
+        </details>
+
+        <details>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">width</span>Distribución y fondo general</summary>
+          <div class="section-content quick-grid">
+            <div class="group-card">
+              <h4 class="group-title">Ancho de contenido</h4>
+              <div class="inline-three">
+                <label>Ancho contenido
+                  <select id="contentWidthMode" data-quick="contentWidthMode">
+                    <option value="default">Por defecto del estilo</option>
+                    <option value="px">Ancho fijo (px)</option>
+                    <option value="percent">Ancho relativo (%)</option>
+                    <option value="mixed">Mixto (px y %)</option>
+                  </select>
+                </label>
+                <label id="contentWidthPxWrap">Ancho (px)
+                  <input id="contentWidth" data-quick="contentWidth" type="number" min="640" max="2000" step="10" />
+                </label>
+                <label id="contentWidthPercentWrap">Ancho (%)
+                  <input id="contentWidthPercent" data-quick="contentWidthPercent" type="number" min="10" max="100" step="1" />
+                </label>
+              </div>
+              <p id="contentWidthDefaultSummary" class="status-inline" hidden></p>
+              <p id="contentWidthMixedHint" class="status-inline" hidden>Modo mixto: se aplica el menor valor entre px y % (`max-width: min(px, %)`)</p>
+              <div id="contentCenterWrap" class="toggle-item">
+                <span class="toggle-control">
+                  <input id="contentCentered" data-quick="contentCentered" class="toggle-input" type="checkbox" checked />
+                  <span class="toggle-visual"></span>
+                </span>
+                <label class="toggle-label" for="contentCentered">Centrar contenido</label>
+              </div>
+            </div>
+
+            <div class="group-card">
+              <h4 class="group-title">Imagen de fondo</h4>
+              <div class="button-row">
+                <button id="addBgImageBtn" type="button">Añadir fondo</button>
+                <button id="removeBgImageBtn" type="button">Quitar fondo</button>
+                <input id="addBgImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
+              </div>
+              <label>Imagen de fondo del estilo
+                <select id="bgImageSelect">
+                  <option value="">Seleccionar imagen del estilo…</option>
                 </select>
               </label>
-              <label id="contentWidthPxWrap">Ancho (px)
-                <input id="contentWidth" data-quick="contentWidth" type="number" min="640" max="2000" step="10" />
+              <label>Repetición fondo
+                <select id="bgImageRepeat" data-quick="bgImageRepeat">
+                  <option value="no-repeat">No repetir</option>
+                  <option value="repeat-x">Repetir horizontal</option>
+                  <option value="repeat-y">Repetir vertical</option>
+                  <option value="repeat">Repetir ambos</option>
+                </select>
               </label>
-              <label id="contentWidthPercentWrap">Ancho (%)
-                <input id="contentWidthPercent" data-quick="contentWidthPercent" type="number" min="10" max="100" step="1" />
+              <label>Suavizado fondo (%)
+                <input id="bgImageSoftness" data-quick="bgImageSoftness" type="number" min="0" max="90" step="1" />
               </label>
+              <p id="bgImageInfo" class="status-inline">Sin imagen de fondo.</p>
             </div>
-            <div id="contentCenterWrap" class="toggle-item">
-              <span class="toggle-control">
-                <input id="contentCentered" data-quick="contentCentered" class="toggle-input" type="checkbox" checked />
-                <span class="toggle-visual"></span>
-              </span>
-              <label class="toggle-label" for="contentCentered">Centrar contenido</label>
-            </div>
-            <div class="button-row">
-              <button id="addBgImageBtn" type="button">Añadir fondo</button>
-              <button id="removeBgImageBtn" type="button">Quitar fondo</button>
-              <input id="addBgImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
-            </div>
-            <p id="bgImageInfo" class="status-inline">Sin imagen de fondo.</p>
+          </div>
+        </details>
+
+        <details>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">text_fields</span>Tipografía general</summary>
+          <div class="section-content quick-grid">
             <div class="inline-three">
               <label>Fuente general
                 <select id="fontBody" data-quick="fontBody">
@@ -157,6 +195,12 @@
               <label>Tamaño base (px) <input id="baseFontSize" data-quick="baseFontSize" type="number" min="12" max="28" step="1" /></label>
               <label>Interlineado <input id="lineHeight" data-quick="lineHeight" type="number" min="1" max="2.2" step="0.05" /></label>
             </div>
+          </div>
+        </details>
+
+        <details>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">title</span>Títulos de página y proyecto</summary>
+          <div class="section-content quick-grid">
             <div class="inline-three">
               <label>Tamaño título página (rem) <input id="pageTitleSize" data-quick="pageTitleSize" type="number" min="1.1" max="3.2" step="0.05" /></label>
               <label>Peso título página
@@ -171,8 +215,8 @@
             </div>
             <div class="inline-three">
               <label>Margen inferior título (rem) <input id="pageTitleMarginBottom" data-quick="pageTitleMarginBottom" type="number" min="0" max="2.5" step="0.05" /></label>
-              <label>Tamaño título de curso (rem) <input id="packageTitleSize" data-quick="packageTitleSize" type="number" min="0" max="4" step="0.05" /></label>
-              <label>Peso título de curso
+              <label>Tamaño título de proyecto (rem) <input id="packageTitleSize" data-quick="packageTitleSize" type="number" min="0" max="4" step="0.05" /></label>
+              <label>Peso título de proyecto
                 <select id="packageTitleWeight" data-quick="packageTitleWeight">
                   <option value="400">400</option>
                   <option value="500">500</option>
@@ -182,7 +226,7 @@
               </label>
             </div>
             <div class="inline-three">
-              <label>Color título de curso <input id="packageTitleColor" data-quick="packageTitleColor" type="color" /></label>
+              <label>Color título de proyecto <input id="packageTitleColor" data-quick="packageTitleColor" type="color" /></label>
               <label>Tamaño título iDevice (rem) <input id="boxTitleSize" data-quick="boxTitleSize" type="number" min="1" max="2.4" step="0.05" /></label>
               <label>Separación icono/título (px) <input id="boxTitleGap" data-quick="boxTitleGap" type="number" min="0" max="28" step="1" /></label>
             </div>
@@ -354,7 +398,7 @@
         </details>
 
         <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">menu</span>Menú y navegación</summary>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">menu</span>Navegación (menú lateral)</summary>
           <div class="section-content quick-grid palette-compact">
             <label>Fondo menú <input id="menuBgColor" data-quick="menuBgColor" type="color" /></label>
             <label>Texto menú <input id="menuTextColor" data-quick="menuTextColor" type="color" /></label>
@@ -364,7 +408,7 @@
         </details>
 
         <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">smart_button</span>iDevices y botones</summary>
+          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">smart_button</span>iDevices y botones (contenido)</summary>
           <div class="section-content quick-grid">
             <div class="palette-compact">
               <label>Fondo iDevice <input id="boxBgColor" data-quick="boxBgColor" type="color" /></label>
@@ -495,7 +539,7 @@
                       <input id="previewShowPackageTitle" data-preview="showPackageTitle" class="toggle-input" type="checkbox" checked />
                       <span class="toggle-visual"></span>
                     </span>
-                    <label class="toggle-label" for="previewShowPackageTitle">Mostrar título de curso</label>
+                    <label class="toggle-label" for="previewShowPackageTitle">Mostrar título de proyecto</label>
                   </div>
                   <div class="toggle-item">
                     <span class="toggle-control">
@@ -521,7 +565,7 @@
     </main>
   </div>
   <footer class="app-footer">
-    <p>v 0.3.0 · (c) <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">Licencia AGPLv3</a> · <a href="https://github.com/jjdeharo/editor-estilos" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a> · <a href="https://github.com/jjdeharo/editor-estilos/issues" target="_blank" rel="noopener noreferrer">Problemas y sugerencias</a></p>
+    <p>v 0.4.0 · (c) <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">Licencia AGPLv3</a> · <a href="https://github.com/jjdeharo/editor-estilos" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a> · <a href="https://github.com/jjdeharo/editor-estilos/issues" target="_blank" rel="noopener noreferrer">Problemas y sugerencias</a></p>
   </footer>
 
   <script src="vendor/jszip.min.js"></script>

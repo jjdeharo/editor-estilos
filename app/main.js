@@ -349,6 +349,8 @@ const QUICK_DEFAULTS = {
   buttonTextColor: "#ffffff",
   bgImageEnabled: false,
   bgImagePath: "",
+  bgImageRepeat: "no-repeat",
+  bgImageSoftness: 35,
   headerImageEnabled: false,
   headerHideTitle: false,
   headerImagePath: "",
@@ -370,7 +372,7 @@ const QUICK_DEFAULTS = {
   logoMarginY: 14
 };
 const BOX_FONT_SIZE_OPTIONS = ["inherit", "14px", "16px", "18px", "20px", "22px", "24px"];
-const CONTENT_WIDTH_MODE_OPTIONS = ["default", "px", "percent"];
+const CONTENT_WIDTH_MODE_OPTIONS = ["default", "px", "percent", "mixed"];
 
 const PREVIEW_DEFAULTS = {
   showSearch: true,
@@ -388,6 +390,87 @@ const HIGHLIGHT_BY_FILE_GROUP = {
   json: "json",
   html: "xml",
   markdown: "markdown"
+};
+const QUICK_HELP_TEXT = {
+  linkColor: "Cambia el color de los enlaces del contenido.",
+  titleColor: "Cambia el color del titulo principal de cada pagina.",
+  textColor: "Define el color base del texto del contenido.",
+  contentBgColor: "Cambia el fondo del area principal de contenido.",
+  pageBgColor: "Cambia el fondo global de la pagina.",
+  contentOuterBgColor: "Cambia el color del espacio lateral cuando el contenido no ocupa el 100%.",
+  contentWidthMode: "Ajusta el ancho del área principal. Con menú lateral activo, cambia el ancho del conjunto visible (menú + contenido).",
+  contentWidth: "Fija en pixeles el ancho maximo del bloque principal de contenido (columna central).",
+  contentWidthPercent: "Fija en porcentaje el ancho maximo del bloque principal de contenido (columna central).",
+  contentCentered: "Centra o alinea a la izquierda el bloque principal cuando no ocupa todo el ancho.",
+  fontBody: "Define la fuente base del texto general.",
+  fontTitles: "Define la fuente usada en titulos.",
+  fontMenu: "Define la fuente usada en el menu lateral.",
+  baseFontSize: "Ajusta el tamano base de lectura.",
+  lineHeight: "Ajusta el interlineado global para mejorar legibilidad.",
+  pageTitleSize: "Ajusta el tamano del titulo de pagina.",
+  pageTitleWeight: "Ajusta el grosor del titulo de pagina.",
+  pageTitleUppercase: "Fuerza mayusculas en titulos de pagina.",
+  pageTitleLetterSpacing: "Ajusta el espaciado entre letras del titulo de pagina.",
+  pageTitleMarginBottom: "Ajusta la separacion bajo el titulo de pagina.",
+  packageTitleSize: "Ajusta el tamano del titulo del proyecto.",
+  packageTitleColor: "Ajusta el color del titulo del proyecto.",
+  packageTitleWeight: "Ajusta el grosor del titulo del proyecto.",
+  boxTitleSize: "Ajusta el tamano de titulos de iDevices.",
+  boxTitleGap: "Ajusta la distancia entre icono y titulo de iDevice.",
+  menuBgColor: "Cambia el fondo del menu lateral.",
+  menuTextColor: "Cambia el color de texto del menu lateral.",
+  menuActiveBgColor: "Cambia el fondo del elemento activo en el menu lateral.",
+  menuActiveTextColor: "Cambia el color del elemento activo en el menu lateral.",
+  boxBgColor: "Cambia el fondo de los iDevices.",
+  boxBorderColor: "Cambia el borde de los iDevices.",
+  boxTitleColor: "Cambia el color del titulo de iDevice.",
+  boxTextAlign: "Define la alineacion del texto en iDevices.",
+  boxFontSize: "Define el tamano del texto dentro de iDevices.",
+  buttonBgColor: "Cambia el color de fondo de botones del contenido.",
+  buttonTextColor: "Cambia el color de texto de botones del contenido.",
+  bgImageRepeat: "Define si la imagen de fondo se repite en la pagina.",
+  bgImageSoftness: "Suaviza la imagen de fondo con un velo para reducir contraste.",
+  logoEnabled: "Muestra u oculta el logotipo institucional.",
+  logoSize: "Ajusta el tamano del logotipo institucional.",
+  logoPosition: "Elige la posicion del logotipo institucional.",
+  logoMarginX: "Ajusta el margen horizontal del logotipo.",
+  logoMarginY: "Ajusta el margen vertical del logotipo.",
+  headerImageEnabled: "Activa o desactiva imagen en cabecera.",
+  headerHideTitle: "Oculta el titulo textual cuando hay imagen en cabecera.",
+  headerImageHeight: "Ajusta la altura de la cabecera.",
+  headerImageFit: "Define como se adapta la imagen de cabecera al espacio disponible.",
+  headerImagePosition: "Define la posicion de la imagen de cabecera.",
+  headerImageRepeat: "Define si la imagen de cabecera se repite.",
+  footerImageEnabled: "Activa o desactiva imagen en pie.",
+  footerImageHeight: "Ajusta la altura del pie.",
+  footerImageFit: "Define como se adapta la imagen de pie.",
+  footerImagePosition: "Define la posicion de la imagen de pie.",
+  footerImageRepeat: "Define si la imagen de pie se repite."
+};
+const PREVIEW_HELP_TEXT = {
+  showSearch: "Muestra u oculta el buscador.",
+  showPageCounter: "Muestra u oculta el contador de paginas.",
+  showNavButtons: "Muestra u oculta los botones anterior/siguiente.",
+  navCollapsed: "Simula el menu lateral plegado.",
+  showPackageTitle: "Muestra u oculta el titulo del proyecto.",
+  showPageTitle: "Muestra u oculta el titulo de pagina.",
+  collapseIdevices: "Simula los iDevices plegados."
+};
+const CONTROL_HELP_TEXT_BY_ID = {
+  addBgImageBtn: "Selecciona una imagen para el fondo global.",
+  removeBgImageBtn: "Elimina la imagen de fondo configurada.",
+  bgImageSelect: "Elige una imagen existente del estilo para usarla como fondo.",
+  addFontBtn: "Anade fuentes personalizadas para usarlas en los selectores de tipografia.",
+  addLogoBtn: "Sube o reemplaza el logotipo institucional.",
+  removeLogoBtn: "Elimina el logotipo institucional cargado.",
+  showAllStyleImages: "Amplia el listado para elegir cualquier imagen del estilo en cabecera y pie.",
+  headerImageSelect: "Elige una imagen existente del estilo para usarla en la cabecera.",
+  addHeaderImageBtn: "Sube una imagen personalizada para la cabecera.",
+  removeHeaderImageBtn: "Elimina la imagen de cabecera configurada.",
+  footerImageSelect: "Elige una imagen existente del estilo para usarla en el pie.",
+  addFooterImageBtn: "Sube una imagen personalizada para el pie.",
+  removeFooterImageBtn: "Elimina la imagen de pie configurada.",
+  addIdeviceIconsBtn: "Reemplaza en lote los iconos de iDevices."
 };
 
 const DELIVERY_MODE_BODY_SELECTORS = ["body.exe-web-site", "body.exe-ims", "body.exe-scorm"];
@@ -410,6 +493,36 @@ function modeScopedSelectors(targetSelectors = []) {
     }
   }
   return joinSelectorList(scoped);
+}
+
+function applyTooltipToControl(target, text) {
+  if (!(target instanceof HTMLElement) || !text) return;
+  target.title = text;
+  if (target.id) {
+    const linked = document.querySelector(`label[for="${target.id}"]`);
+    if (linked instanceof HTMLElement) linked.title = text;
+  }
+  const wrapLabel = target.closest("label");
+  if (wrapLabel instanceof HTMLElement) wrapLabel.title = text;
+  const toggleItem = target.closest(".toggle-item");
+  if (toggleItem instanceof HTMLElement) toggleItem.title = text;
+}
+
+function applyControlTooltips() {
+  for (const input of els.quickInputs) {
+    const key = String(input?.dataset?.quick || "");
+    const text = QUICK_HELP_TEXT[key];
+    applyTooltipToControl(input, text);
+  }
+  for (const input of els.previewInputs) {
+    const key = String(input?.dataset?.preview || "");
+    const text = PREVIEW_HELP_TEXT[key];
+    applyTooltipToControl(input, text);
+  }
+  for (const [id, text] of Object.entries(CONTROL_HELP_TEXT_BY_ID)) {
+    const target = document.getElementById(id);
+    applyTooltipToControl(target, text);
+  }
 }
 
 const els = {
@@ -456,6 +569,7 @@ const els = {
   addBgImageBtn: document.getElementById("addBgImageBtn"),
   removeBgImageBtn: document.getElementById("removeBgImageBtn"),
   addBgImageInput: document.getElementById("addBgImageInput"),
+  bgImageSelect: document.getElementById("bgImageSelect"),
   bgImageInfo: document.getElementById("bgImageInfo"),
   addHeaderImageBtn: document.getElementById("addHeaderImageBtn"),
   removeHeaderImageBtn: document.getElementById("removeHeaderImageBtn"),
@@ -947,6 +1061,7 @@ function refreshStyleImageSelect(selectEl, currentPath, kindLabel) {
 }
 
 function refreshHeaderFooterImageSelects() {
+  refreshStyleImageSelect(els.bgImageSelect, state.quick.bgImagePath, "fondo");
   refreshStyleImageSelect(els.headerImageSelect, state.quick.headerImagePath, "cabecera");
   refreshStyleImageSelect(els.footerImageSelect, state.quick.footerImagePath, "pie");
 }
@@ -1571,6 +1686,8 @@ function quickFromUI() {
   if (!["left top", "center top", "right top", "left center", "center center", "right center", "left bottom", "center bottom", "right bottom"].includes(next.footerImagePosition)) {
     next.footerImagePosition = QUICK_DEFAULTS.footerImagePosition;
   }
+  if (!["no-repeat", "repeat-x", "repeat-y", "repeat"].includes(next.bgImageRepeat)) next.bgImageRepeat = QUICK_DEFAULTS.bgImageRepeat;
+  next.bgImageSoftness = Math.max(0, Math.min(90, Number(next.bgImageSoftness) || QUICK_DEFAULTS.bgImageSoftness));
   if (!["no-repeat", "repeat-x", "repeat-y", "repeat"].includes(next.footerImageRepeat)) next.footerImageRepeat = QUICK_DEFAULTS.footerImageRepeat;
   next.pageTitleSize = Math.max(1.1, Math.min(3.2, Number(next.pageTitleSize) || QUICK_DEFAULTS.pageTitleSize));
   next.pageTitleLetterSpacing = Math.max(0, Math.min(6, Number(next.pageTitleLetterSpacing) || QUICK_DEFAULTS.pageTitleLetterSpacing));
@@ -1622,16 +1739,103 @@ function updateContentWidthControls(values = state.quick) {
   const percentWrap = document.getElementById("contentWidthPercentWrap");
   const centerWrap = document.getElementById("contentCenterWrap");
   const outerBgWrap = document.getElementById("contentOuterBgWrap");
-  if (pxWrap) pxWrap.hidden = mode !== "px";
-  if (percentWrap) percentWrap.hidden = mode !== "percent";
-  let showOuterBg = false;
-  if (centerWrap) {
-    const pct = Math.max(10, Math.min(100, Number(values?.contentWidthPercent) || QUICK_DEFAULTS.contentWidthPercent));
-    const showCenter = mode === "px" || (mode === "percent" && pct < 100);
-    centerWrap.hidden = !showCenter;
-    showOuterBg = showCenter;
+  const mixedHint = document.getElementById("contentWidthMixedHint");
+  const defaultSummary = document.getElementById("contentWidthDefaultSummary");
+  const pct = Math.max(10, Math.min(100, Number(values?.contentWidthPercent) || QUICK_DEFAULTS.contentWidthPercent));
+
+  let showPx = false;
+  let showPercent = false;
+  let showCenter = false;
+  let showMixedHint = false;
+
+  if (mode === "px") {
+    showPx = true;
+    showCenter = true;
+  } else if (mode === "percent") {
+    showPercent = true;
+    showCenter = pct < 100;
+  } else if (mode === "mixed") {
+    showPx = true;
+    showPercent = true;
+    showCenter = true;
+    showMixedHint = true;
   }
-  if (outerBgWrap) outerBgWrap.hidden = !showOuterBg;
+
+  if (pxWrap) pxWrap.hidden = !showPx;
+  if (percentWrap) percentWrap.hidden = !showPercent;
+  if (centerWrap) centerWrap.hidden = !showCenter;
+  if (outerBgWrap) outerBgWrap.hidden = !showCenter;
+  if (mixedHint) mixedHint.hidden = !showMixedHint;
+  if (defaultSummary) {
+    const showDefaultSummary = mode === "default";
+    defaultSummary.hidden = !showDefaultSummary;
+    if (showDefaultSummary) {
+      defaultSummary.textContent = summarizeDefaultWidthConfig(readCss());
+    }
+  }
+}
+
+function summarizeDefaultWidthConfig(cssText) {
+  const css = stripQuickBlock(String(cssText || ""));
+  if (!css) return "El estilo no define un ancho específico: se usa el comportamiento por defecto del navegador.";
+
+  const selectorHints = [
+    "#node-content-container.exe-content #node-content",
+    ".exe-web-site .page-content",
+    ".exe-ims .page-content",
+    ".exe-scorm .page-content",
+    ".exe-web-site main.page",
+    ".exe-ims main.page",
+    ".exe-scorm main.page"
+  ].map((s) => s.toLowerCase());
+  const blockRe = /([^{}]+)\{([^}]*)\}/g;
+  let maxWidth = "";
+  let width = "";
+  let marginLeft = "";
+  let marginRight = "";
+  let margin = "";
+
+  for (const m of css.matchAll(blockRe)) {
+    const selectorsRaw = String(m[1] || "").toLowerCase();
+    const selectors = selectorsRaw.replace(/\s+/g, " ");
+    if (!selectorHints.some((hint) => selectors.includes(hint))) continue;
+    const declarations = String(m[2] || "");
+    const grab = (prop) => {
+      const re = new RegExp(`(?:^|[\\s;])${prop}(?![-\\w])\\s*:\\s*([^;]+)`, "gi");
+      let last = "";
+      for (const pm of declarations.matchAll(re)) last = String(pm[1] || "").trim();
+      return last;
+    };
+    const w = grab("width");
+    const mw = grab("max-width");
+    const ml = grab("margin-left");
+    const mr = grab("margin-right");
+    const mg = grab("margin");
+    if (w) width = w;
+    if (mw) maxWidth = mw;
+    if (ml) marginLeft = ml;
+    if (mr) marginRight = mr;
+    if (mg) margin = mg;
+  }
+
+  const normalizedWidth = String(width || "").replace(/\s+/g, "").toLowerCase();
+  const isFluid100 = normalizedWidth === "100%" || normalizedWidth === "100vw";
+  let widthText = "sin ancho explícito definido";
+  if (isFluid100 && maxWidth) widthText = `ancho 100% con límite máximo ${maxWidth}`;
+  else if (isFluid100) widthText = "ancho 100% (fluido)";
+  else if (maxWidth) widthText = `ancho fluido (auto/100%) con límite máximo ${maxWidth}`;
+  else if (width) widthText = `ancho ${width}`;
+
+  let centered = false;
+  if (marginLeft && marginRight) {
+    centered = marginLeft.toLowerCase().includes("auto") && marginRight.toLowerCase().includes("auto");
+  } else if (margin) {
+    centered = /\bauto\b/i.test(margin);
+  }
+
+  return centered
+    ? `Configuración del estilo: ${widthText}, contenido centrado.`
+    : `Configuración del estilo: ${widthText}.`;
 }
 
 function previewFromUI() {
@@ -1990,7 +2194,7 @@ function quickFromCss(cssText) {
     q.buttonTextColor
   );
 
-  const widthMeta = cssText.match(/\/\*\s*content-width-editor:mode=(default|px|percent);px=(\d+);pct=(\d+);center=(0|1)(?:;outer=(#[0-9a-f]{6}|#[0-9a-f]{8}))?\s*\*\//i);
+  const widthMeta = cssText.match(/\/\*\s*content-width-editor:mode=(default|px|percent|mixed);px=(\d+);pct=(\d+);center=(0|1)(?:;outer=(#[0-9a-f]{6}|#[0-9a-f]{8}))?\s*\*\//i);
   if (widthMeta) {
     q.contentWidthMode = String(widthMeta[1] || q.contentWidthMode).toLowerCase();
     q.contentWidth = Number(widthMeta[2]) || q.contentWidth;
@@ -2035,10 +2239,41 @@ function quickFromCss(cssText) {
     q.logoMarginX = Number(logoMeta[5]) || q.logoMarginX;
     q.logoMarginY = Number(logoMeta[6]) || q.logoMarginY;
   }
-  const bgMeta = cssText.match(/\/\*\s*bg-editor:path=([^;]*);enabled=(0|1)\s*\*\//i);
+  const bgMeta = cssText.match(/\/\*\s*bg-editor:path=([^;]*);enabled=(0|1)(?:;repeat=(no-repeat|repeat-x|repeat-y|repeat))?(?:;soft=(\d+))?\s*\*\//i);
   if (bgMeta) {
     q.bgImagePath = normalizePath(bgMeta[1].trim());
     q.bgImageEnabled = bgMeta[2] === "1";
+    if (bgMeta[3]) q.bgImageRepeat = normalizeBgRepeat(bgMeta[3], q.bgImageRepeat);
+    if (bgMeta[4]) q.bgImageSoftness = Math.max(0, Math.min(90, Number(bgMeta[4]) || q.bgImageSoftness));
+  } else {
+    const contentBgSelectors = [
+      ".exe-content",
+      ".exe-web-site .exe-content",
+      "#node-content-container.exe-content"
+    ];
+    const contentBgRaw = lastRulePropWithUrl(contentBgSelectors, ["background-image", "background"]);
+    const contentBgPath = extractCssUrl(contentBgRaw);
+    if (contentBgPath) {
+      q.bgImagePath = normalizePath(contentBgPath);
+      q.bgImageEnabled = true;
+      const contentRepeatRaw = lastRulePropValue(contentBgSelectors, ["background-repeat"]);
+      q.bgImageRepeat = normalizeBgRepeat(contentRepeatRaw, q.bgImageRepeat);
+      const contentBgImageRaw = String(contentBgRaw || "");
+      const softMatch = contentBgImageRaw.match(/linear-gradient\(\s*rgba\(\s*255\s*,\s*255\s*,\s*255\s*,\s*([0-9.]+)\s*\)/i);
+      if (softMatch) {
+        const alpha = Number.parseFloat(softMatch[1]);
+        if (Number.isFinite(alpha)) q.bgImageSoftness = Math.max(0, Math.min(90, Math.round(alpha * 100)));
+      }
+    } else {
+      const quickBlock = getQuickBlock(cssText);
+      if (quickBlock) {
+        const bgRepeatMatches = Array.from(quickBlock.matchAll(/background-repeat:\s*(no-repeat|repeat-x|repeat-y|repeat)\s*;/gi));
+        if (bgRepeatMatches.length) {
+          const lastRepeat = bgRepeatMatches[bgRepeatMatches.length - 1]?.[1] || "";
+          q.bgImageRepeat = normalizeBgRepeat(lastRepeat, q.bgImageRepeat);
+        }
+      }
+    }
   }
   const headerMetaV3 = cssText.match(/\/\*\s*header-image-editor:path=([^;]*);enabled=(0|1);hide=(0|1);height=(\d+);fit=(contain|cover|auto);pos=([^;]*);repeat=(no-repeat|repeat-x|repeat-y|repeat)\s*\*\//i);
   const headerMetaV2 = cssText.match(/\/\*\s*header-image-editor:path=([^;]*);enabled=(0|1);height=(\d+);fit=(contain|cover|auto);pos=([^;]*);repeat=(no-repeat|repeat-x|repeat-y|repeat)\s*\*\//i);
@@ -2130,6 +2365,11 @@ function buildQuickCss({ important = true } = {}) {
   const bang = important ? " !important" : "";
   const bodyModeSelectors = modeBodySelectors();
   const bodyModeAfterSelectors = modeBodySelectors("::after");
+  const contentAreaSelectors = joinSelectorList([
+    modeScopedSelectors(".exe-content"),
+    ".exe-export .exe-content",
+    ".exe-content"
+  ]);
   const layoutWidthSelectors = joinSelectorList([
     "#node-content-container.exe-content #node-content",
     modeScopedSelectors(".page-content"),
@@ -2147,13 +2387,13 @@ function buildQuickCss({ important = true } = {}) {
   const bgImagePath = q.bgImagePath && state.files.has(q.bgImagePath) ? q.bgImagePath : "";
   const headerImagePath = q.headerImagePath && state.files.has(q.headerImagePath) ? q.headerImagePath : "";
   const footerImagePath = q.footerImagePath && state.files.has(q.footerImagePath) ? q.footerImagePath : "";
-  const hasLateralSpace = q.contentWidthMode === "px" || (q.contentWidthMode === "percent" && q.contentWidthPercent < 100);
+  const hasLateralSpace = q.contentWidthMode === "px" || q.contentWidthMode === "mixed" || (q.contentWidthMode === "percent" && q.contentWidthPercent < 100);
   const effectivePageBgColor = hasLateralSpace
     ? normalizeHex(q.contentOuterBgColor, QUICK_DEFAULTS.contentOuterBgColor)
     : normalizeHex(q.pageBgColor);
   const logoMeta = `/* logo-editor:path=${logoPath};enabled=${q.logoEnabled ? "1" : "0"};size=${q.logoSize};position=${q.logoPosition};mx=${q.logoMarginX};my=${q.logoMarginY} */`;
   const widthMeta = `/* content-width-editor:mode=${q.contentWidthMode};px=${q.contentWidth};pct=${q.contentWidthPercent};center=${q.contentCentered ? "1" : "0"};outer=${normalizeHex(q.contentOuterBgColor, QUICK_DEFAULTS.contentOuterBgColor)} */`;
-  const bgMeta = `/* bg-editor:path=${bgImagePath};enabled=${q.bgImageEnabled ? "1" : "0"} */`;
+  const bgMeta = `/* bg-editor:path=${bgImagePath};enabled=${q.bgImageEnabled ? "1" : "0"};repeat=${q.bgImageRepeat};soft=${Math.max(0, Math.min(90, Number(q.bgImageSoftness) || QUICK_DEFAULTS.bgImageSoftness))} */`;
   const headerMeta = `/* header-image-editor:path=${headerImagePath};enabled=${q.headerImageEnabled ? "1" : "0"};hide=${q.headerHideTitle ? "1" : "0"};height=${q.headerImageHeight};fit=${q.headerImageFit};pos=${q.headerImagePosition};repeat=${q.headerImageRepeat} */`;
   const footerMeta = `/* footer-image-editor:path=${footerImagePath};enabled=${q.footerImageEnabled ? "1" : "0"};height=${q.footerImageHeight};fit=${q.footerImageFit};pos=${q.footerImagePosition};repeat=${q.footerImageRepeat} */`;
   const logoRule = q.logoEnabled && logoPath
@@ -2222,16 +2462,23 @@ ${bodyModeSelectors} {
   line-height: ${q.lineHeight}${bang};
 }
 ${q.bgImageEnabled && bgImagePath ? `
-${bodyModeSelectors} {
-  background-image: url("${bgImagePath}")${bang};
-  background-repeat: no-repeat${bang};
-  background-position: center top${bang};
-  background-size: cover${bang};
+${contentAreaSelectors} {
+  background-image: ${Math.max(0, Math.min(90, Number(q.bgImageSoftness) || QUICK_DEFAULTS.bgImageSoftness)) > 0
+    ? `linear-gradient(rgba(255, 255, 255, ${Math.max(0, Math.min(90, Number(q.bgImageSoftness) || QUICK_DEFAULTS.bgImageSoftness)) / 100}), rgba(255, 255, 255, ${Math.max(0, Math.min(90, Number(q.bgImageSoftness) || QUICK_DEFAULTS.bgImageSoftness)) / 100})), `
+    : ""}url("${bgImagePath}")${bang};
+  background-repeat: ${q.bgImageRepeat}${bang};
+  background-position: ${q.bgImageRepeat === "no-repeat" ? "center center" : "left top"}${bang};
+  background-size: ${q.bgImageRepeat === "no-repeat" ? "cover" : "auto"}${bang};
+  background-attachment: ${q.bgImageRepeat === "no-repeat" ? "fixed" : "scroll"}${bang};
 }
 ` : ""}
 ${q.contentWidthMode === "default" ? "" : `
 ${layoutWidthSelectors} {
-  max-width: ${q.contentWidthMode === "percent" ? `${q.contentWidthPercent}%` : `${q.contentWidth}px`}${bang};
+  max-width: ${q.contentWidthMode === "percent"
+    ? `${q.contentWidthPercent}%`
+    : (q.contentWidthMode === "mixed"
+      ? `min(${q.contentWidth}px, ${q.contentWidthPercent}%)`
+      : `${q.contentWidth}px`)}${bang};
   margin-left: ${q.contentCentered ? "auto" : "0"}${bang};
   margin-right: ${q.contentCentered ? "auto" : "0"}${bang};
 }
@@ -2546,7 +2793,7 @@ function buildPreviewPayload(cssText) {
       activity: previewIconUrl("activity")
     },
     screenshotUrl: getBlobUrl("screenshot.png"),
-    packageTitle: "Curso de ejemplo",
+    packageTitle: "Proyecto de ejemplo",
     pageTitle: "Introducción"
   };
 }
@@ -3019,6 +3266,22 @@ async function onAddBackgroundImageSelected(file) {
   setStatus(`Imagen de fondo cargada: ${path}`);
 }
 
+function selectBackgroundImageFromStylePath(path) {
+  const clean = normalizePath(path || "");
+  if (!clean) return;
+  if (!state.files.has(clean) || !isImageFile(clean)) {
+    setStatus("La imagen seleccionada para fondo no está disponible en el estilo.");
+    return;
+  }
+  state.quick.bgImagePath = clean;
+  state.quick.bgImageEnabled = true;
+  quickToUI(state.quick);
+  applyQuickControls({ showStatus: false });
+  markDirty();
+  renderPreview();
+  setStatus(`Imagen de fondo seleccionada desde el estilo: ${clean}`);
+}
+
 function removeBackgroundImage() {
   if (state.quick.bgImagePath && state.files.has(state.quick.bgImagePath)) {
     state.files.delete(state.quick.bgImagePath);
@@ -3415,6 +3678,7 @@ function setupPanelAccordion(panelId) {
 
 function setupEvents() {
   setupTrialNotice();
+  applyControlTooltips();
   setupTabs();
   setupPanelAccordion("io");
   setupPanelAccordion("quick");
@@ -3577,6 +3841,12 @@ function setupEvents() {
     removeBackgroundImage();
   });
 
+  els.bgImageSelect?.addEventListener("change", () => {
+    const selectedPath = els.bgImageSelect.value;
+    if (!selectedPath) return;
+    selectBackgroundImageFromStylePath(selectedPath);
+  });
+
   els.addHeaderImageBtn?.addEventListener("click", () => {
     if (!els.addHeaderImageInput) return;
     els.addHeaderImageInput.value = "";
@@ -3661,6 +3931,9 @@ function setupEvents() {
 
   for (const input of els.quickInputs) {
     input.addEventListener("input", () => {
+      applyQuickControls({ showStatus: false });
+    });
+    input.addEventListener("change", () => {
       applyQuickControls({ showStatus: false });
     });
   }

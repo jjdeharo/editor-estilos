@@ -2,7 +2,7 @@
 
 Editor web para crear, ajustar y exportar estilos (`.zip`) compatibles con eXeLearning.
 
-Versión actual: `v 0.3.0`
+Versión actual: `v 0.4.0`
 
 ## Qué hace
 
@@ -13,7 +13,7 @@ Versión actual: `v 0.3.0`
 - Permite añadir fuentes y logotipo institucional con controles básicos.
 - Permite añadir/quitar imagen de fondo desde ajustes rápidos.
 - Permite añadir/reemplazar iconos de iDevices en lote.
-- Incluye ajustes avanzados de títulos (página, curso e iDevice) en la UI.
+- Incluye ajustes avanzados de títulos (página, proyecto e iDevice) en la UI.
 - Actualiza `screenshot.png` automáticamente al exportar (si falla, conserva el existente).
 - Exporta ZIP listo para importar en eXeLearning.
 - Incluye aviso inicial de fase de pruebas (se muestra una sola vez y se recuerda).

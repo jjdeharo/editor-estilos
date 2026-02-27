@@ -67,7 +67,7 @@ function previewPayload(rawPayload) {
     preview: { ...PREVIEW_DEFAULTS, ...(payload.preview || {}) },
     iconUrls: payload.iconUrls && typeof payload.iconUrls === "object" ? payload.iconUrls : {},
     screenshotUrl: String(payload.screenshotUrl || ""),
-    packageTitle: String(payload.packageTitle || "Curso de ejemplo"),
+    packageTitle: String(payload.packageTitle || "Proyecto de ejemplo"),
     pageTitle: String(payload.pageTitle || "Introducción")
   };
 }
@@ -88,7 +88,7 @@ function buildModernPages(payload) {
         <article class="box" id="id1">
           <header class="box-head${infoIcon.hasIcon ? "" : " no-icon"}">
             ${infoIcon.html}
-            <h1 class="box-title">Presentación del curso</h1>
+            <h1 class="box-title">Presentación del proyecto</h1>
             <button class="${boxToggleClass}" title="Ocultar/Mostrar contenido"><span>Ocultar/Mostrar contenido</span></button>
           </header>
           <div class="box-content">
