@@ -1077,6 +1077,11 @@ textarea:focus-visible {
   font-weight: 600;
 }
 
+#exportRenameHelp.warn {
+  color: #b54708;
+  font-weight: 600;
+}
+
 #exportRenameCancelBtn {
   background: #fff;
   border-color: #c7ced8;

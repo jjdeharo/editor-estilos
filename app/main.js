@@ -902,6 +902,7 @@ function askRenameForElpxExport(officialName, officialTitle) {
   const confirmBtn = els.exportRenameConfirmBtn;
   const cancelBtn = els.exportRenameCancelBtn;
   const modal = els.exportRenameModal;
+  const removalWarning = "Si mantienes Nombre/Título oficiales, en eXeLearning debes eliminar antes el estilo anterior para poder importarlo.";
 
   nameInput.value = String(els.metaName?.value || "").trim();
   titleInput.value = String(els.metaTitle?.value || "").trim();
@@ -911,21 +912,26 @@ function askRenameForElpxExport(officialName, officialTitle) {
     const nextTitle = String(titleInput.value || "").trim();
     const nameChanged = nextName.toLowerCase() !== officialNameNorm;
     const titleChanged = nextTitle.toLowerCase() !== officialTitleNorm;
-    const canSave = Boolean(nextName && nextTitle && nameChanged && titleChanged);
+    const canSave = Boolean(nextName && nextTitle);
     confirmBtn.disabled = !canSave;
+    help.classList.remove("error", "warn");
 
     if (!nextName || !nextTitle) {
       help.textContent = "Completa Nombre y Título para continuar.";
       help.classList.add("error");
       return;
     }
-    if (!nameChanged || !titleChanged) {
-      help.textContent = "Debes cambiar tanto el Nombre como el Título.";
-      help.classList.add("error");
+    if (!nameChanged && !titleChanged) {
+      help.textContent = removalWarning;
+      help.classList.add("warn");
       return;
     }
-    help.textContent = "Listo. Puedes guardar el ELPX.";
-    help.classList.remove("error");
+    if (!nameChanged || !titleChanged) {
+      help.textContent = `Recomendado: cambiar ambos campos. ${removalWarning}`;
+      help.classList.add("warn");
+      return;
+    }
+    help.textContent = "Listo. Puedes guardar el ELPX como estilo nuevo.";
   };
 
   return new Promise((resolve) => {
@@ -943,7 +949,12 @@ function askRenameForElpxExport(officialName, officialTitle) {
       const nextTitle = String(titleInput.value || "").trim();
       if (!nextName || !nextTitle) return;
       cleanup();
-      resolve({ name: nextName, title: nextTitle });
+      resolve({
+        name: nextName,
+        title: nextTitle,
+        keptOfficialMetadata:
+          nextName.toLowerCase() === officialNameNorm || nextTitle.toLowerCase() === officialTitleNorm
+      });
     };
     const onCancel = () => {
       cleanup();
@@ -969,7 +980,7 @@ function askRenameForElpxExport(officialName, officialTitle) {
 
 async function ensureElpxRenameForOfficialStyle() {
   const conflict = officialMetadataConflict();
-  if (!conflict.hasConflict) return true;
+  if (!conflict.hasConflict) return { ok: true, keptOfficialMetadata: false };
 
   const official = getOfficialStyleById(conflict.officialId || state.officialSourceId);
   const officialName = String(conflict.officialId || state.officialSourceId || "").trim();
@@ -977,19 +988,13 @@ async function ensureElpxRenameForOfficialStyle() {
   const result = await askRenameForElpxExport(officialName, officialTitle);
   if (!result) {
     setStatus("Guardado de ELPX cancelado. Puedes ajustar más metadatos y volver a intentarlo.");
-    return false;
+    return { ok: false, keptOfficialMetadata: false };
   }
 
   if (els.metaName) els.metaName.value = result.name;
   if (els.metaTitle) els.metaTitle.value = result.title;
   saveMetaFields({ showStatus: false });
-
-  const after = officialMetadataConflict();
-  if (after.hasConflict) {
-    setStatus("Debes cambiar Nombre y Título para guardar el ELPX.");
-    return false;
-  }
-  return true;
+  return { ok: true, keptOfficialMetadata: Boolean(result.keptOfficialMetadata) };
 }
 
 function setStatus(text) {
@@ -4605,7 +4610,8 @@ async function exportElpx() {
     setStatus("Primero carga un ELPX para poder exportarlo modificado.");
     return;
   }
-  if (!(await ensureElpxRenameForOfficialStyle())) return;
+  const renameCheck = await ensureElpxRenameForOfficialStyle();
+  if (!renameCheck.ok) return;
   await syncElpxProjectThemeNameReference();
   await syncThemeFilesToElpxCache();
   const zip = new window.JSZip();
@@ -4622,7 +4628,10 @@ async function exportElpx() {
     URL.revokeObjectURL(a.href);
     a.remove();
   }, 0);
-  setStatus(`ELPX exportado correctamente (${state.elpxFiles.size} archivos).`);
+  const warning = renameCheck.keptOfficialMetadata
+    ? " Aviso: en eXeLearning elimina antes el estilo anterior con ese Nombre/Título para poder importarlo."
+    : "";
+  setStatus(`ELPX exportado correctamente (${state.elpxFiles.size} archivos).${warning}`);
 }
 
 function onEditorInput() {
