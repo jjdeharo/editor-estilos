@@ -559,6 +559,8 @@ const els = {
   textHighlight: document.getElementById("textHighlight"),
   binaryPreview: document.getElementById("binaryPreview"),
   previewFrame: document.getElementById("previewFrame"),
+  floatingPreviewPlaceholder: document.getElementById("floatingPreviewPlaceholder"),
+  restoreFloatingWorkspaceBtn: document.getElementById("restoreFloatingWorkspaceBtn"),
   previewPopoutBtn: document.getElementById("previewPopoutBtn"),
   previewOptionsBtn: document.getElementById("previewOptionsBtn"),
   previewOptionsPanel: document.getElementById("previewOptionsPanel"),
@@ -2877,24 +2879,69 @@ function setPreviewPopoutButtonState() {
     : "Abrir espacio flotante (herramientas y previsualización) en ventanas independientes";
 }
 
-function openPreviewPopoutWindow() {
+function setFloatingPreviewPlaceholderVisible(visible) {
+  if (els.floatingPreviewPlaceholder) els.floatingPreviewPlaceholder.hidden = !visible;
+  if (els.previewPanel) els.previewPanel.classList.toggle("floating-preview-active", Boolean(visible));
+}
+
+function popupFeaturesString({ left, top, width, height }) {
+  const nLeft = Math.max(0, Math.round(Number(left) || 0));
+  const nTop = Math.max(0, Math.round(Number(top) || 0));
+  const nWidth = Math.max(420, Math.round(Number(width) || 1360));
+  const nHeight = Math.max(520, Math.round(Number(height) || 900));
+  return `popup=yes,resizable=yes,scrollbars=yes,left=${nLeft},top=${nTop},width=${nWidth},height=${nHeight}`;
+}
+
+function floatingWorkspaceGeometry() {
+  const screenObj = window.screen || {};
+  const availWidth = Math.max(1280, Number(screenObj.availWidth) || window.outerWidth || 1600);
+  const availHeight = Math.max(760, Number(screenObj.availHeight) || window.outerHeight || 900);
+  const availLeft = Number(screenObj.availLeft) || 0;
+  const availTop = Number(screenObj.availTop) || 0;
+  const gap = 22;
+  const margin = 20;
+
+  const usableWidth = Math.max(1100, availWidth - margin * 2);
+  const usableHeight = Math.max(620, availHeight - margin * 2);
+  const height = Math.max(620, Math.min(usableHeight, Math.round((window.outerHeight || usableHeight) * 0.92)));
+
+  let editorWidth = Math.round(usableWidth * 0.31);
+  editorWidth = Math.max(400, Math.min(560, editorWidth));
+  let previewWidth = usableWidth - editorWidth - gap;
+  if (previewWidth < 760) {
+    previewWidth = 760;
+    editorWidth = Math.max(420, usableWidth - previewWidth - gap);
+  }
+
+  const totalWidth = editorWidth + gap + previewWidth;
+  const left = availLeft + Math.max(margin, Math.floor((availWidth - totalWidth) / 2));
+  const top = availTop + Math.max(10, Math.floor((availHeight - height) / 2));
+
+  return {
+    editor: { left, top, width: editorWidth, height },
+    preview: { left: left + editorWidth + gap, top, width: previewWidth, height }
+  };
+}
+
+function openPreviewPopoutWindow(preferredBounds = null) {
   cleanupPreviewPopoutWindowReference();
   if (state.previewPopoutWindow) {
     state.previewPopoutWindow.focus();
     renderPreview();
     setPreviewPopoutButtonState();
-    return;
+    return true;
   }
 
+  const defaultBounds = { left: 120, top: 80, width: 1360, height: 900 };
   const popup = window.open(
     PREVIEW_FRAME_URL,
     PREVIEW_POPOUT_WINDOW_NAME,
-    "popup=yes,width=1360,height=900,resizable=yes,scrollbars=yes"
+    popupFeaturesString(preferredBounds || defaultBounds)
   );
   if (!popup) {
     setStatus("No se pudo abrir la ventana de previsualización (bloqueada por el navegador).");
     setPreviewPopoutButtonState();
-    return;
+    return false;
   }
 
   state.previewPopoutWindow = popup;
@@ -2903,11 +2950,16 @@ function openPreviewPopoutWindow() {
     setPreviewPopoutButtonState();
   });
   popup.addEventListener("beforeunload", () => {
-    cleanupPreviewPopoutWindowReference();
+    const editorWin = state.editorPopoutWindow;
+    state.previewPopoutWindow = null;
+    if (editorWin && !editorWin.closed) editorWin.close();
+    restoreEditorPanelToMain({ closeWindow: false });
+    setFloatingPreviewPlaceholderVisible(false);
     setPreviewPopoutButtonState();
   });
   setPreviewPopoutButtonState();
   renderPreview();
+  return true;
 }
 
 function closePreviewPopoutWindow() {
@@ -2926,7 +2978,7 @@ function ensureEditorFloatingPlaceholder() {
     <h3>Herramientas en ventana independiente</h3>
     <p>El panel de edición está desacoplado para trabajar con dos monitores.</p>
     <div class="button-row">
-      <button type="button" data-action="restore-floating-workspace">Volver a acoplar herramientas</button>
+      <button type="button" data-action="restore-floating-workspace">Volver a acoplar las dos ventanas</button>
     </div>
   `;
   const restoreBtn = placeholder.querySelector('[data-action="restore-floating-workspace"]');
@@ -2959,7 +3011,7 @@ function buildEditorPopoutHtml() {
 </html>`;
 }
 
-function openEditorPopoutWindow() {
+function openEditorPopoutWindow(preferredBounds = null) {
   cleanupEditorPopoutWindowReference();
   if (state.editorPopoutWindow) {
     state.editorPopoutWindow.focus();
@@ -2971,10 +3023,11 @@ function openEditorPopoutWindow() {
   const previewPanel = els.previewPanel;
   if (!panel || !shell || !previewPanel) return false;
 
+  const defaultBounds = { left: 40, top: 80, width: 760, height: 980 };
   const popup = window.open(
     "",
     EDITOR_POPOUT_WINDOW_NAME,
-    "popup=yes,width=760,height=980,resizable=yes,scrollbars=yes"
+    popupFeaturesString(preferredBounds || defaultBounds)
   );
   if (!popup) {
     setStatus("No se pudo abrir la ventana de herramientas (bloqueada por el navegador).");
@@ -2993,6 +3046,7 @@ function openEditorPopoutWindow() {
   popup.addEventListener("beforeunload", () => {
     restoreEditorPanelToMain({ closeWindow: false });
     closePreviewPopoutWindow();
+    setFloatingPreviewPlaceholderVisible(false);
     setPreviewPopoutButtonState();
   });
   return true;
@@ -3014,14 +3068,21 @@ function restoreEditorPanelToMain({ closeWindow = true } = {}) {
 }
 
 function openFloatingWorkspace() {
-  openPreviewPopoutWindow();
-  openEditorPopoutWindow();
+  const geometry = floatingWorkspaceGeometry();
+  const editorOpened = openEditorPopoutWindow(geometry.editor);
+  const previewOpened = openPreviewPopoutWindow(geometry.preview);
+  if (!(editorOpened && previewOpened)) {
+    closeFloatingWorkspace();
+    return;
+  }
+  setFloatingPreviewPlaceholderVisible(true);
   setPreviewPopoutButtonState();
 }
 
 function closeFloatingWorkspace() {
   closePreviewPopoutWindow();
   restoreEditorPanelToMain({ closeWindow: true });
+  setFloatingPreviewPlaceholderVisible(false);
   setPreviewPopoutButtonState();
 }
 
@@ -3036,6 +3097,7 @@ function closePreviewPopoutIfOpen() {
     state.previewPopoutWindow.close();
   }
   state.previewPopoutWindow = null;
+  setFloatingPreviewPlaceholderVisible(false);
 }
 
 function closeEditorPopoutIfOpen() {
@@ -3912,6 +3974,7 @@ function setupEvents() {
   els.textEditor.addEventListener("input", onEditorInput);
   els.textEditor.addEventListener("scroll", syncHighlightedScroll);
   els.previewPopoutBtn?.addEventListener("click", togglePreviewPopoutWindow);
+  els.restoreFloatingWorkspaceBtn?.addEventListener("click", closeFloatingWorkspace);
   els.openDetachedEditorBtn?.addEventListener("click", openDetachedEditor);
   window.addEventListener("beforeunload", closeDetachedEditorIfOpen);
   window.addEventListener("beforeunload", closePreviewPopoutIfOpen);

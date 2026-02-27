@@ -140,6 +140,32 @@ body {
   color: var(--muted);
 }
 
+.floating-preview-placeholder {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 14px;
+  margin: 10px 12px 0;
+  border: 1px dashed #b7c2d2;
+  background: #f4f7fb;
+  border-radius: 8px;
+}
+
+.floating-preview-placeholder h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  color: var(--action-dark);
+}
+
+.floating-preview-placeholder p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.preview-panel.floating-preview-active #previewFrame {
+  display: none;
+}
+
 .preview-panel {
   display: grid;
   grid-template-rows: auto 1fr;
