@@ -2879,6 +2879,36 @@ function ideviceTypeClassFromElement(el) {
   return "";
 }
 
+function buildFxSelector(el) {
+  if (!isDomElement(el)) return "";
+  const directMap = [
+    [".fx-accordion-title", ".exe-content .fx-accordion-title"],
+    [".fx-accordion-content", ".exe-content .fx-accordion-content"],
+    [".exe-tabs .fx-tabs a", ".exe-content .exe-tabs .fx-tabs a"],
+    [".exe-tabs .fx-tab-content", ".exe-content .exe-tabs .fx-tab-content"],
+    [".fx-pagination .fx-current a", ".exe-content .fx-pagination .fx-current a"],
+    [".fx-pagination a", ".exe-content .fx-pagination a"],
+    [".fx-page-content", ".exe-content .fx-page-content"],
+    [".fx-carousel-pagination a", ".exe-content .fx-carousel-pagination a"],
+    [".fx-carousel-content", ".exe-content .fx-carousel-content"],
+    [".fx-timeline-major h2 a", ".exe-content .fx-timeline-major h2 a"],
+    [".fx-timeline-minor h3 a", ".exe-content .fx-timeline-minor h3 a"],
+    [".fx-timeline-event", ".exe-content .fx-timeline-event"],
+    [".fx-timeline-expand", ".exe-content .fx-timeline-expand"]
+  ];
+  for (const [query, selector] of directMap) {
+    if (el.closest(query)) return selector;
+  }
+  const fxContainer = el.closest(".exe-fx");
+  if (!fxContainer) return "";
+  if (fxContainer.classList.contains("exe-accordion")) return ".exe-content .exe-fx.exe-accordion";
+  if (fxContainer.classList.contains("exe-tabs")) return ".exe-content .exe-fx.exe-tabs";
+  if (fxContainer.classList.contains("exe-paginated")) return ".exe-content .exe-fx.exe-paginated";
+  if (fxContainer.classList.contains("exe-carousel")) return ".exe-content .exe-fx.exe-carousel";
+  if (fxContainer.classList.contains("fx-timeline-container")) return ".exe-content .fx-timeline-container";
+  return ".exe-content .exe-fx";
+}
+
 function buildElementSelector(el) {
   if (!isDomElement(el)) return "";
   const tag = String(el.tagName || "").toLowerCase();
@@ -2888,6 +2918,8 @@ function buildElementSelector(el) {
     return "#siteNav";
   }
   if (el.closest(".nav-buttons")) return ".nav-buttons a";
+  const fxSelector = buildFxSelector(el);
+  if (fxSelector) return fxSelector;
   if (el.closest(".package-title")) return ".exe-content .package-title";
   if (el.closest(".page-title")) return ".exe-content .page-title";
   if (el.closest(".box-title, .iDeviceTitle")) return ".exe-content .box-title, .exe-content .iDeviceTitle";
