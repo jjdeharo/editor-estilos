@@ -301,7 +301,15 @@ const CLICK_OVERRIDES_START = "/* click-overrides:start */";
 const CLICK_OVERRIDES_END = "/* click-overrides:end */";
 const UNDO_STACK_LIMIT = 30;
 const ELPX_SW_URL = "elpx-sw.js";
-const ELPX_URL_PREFIX = "/__elpx/";
+const APP_BASE_PATH = (() => {
+  try {
+    const path = new URL(".", window.location.href).pathname || "/";
+    return path.endsWith("/") ? path : `${path}/`;
+  } catch {
+    return "/";
+  }
+})();
+const ELPX_URL_PREFIX = `${APP_BASE_PATH}__elpx/`;
 const ELPX_CACHE_PREFIX = "editor-estilos:elpx:";
 
 const FILE_TYPE_OPTIONS = [
@@ -1142,7 +1150,7 @@ function rewriteElpxThemeUrls(cssText) {
     ) {
       return full;
     }
-    if (token.startsWith("/__elpx/")) return `url("${token}")`;
+    if (token.startsWith(ELPX_URL_PREFIX)) return `url("${token}")`;
     const resolvedRelative = resolveRelativeToTheme(token);
     if (!resolvedRelative) return full;
     return `url("${elpxUrlPath(state.elpxSessionId, resolvedRelative)}")`;
