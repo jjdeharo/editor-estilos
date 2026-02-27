@@ -296,6 +296,8 @@ const QUICK_PROTECTED_PATTERNS = [
 const TRIAL_NOTICE_KEY = "editor-estilos:trial-notice-dismissed";
 const PREVIEW_TOGGLES_KEY = "editor-estilos:preview-toggles";
 const PREVIEW_FRAME_URL = "app/preview.html";
+const PREVIEW_POPOUT_WINDOW_NAME = "editorEstilosPreviewPopout";
+const EDITOR_POPOUT_WINDOW_NAME = "editorEstilosToolsPopout";
 
 const FILE_TYPE_OPTIONS = [
   { value: "images", label: "Imágenes" },
@@ -470,7 +472,9 @@ const CONTROL_HELP_TEXT_BY_ID = {
   footerImageSelect: "Elige una imagen existente del estilo para usarla en el pie.",
   addFooterImageBtn: "Sube una imagen personalizada para el pie.",
   removeFooterImageBtn: "Elimina la imagen de pie configurada.",
-  addIdeviceIconsBtn: "Reemplaza en lote los iconos de iDevices."
+  addIdeviceIconsBtn: "Reemplaza en lote los iconos de iDevices.",
+  previewPopoutBtn: "Activa o desactiva el espacio flotante: abre herramientas y previsualización en ventanas separadas.",
+  openDetachedEditorBtn: "Abre el archivo actual en una ventana de edición separada para trabajar con más espacio."
 };
 
 const DELIVERY_MODE_BODY_SELECTORS = ["body.exe-web-site", "body.exe-ims", "body.exe-scorm"];
@@ -526,6 +530,9 @@ function applyControlTooltips() {
 }
 
 const els = {
+  appShell: document.getElementById("appShell"),
+  editorPanel: document.getElementById("editorPanel"),
+  previewPanel: document.getElementById("previewPanel"),
   trialNotice: document.getElementById("trialNotice"),
   dismissTrialNotice: document.getElementById("dismissTrialNotice"),
   tabs: Array.from(document.querySelectorAll(".tab")),
@@ -552,6 +559,7 @@ const els = {
   textHighlight: document.getElementById("textHighlight"),
   binaryPreview: document.getElementById("binaryPreview"),
   previewFrame: document.getElementById("previewFrame"),
+  previewPopoutBtn: document.getElementById("previewPopoutBtn"),
   previewOptionsBtn: document.getElementById("previewOptionsBtn"),
   previewOptionsPanel: document.getElementById("previewOptionsPanel"),
   metaName: document.getElementById("metaName"),
@@ -603,6 +611,9 @@ const state = {
   previewLayoutMode: "modern",
   previewFromLegacyZip: false,
   previewPendingRender: false,
+  previewPopoutWindow: null,
+  editorPopoutWindow: null,
+  editorPanelPlaceholder: null,
   isDirty: false
 };
 let highlightRenderRaf = 0;
@@ -1272,8 +1283,8 @@ function setDetachedEditorButtonState() {
   const enabled = isDetachedEditorAvailable();
   els.openDetachedEditorBtn.disabled = !enabled;
   els.openDetachedEditorBtn.title = enabled
-    ? "Abrir editor en ventana independiente"
-    : "Solo disponible para archivos de texto";
+    ? "Abre el archivo actual en una ventana de edición separada para trabajar con más espacio."
+    : "Solo disponible para archivos de texto.";
 }
 
 function detachedEditorHtml() {
@@ -1312,6 +1323,8 @@ function detachedEditorHtml() {
       color: #111827;
       position: relative;
       z-index: 2;
+      overflow-wrap: normal;
+      white-space: pre;
     }
     #detachedHighlight {
       display: none;
@@ -1326,7 +1339,9 @@ function detachedEditorHtml() {
       background: #f8fafc;
       white-space: pre;
       pointer-events: none;
+      scrollbar-width: none;
     }
+    #detachedHighlight::-webkit-scrollbar { width: 0; height: 0; }
     #detachedHighlight.hljs { background: #f8fafc; }
     .editor-surface.syntax-active #detachedHighlight { display: block; }
     .editor-surface.syntax-active #detachedEditor {
@@ -1345,7 +1360,7 @@ function detachedEditorHtml() {
   <div class="bar">Editando: <span id="detachedPath">-</span></div>
   <div id="detachedSurface" class="editor-surface">
     <pre id="detachedHighlight" aria-hidden="true"></pre>
-    <textarea id="detachedEditor" spellcheck="false"></textarea>
+    <textarea id="detachedEditor" spellcheck="false" wrap="off"></textarea>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
 </body>
@@ -2809,7 +2824,7 @@ function detectPreviewLayoutMode() {
   return "modern";
 }
 
-function getPreviewRuntime() {
+function getMainPreviewRuntime() {
   const frame = els.previewFrame;
   if (!frame) return null;
   try {
@@ -2821,15 +2836,224 @@ function getPreviewRuntime() {
   return null;
 }
 
-function renderPreview() {
-  const runtime = getPreviewRuntime();
-  if (!runtime) {
-    state.previewPendingRender = true;
+function cleanupPreviewPopoutWindowReference() {
+  if (state.previewPopoutWindow && state.previewPopoutWindow.closed) {
+    state.previewPopoutWindow = null;
+  }
+}
+
+function getPreviewPopoutRuntime() {
+  cleanupPreviewPopoutWindowReference();
+  const win = state.previewPopoutWindow;
+  if (!win) return null;
+  try {
+    const runtime = win.__previewRuntime;
+    if (runtime && typeof runtime.render === "function") return runtime;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function cleanupEditorPopoutWindowReference() {
+  if (state.editorPopoutWindow && state.editorPopoutWindow.closed) {
+    state.editorPopoutWindow = null;
+  }
+}
+
+function isFloatingWorkspaceActive() {
+  cleanupPreviewPopoutWindowReference();
+  cleanupEditorPopoutWindowReference();
+  return Boolean(state.previewPopoutWindow || state.editorPopoutWindow);
+}
+
+function setPreviewPopoutButtonState() {
+  const btn = els.previewPopoutBtn;
+  if (!btn) return;
+  const active = isFloatingWorkspaceActive();
+  btn.setAttribute("aria-pressed", active ? "true" : "false");
+  btn.title = active
+    ? "Cerrar espacio flotante y volver a la vista integrada"
+    : "Abrir espacio flotante (herramientas y previsualización) en ventanas independientes";
+}
+
+function openPreviewPopoutWindow() {
+  cleanupPreviewPopoutWindowReference();
+  if (state.previewPopoutWindow) {
+    state.previewPopoutWindow.focus();
+    renderPreview();
+    setPreviewPopoutButtonState();
     return;
   }
-  const css = readCss();
-  runtime.render(buildPreviewPayload(css));
-  state.previewPendingRender = false;
+
+  const popup = window.open(
+    PREVIEW_FRAME_URL,
+    PREVIEW_POPOUT_WINDOW_NAME,
+    "popup=yes,width=1360,height=900,resizable=yes,scrollbars=yes"
+  );
+  if (!popup) {
+    setStatus("No se pudo abrir la ventana de previsualización (bloqueada por el navegador).");
+    setPreviewPopoutButtonState();
+    return;
+  }
+
+  state.previewPopoutWindow = popup;
+  popup.addEventListener("load", () => {
+    renderPreview();
+    setPreviewPopoutButtonState();
+  });
+  popup.addEventListener("beforeunload", () => {
+    cleanupPreviewPopoutWindowReference();
+    setPreviewPopoutButtonState();
+  });
+  setPreviewPopoutButtonState();
+  renderPreview();
+}
+
+function closePreviewPopoutWindow() {
+  cleanupPreviewPopoutWindowReference();
+  const win = state.previewPopoutWindow;
+  if (win && !win.closed) win.close();
+  state.previewPopoutWindow = null;
+  setPreviewPopoutButtonState();
+}
+
+function ensureEditorFloatingPlaceholder() {
+  if (state.editorPanelPlaceholder) return state.editorPanelPlaceholder;
+  const placeholder = document.createElement("aside");
+  placeholder.className = "editor-panel floating-editor-placeholder";
+  placeholder.innerHTML = `
+    <h3>Herramientas en ventana independiente</h3>
+    <p>El panel de edición está desacoplado para trabajar con dos monitores.</p>
+    <div class="button-row">
+      <button type="button" data-action="restore-floating-workspace">Volver a acoplar herramientas</button>
+    </div>
+  `;
+  const restoreBtn = placeholder.querySelector('[data-action="restore-floating-workspace"]');
+  restoreBtn?.addEventListener("click", () => {
+    closeFloatingWorkspace();
+  });
+  state.editorPanelPlaceholder = placeholder;
+  return placeholder;
+}
+
+function buildEditorPopoutHtml() {
+  const styleHref = new URL("app/styles.css", window.location.href).href;
+  return `<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Editor de herramientas</title>
+  <link rel="stylesheet" href="${styleHref}" />
+  <style>
+    html, body { margin: 0; height: 100%; background: #eef1f4; }
+    body { display: flex; min-height: 100%; overflow: hidden; }
+    #floatingEditorMount { flex: 1; min-width: 0; min-height: 0; padding: 12px; display: flex; }
+    #floatingEditorMount > .editor-panel { flex: 1; min-height: 0; }
+  </style>
+</head>
+<body>
+  <div id="floatingEditorMount"></div>
+</body>
+</html>`;
+}
+
+function openEditorPopoutWindow() {
+  cleanupEditorPopoutWindowReference();
+  if (state.editorPopoutWindow) {
+    state.editorPopoutWindow.focus();
+    return true;
+  }
+
+  const panel = els.editorPanel;
+  const shell = els.appShell;
+  const previewPanel = els.previewPanel;
+  if (!panel || !shell || !previewPanel) return false;
+
+  const popup = window.open(
+    "",
+    EDITOR_POPOUT_WINDOW_NAME,
+    "popup=yes,width=760,height=980,resizable=yes,scrollbars=yes"
+  );
+  if (!popup) {
+    setStatus("No se pudo abrir la ventana de herramientas (bloqueada por el navegador).");
+    return false;
+  }
+  popup.document.open();
+  popup.document.write(buildEditorPopoutHtml());
+  popup.document.close();
+  const mount = popup.document.getElementById("floatingEditorMount");
+  if (!mount) return false;
+
+  const placeholder = ensureEditorFloatingPlaceholder();
+  if (!placeholder.isConnected) shell.insertBefore(placeholder, previewPanel);
+  mount.appendChild(panel);
+  state.editorPopoutWindow = popup;
+  popup.addEventListener("beforeunload", () => {
+    restoreEditorPanelToMain({ closeWindow: false });
+    closePreviewPopoutWindow();
+    setPreviewPopoutButtonState();
+  });
+  return true;
+}
+
+function restoreEditorPanelToMain({ closeWindow = true } = {}) {
+  const panel = els.editorPanel;
+  const shell = els.appShell;
+  const previewPanel = els.previewPanel;
+  if (panel && shell && previewPanel && panel.ownerDocument !== document) {
+    shell.insertBefore(panel, previewPanel);
+  }
+  if (state.editorPanelPlaceholder?.isConnected) state.editorPanelPlaceholder.remove();
+  cleanupEditorPopoutWindowReference();
+  if (closeWindow && state.editorPopoutWindow && !state.editorPopoutWindow.closed) {
+    state.editorPopoutWindow.close();
+  }
+  state.editorPopoutWindow = null;
+}
+
+function openFloatingWorkspace() {
+  openPreviewPopoutWindow();
+  openEditorPopoutWindow();
+  setPreviewPopoutButtonState();
+}
+
+function closeFloatingWorkspace() {
+  closePreviewPopoutWindow();
+  restoreEditorPanelToMain({ closeWindow: true });
+  setPreviewPopoutButtonState();
+}
+
+function togglePreviewPopoutWindow() {
+  if (isFloatingWorkspaceActive()) closeFloatingWorkspace();
+  else openFloatingWorkspace();
+}
+
+function closePreviewPopoutIfOpen() {
+  cleanupPreviewPopoutWindowReference();
+  if (state.previewPopoutWindow && !state.previewPopoutWindow.closed) {
+    state.previewPopoutWindow.close();
+  }
+  state.previewPopoutWindow = null;
+}
+
+function closeEditorPopoutIfOpen() {
+  restoreEditorPanelToMain({ closeWindow: true });
+}
+
+function renderPreview() {
+  const payload = buildPreviewPayload(readCss());
+  const mainRuntime = getMainPreviewRuntime();
+  if (!mainRuntime) {
+    state.previewPendingRender = true;
+  } else {
+    mainRuntime.render(payload);
+    state.previewPendingRender = false;
+  }
+  const popoutRuntime = getPreviewPopoutRuntime();
+  if (popoutRuntime) popoutRuntime.render(payload);
+  setPreviewPopoutButtonState();
 }
 
 function styleJsText() {
@@ -2845,7 +3069,7 @@ function waitForPreviewFrameReady(timeoutMs = 1200) {
   return new Promise((resolve) => {
     const deadline = Date.now() + Math.max(200, timeoutMs);
     const tick = () => {
-      if (getPreviewRuntime()) {
+      if (getMainPreviewRuntime()) {
         resolve(true);
         return;
       }
@@ -3684,10 +3908,14 @@ function setupEvents() {
   setupPanelAccordion("quick");
   setupPreviewOptionsPopover();
   setupPreviewFrame();
+  setPreviewPopoutButtonState();
   els.textEditor.addEventListener("input", onEditorInput);
   els.textEditor.addEventListener("scroll", syncHighlightedScroll);
+  els.previewPopoutBtn?.addEventListener("click", togglePreviewPopoutWindow);
   els.openDetachedEditorBtn?.addEventListener("click", openDetachedEditor);
   window.addEventListener("beforeunload", closeDetachedEditorIfOpen);
+  window.addEventListener("beforeunload", closePreviewPopoutIfOpen);
+  window.addEventListener("beforeunload", closeEditorPopoutIfOpen);
   const onFileTypeFilterChange = () => {
     renderFileList();
   };

@@ -12,8 +12,8 @@
     <p><strong>Editor de estilos en fase de pruebas.</strong> Verifica siempre el resultado final en eXeLearning antes de publicarlo o compartirlo.</p>
     <button id="dismissTrialNotice" type="button" aria-label="Cerrar aviso">×</button>
   </div>
-  <div class="app-shell">
-    <aside class="editor-panel">
+  <div id="appShell" class="app-shell">
+    <aside id="editorPanel" class="editor-panel">
       <header class="panel-header">
         <h1>Editor de estilos eXeLearning (v3 y superiores)</h1>
         <p>Carga una plantilla oficial o un ZIP, edita y exporta.</p>
@@ -476,23 +476,27 @@
             <button id="replaceImageBtn" type="button">Reemplazar imagen</button>
             <input id="replaceImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
           </div>
-          <div class="button-row">
-            <button id="openDetachedEditorBtn" type="button">Editar en ventana independiente</button>
-          </div>
-          <div id="editorSurface" class="editor-surface">
+          <div id="editorSurface" class="editor-surface has-inline-action">
+            <button id="openDetachedEditorBtn" class="editor-inline-action" type="button" aria-label="Abrir editor en ventana independiente">
+              <span class="inline-icon material-symbols-outlined" aria-hidden="true">open_in_new</span>
+            </button>
             <pre id="textHighlight" class="text-highlight" aria-hidden="true"></pre>
-            <textarea id="textEditor" spellcheck="false"></textarea>
+            <textarea id="textEditor" spellcheck="false" wrap="off"></textarea>
           </div>
           <div id="binaryPreview" class="binary-preview"></div>
         </div>
       </section>
     </aside>
 
-    <main class="preview-panel">
+    <main id="previewPanel" class="preview-panel">
       <header class="preview-header">
         <div class="preview-header-top">
           <h2>Previsualización simulada (solo se verá de forma completa desde eXeLearning)</h2>
           <div class="preview-toolbar">
+            <button id="previewPopoutBtn" class="icon-btn" type="button" aria-pressed="false" title="Abrir espacio flotante (herramientas y previsualización)">
+              <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+              <span class="sr-only">Abrir previsualización en ventana independiente</span>
+            </button>
             <button id="previewOptionsBtn" class="icon-btn" type="button" aria-expanded="false" aria-controls="previewOptionsPanel" title="Opciones de vista previa">
               <span aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" role="img">

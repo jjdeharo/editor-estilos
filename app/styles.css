@@ -120,6 +120,26 @@ body {
   background: #f8fafc;
 }
 
+.floating-editor-placeholder {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px dashed #b7c2d2;
+  background: #f4f7fb;
+}
+
+.floating-editor-placeholder h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  color: var(--action-dark);
+}
+
+.floating-editor-placeholder p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .preview-panel {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -144,6 +164,9 @@ body {
 .preview-toolbar {
   position: relative;
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .icon-btn {
@@ -166,6 +189,12 @@ body {
 }
 
 .icon-btn[aria-expanded="true"] {
+  background: #e6f6f6;
+  border-color: color-mix(in srgb, var(--action) 45%, #8aa0b2);
+  color: var(--action-dark);
+}
+
+.icon-btn[aria-pressed="true"] {
   background: #e6f6f6;
   border-color: color-mix(in srgb, var(--action) 45%, #8aa0b2);
   color: var(--action-dark);
@@ -578,6 +607,31 @@ textarea:focus-visible {
   border-radius: 6px;
 }
 
+.editor-inline-action {
+  position: absolute;
+  top: 8px;
+  right: 20px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.editor-inline-action .inline-icon {
+  font-size: 1rem;
+  margin-right: 0;
+  vertical-align: 0;
+}
+
+.editor-surface.has-inline-action #textEditor,
+.editor-surface.has-inline-action .text-highlight {
+  padding-top: 38px;
+}
+
 #textEditor {
   width: 100%;
   min-height: 260px;
@@ -591,6 +645,8 @@ textarea:focus-visible {
   background: #fff;
   position: relative;
   z-index: 2;
+  overflow-wrap: normal;
+  white-space: pre;
 }
 
 .text-highlight {
@@ -608,6 +664,12 @@ textarea:focus-visible {
   white-space: pre;
   pointer-events: none;
   background: #f8fafc;
+  scrollbar-width: none;
+}
+
+.text-highlight::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .text-highlight.hljs {
