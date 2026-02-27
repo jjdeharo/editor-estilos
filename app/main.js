@@ -2922,7 +2922,10 @@ function buildElementSelector(el) {
     if (tag === "a" || el.closest("a")) return "#siteNav a";
     return "#siteNav";
   }
-  if (el.closest(".nav-buttons")) return ".nav-buttons a";
+  if (el.closest(".nav-buttons")) {
+    if (tag === "a" || el.closest(".nav-buttons a")) return ".nav-buttons a";
+    return ".nav-buttons";
+  }
   const fxSelector = buildFxSelector(el);
   if (fxSelector) return fxSelector;
   if (el.closest(".package-title")) return ".exe-content .package-title";
