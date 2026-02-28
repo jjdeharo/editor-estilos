@@ -8,9 +8,17 @@
       stroke-linejoin="round"
     />
   </g>
-  <g transform="translate(46 22) rotate(142)">
-    <rect x="-19" y="-4.1" width="32" height="8.2" rx="2" fill="#ffffff" stroke="#132032" stroke-width="1.6"/>
-    <path d="M13 -4.1 L20 0 L13 4.1 Z" fill="#ffffff" stroke="#132032" stroke-width="1.6" stroke-linejoin="round"/>
-    <path d="M16.4 -1.9 L20 0 L16.4 1.9 Z" fill="#132032"/>
+  <g transform="translate(24 -1) scale(1.8)">
+    <path
+      d="M19.54 5.08A10.61 10.61 0 0 0 11.91 2a10 10 0 0 0-.05 20 2.58 2.58 0 0 0 2.53-1.89 2.52 2.52 0 0 0-.57-2.28.5.5 0 0 1 .37-.83h1.65A6.15 6.15 0 0 0 22 11.33a8.48 8.48 0 0 0-2.46-6.25z"
+      fill="#ffffff"
+      stroke="#132032"
+      stroke-width="0.9"
+      stroke-linejoin="round"
+    />
+    <circle cx="12" cy="6.5" r="1.5" fill="#ef4444"/>
+    <path d="M15.25 7.2a1.5 1.5 0 1 0 2.05.55 1.5 1.5 0 0 0-2.05-.55z" fill="#f59e0b"/>
+    <path d="M8.75 7.2a1.5 1.5 0 1 0 .55 2.05 1.5 1.5 0 0 0-.55-2.05z" fill="#3b82f6"/>
+    <path d="M6.16 11.26a1.5 1.5 0 1 0 2.08.4 1.49 1.49 0 0 0-2.08-.4z" fill="#22c55e"/>
   </g>
 </svg>
