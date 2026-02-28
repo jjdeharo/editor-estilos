@@ -312,17 +312,35 @@ const APP_BASE_PATH = (() => {
 const ELPX_URL_PREFIX = `${APP_BASE_PATH}__elpx/`;
 const ELPX_CACHE_PREFIX = "editor-estilos:elpx:";
 
+function i18nText(key, fallback, params = {}) {
+  const i18n = window.EditorI18n;
+  if (i18n && typeof i18n.t === "function") return i18n.t(key, fallback, params);
+  return fallback;
+}
+
+function alertT(key, fallback, params = {}) {
+  window.alert(i18nText(key, fallback, params));
+}
+
+function confirmT(key, fallback, params = {}) {
+  return window.confirm(i18nText(key, fallback, params));
+}
+
+function setStatusT(key, fallback, params = {}) {
+  setStatus(i18nText(key, fallback, params));
+}
+
 const FILE_TYPE_OPTIONS = [
-  { value: "images", label: "Imágenes" },
-  { value: "css", label: "CSS" },
-  { value: "js", label: "JavaScript" },
-  { value: "xml", label: "XML" },
-  { value: "fonts", label: "Fuentes" },
-  { value: "text", label: "Texto" },
-  { value: "json", label: "JSON" },
-  { value: "html", label: "HTML" },
-  { value: "markdown", label: "Markdown" },
-  { value: "other", label: "Otros" }
+  { value: "images", key: "files.type.images", label: "Imágenes" },
+  { value: "css", key: "files.type.css", label: "CSS" },
+  { value: "js", key: "files.type.js", label: "JavaScript" },
+  { value: "xml", key: "files.type.xml", label: "XML" },
+  { value: "fonts", key: "files.type.fonts", label: "Fuentes" },
+  { value: "text", key: "files.type.text", label: "Texto" },
+  { value: "json", key: "files.type.json", label: "JSON" },
+  { value: "html", key: "files.type.html", label: "HTML" },
+  { value: "markdown", key: "files.type.markdown", label: "Markdown" },
+  { value: "other", key: "files.type.other", label: "Otros" }
 ];
 
 const QUICK_DEFAULTS = {
@@ -409,99 +427,34 @@ const HIGHLIGHT_BY_FILE_GROUP = {
   html: "xml",
   markdown: "markdown"
 };
-const QUICK_HELP_TEXT = {
-  linkColor: "Cambia el color de los enlaces del contenido.",
-  titleColor: "Cambia el color del titulo principal de cada pagina.",
-  textColor: "Define el color base del texto del contenido.",
-  contentBgColor: "Cambia el fondo del area principal de contenido.",
-  pageBgColor: "Cambia el fondo global de la pagina.",
-  contentOuterBgColor: "Cambia el color del espacio lateral cuando el contenido no ocupa el 100%.",
-  contentWidthMode: "Ajusta el ancho del área principal. Con menú lateral activo, cambia el ancho del conjunto visible (menú + contenido).",
-  contentWidth: "Fija en pixeles el ancho maximo del bloque principal de contenido (columna central).",
-  contentWidthPercent: "Fija en porcentaje el ancho maximo del bloque principal de contenido (columna central).",
-  contentCentered: "Centra o alinea a la izquierda el bloque principal cuando no ocupa todo el ancho.",
-  fontBody: "Define la fuente base del texto general.",
-  fontTitles: "Define la fuente usada en titulos.",
-  fontMenu: "Define la fuente usada en el menu lateral.",
-  baseFontSize: "Ajusta el tamano base de lectura.",
-  lineHeight: "Ajusta el interlineado global para mejorar legibilidad.",
-  pageTitleSize: "Ajusta el tamano del titulo de pagina.",
-  pageTitleWeight: "Ajusta el grosor del titulo de pagina.",
-  pageTitleUppercase: "Fuerza mayusculas en titulos de pagina.",
-  pageTitleLetterSpacing: "Ajusta el espaciado entre letras del titulo de pagina.",
-  pageTitleMarginBottom: "Ajusta la separacion bajo el titulo de pagina.",
-  packageTitleSize: "Ajusta el tamano del titulo del proyecto.",
-  packageTitleColor: "Ajusta el color del titulo del proyecto.",
-  packageTitleWeight: "Ajusta el grosor del titulo del proyecto.",
-  boxTitleSize: "Ajusta el tamano de titulos de iDevices.",
-  boxTitleGap: "Ajusta la distancia entre icono y titulo de iDevice.",
-  menuBgColor: "Cambia el fondo del menu lateral.",
-  menuTextColor: "Cambia el color de texto del menu lateral.",
-  menuActiveBgColor: "Cambia el fondo del elemento activo en el menu lateral.",
-  menuActiveTextColor: "Cambia el color del elemento activo en el menu lateral.",
-  boxBgColor: "Cambia el fondo de los iDevices.",
-  boxBorderColor: "Cambia el borde de los iDevices.",
-  boxTitleColor: "Cambia el color del titulo de iDevice.",
-  boxTextAlign: "Define la alineacion del texto en iDevices.",
-  boxFontSize: "Define el tamano del texto dentro de iDevices.",
-  buttonBgColor: "Cambia el color de fondo de botones del contenido.",
-  buttonTextColor: "Cambia el color de texto de botones del contenido.",
-  bgImageRepeat: "Define si la imagen de fondo se repite en la pagina.",
-  bgImageSoftness: "Suaviza la imagen de fondo con un velo para reducir contraste.",
-  logoEnabled: "Muestra u oculta el logotipo institucional.",
-  logoSize: "Ajusta el tamano del logotipo institucional.",
-  logoPosition: "Elige la posicion del logotipo institucional.",
-  logoMarginX: "Ajusta el margen horizontal del logotipo.",
-  logoMarginY: "Ajusta el margen vertical del logotipo.",
-  headerImageEnabled: "Activa o desactiva imagen en cabecera.",
-  headerHideTitle: "Oculta el titulo textual cuando hay imagen en cabecera.",
-  headerImageHeight: "Ajusta la altura de la cabecera.",
-  headerImageFit: "Define como se adapta la imagen de cabecera al espacio disponible.",
-  headerImagePosition: "Define la posicion de la imagen de cabecera.",
-  headerImageRepeat: "Define si la imagen de cabecera se repite.",
-  footerImageEnabled: "Activa o desactiva imagen en pie.",
-  footerImageHeight: "Ajusta la altura del pie.",
-  footerImageFit: "Define como se adapta la imagen de pie.",
-  footerImagePosition: "Define la posicion de la imagen de pie.",
-  footerImageRepeat: "Define si la imagen de pie se repite."
-};
-const PREVIEW_HELP_TEXT = {
-  showSearch: "Muestra u oculta el buscador.",
-  showPageCounter: "Muestra u oculta el contador de paginas.",
-  showNavButtons: "Muestra u oculta los botones anterior/siguiente.",
-  navCollapsed: "Simula el menu lateral plegado.",
-  showPackageTitle: "Muestra u oculta el titulo del proyecto.",
-  showPageTitle: "Muestra u oculta el titulo de pagina.",
-  collapseIdevices: "Simula los iDevices plegados."
-};
-const CONTROL_HELP_TEXT_BY_ID = {
-  addBgImageBtn: "Selecciona una imagen para el fondo global.",
-  removeBgImageBtn: "Elimina la imagen de fondo configurada.",
-  bgImageSelect: "Elige una imagen existente del estilo para usarla como fondo.",
-  addFontBtn: "Anade fuentes personalizadas para usarlas en los selectores de tipografia.",
-  addLogoBtn: "Sube o reemplaza el logotipo institucional.",
-  removeLogoBtn: "Elimina el logotipo institucional cargado.",
-  showAllStyleImages: "Amplia el listado para elegir cualquier imagen del estilo en cabecera y pie.",
-  headerImageSelect: "Elige una imagen existente del estilo para usarla en la cabecera.",
-  addHeaderImageBtn: "Sube una imagen personalizada para la cabecera.",
-  removeHeaderImageBtn: "Elimina la imagen de cabecera configurada.",
-  footerImageSelect: "Elige una imagen existente del estilo para usarla en el pie.",
-  addFooterImageBtn: "Sube una imagen personalizada para el pie.",
-  removeFooterImageBtn: "Elimina la imagen de pie configurada.",
-  navPrevIconSelect: "Elige una imagen del estilo para el botón de Anterior.",
-  navNextIconSelect: "Elige una imagen del estilo para el botón de Siguiente.",
-  navMenuIconSelect: "Elige una imagen del estilo para el botón de Menú.",
-  addNavPrevIconBtn: "Sube una imagen y la aplica al botón de Anterior.",
-  addNavNextIconBtn: "Sube una imagen y la aplica al botón de Siguiente.",
-  addNavMenuIconBtn: "Sube una imagen y la aplica al botón de Menú.",
-  addIdeviceIconsBtn: "Reemplaza en lote los iconos de iDevices.",
-  elpxPickBtn: "Abre un proyecto ELPX para navegar sus páginas reales y aplicar el estilo en tiempo real.",
-  exportElpxBtn: "Guarda el ELPX junto con el estilo modificado para poder importarlo en eXeLearning.",
-  previewInspectBtn: "Activa un modo de edición por clic en la previsualización para ajustar sus propiedades.",
-  undoBtn: "Deshace el último cambio realizado en el estilo o archivos.",
-  redoBtn: "Rehace el último cambio que se deshizo.",
-  openDetachedEditorBtn: "Abre el archivo actual en una ventana de edición separada para trabajar con más espacio."
-};
+const CONTROL_HELP_IDS = [
+  "addBgImageBtn",
+  "removeBgImageBtn",
+  "bgImageSelect",
+  "addFontBtn",
+  "addLogoBtn",
+  "removeLogoBtn",
+  "showAllStyleImages",
+  "headerImageSelect",
+  "addHeaderImageBtn",
+  "removeHeaderImageBtn",
+  "footerImageSelect",
+  "addFooterImageBtn",
+  "removeFooterImageBtn",
+  "navPrevIconSelect",
+  "navNextIconSelect",
+  "navMenuIconSelect",
+  "addNavPrevIconBtn",
+  "addNavNextIconBtn",
+  "addNavMenuIconBtn",
+  "addIdeviceIconsBtn",
+  "elpxPickBtn",
+  "exportElpxBtn",
+  "previewInspectBtn",
+  "undoBtn",
+  "redoBtn",
+  "openDetachedEditorBtn"
+];
 
 const DELIVERY_MODE_BODY_SELECTORS = ["body.exe-web-site", "body.exe-ims", "body.exe-scorm"];
 const DELIVERY_MODE_SCOPE_SELECTORS = [".exe-web-site", ".exe-ims", ".exe-scorm"];
@@ -526,32 +479,50 @@ function modeScopedSelectors(targetSelectors = []) {
 }
 
 function applyTooltipToControl(target, text) {
-  if (!(target instanceof HTMLElement) || !text) return;
-  target.title = text;
+  if (!(target instanceof HTMLElement)) return;
+  let resolved = String(text || "").trim();
+  if (!resolved) {
+    resolved = (
+      target.getAttribute("aria-label")
+      || target.getAttribute("title")
+      || ""
+    ).trim();
+  }
+  if (!resolved && target.id) {
+    const linked = document.querySelector(`label[for="${target.id}"]`);
+    if (linked instanceof HTMLElement) resolved = linked.textContent?.trim() || "";
+  }
+  if (!resolved) {
+    const wrapLabel = target.closest("label");
+    if (wrapLabel instanceof HTMLElement) resolved = wrapLabel.textContent?.trim() || "";
+  }
+  if (!resolved) {
+    const toggleLabel = target.closest(".toggle-item")?.querySelector(".toggle-label");
+    if (toggleLabel instanceof HTMLElement) resolved = toggleLabel.textContent?.trim() || "";
+  }
+  if (!resolved) resolved = target.textContent?.trim() || "";
+  if (!resolved) return;
+  target.title = resolved;
   if (target.id) {
     const linked = document.querySelector(`label[for="${target.id}"]`);
-    if (linked instanceof HTMLElement) linked.title = text;
+    if (linked instanceof HTMLElement) linked.title = resolved;
   }
   const wrapLabel = target.closest("label");
-  if (wrapLabel instanceof HTMLElement) wrapLabel.title = text;
+  if (wrapLabel instanceof HTMLElement) wrapLabel.title = resolved;
   const toggleItem = target.closest(".toggle-item");
-  if (toggleItem instanceof HTMLElement) toggleItem.title = text;
+  if (toggleItem instanceof HTMLElement) toggleItem.title = resolved;
 }
 
 function applyControlTooltips() {
   for (const input of els.quickInputs) {
-    const key = String(input?.dataset?.quick || "");
-    const text = QUICK_HELP_TEXT[key];
-    applyTooltipToControl(input, text);
+    applyTooltipToControl(input);
   }
   for (const input of els.previewInputs) {
-    const key = String(input?.dataset?.preview || "");
-    const text = PREVIEW_HELP_TEXT[key];
-    applyTooltipToControl(input, text);
+    applyTooltipToControl(input);
   }
-  for (const [id, text] of Object.entries(CONTROL_HELP_TEXT_BY_ID)) {
+  for (const id of CONTROL_HELP_IDS) {
     const target = document.getElementById(id);
-    applyTooltipToControl(target, text);
+    applyTooltipToControl(target);
   }
 }
 
@@ -789,7 +760,7 @@ async function restoreEditorSnapshot(snapshot) {
 
 async function undoLastChange() {
   if (!state.undoStack.length) {
-    setStatus("No hay cambios para deshacer.");
+    setStatusT("status.nothingToUndo", "No hay cambios para deshacer.");
     return;
   }
   const previous = state.undoStack.pop();
@@ -799,7 +770,7 @@ async function undoLastChange() {
   state.isRestoringUndo = true;
   try {
     await restoreEditorSnapshot(previous);
-    setStatus("Último cambio deshecho.");
+    setStatusT("status.undoApplied", "Último cambio deshecho.");
   } finally {
     state.isRestoringUndo = false;
   }
@@ -807,7 +778,7 @@ async function undoLastChange() {
 
 async function redoLastChange() {
   if (!state.redoStack.length) {
-    setStatus("No hay cambios para rehacer.");
+    setStatusT("status.nothingToRedo", "No hay cambios para rehacer.");
     return;
   }
   const next = state.redoStack.pop();
@@ -817,7 +788,7 @@ async function redoLastChange() {
   state.isRestoringUndo = true;
   try {
     await restoreEditorSnapshot(next);
-    setStatus("Cambio rehecho.");
+    setStatusT("status.redoApplied", "Cambio rehecho.");
   } finally {
     state.isRestoringUndo = false;
   }
@@ -825,8 +796,10 @@ async function redoLastChange() {
 
 function confirmDiscardUnsavedChanges(contextLabel = "cargar otro estilo") {
   if (!state.isDirty) return true;
-  return window.confirm(
-    `Hay cambios sin exportar. Antes de ${contextLabel}, exporta un ZIP para no perderlos.\n\n¿Continuar y descartar cambios?`
+  return confirmT(
+    "confirm.discardUnsaved",
+    `Hay cambios sin exportar. Antes de ${contextLabel}, exporta un ZIP para no perderlos.\n\n¿Continuar y descartar cambios?`,
+    { contextLabel }
   );
 }
 
@@ -881,9 +854,15 @@ function blockExportForOfficialMetadataConflict(targetLabel = "exportar") {
   if (officialConflict.nameEqual) fields.push("Nombre");
   if (officialConflict.titleEqual) fields.push("Título");
   const fieldsText = fields.join(" y ");
-  setStatus(`Debes cambiar ${fieldsText} del estilo en Metadatos antes de ${targetLabel} para no sobrescribir la plantilla oficial.`);
-  window.alert(
-    `${String(targetLabel).charAt(0).toUpperCase()}${String(targetLabel).slice(1)} bloqueado.\n\n${fieldsText} coincide con la plantilla oficial.\nCámbialo en Estilo > Información y exportación y vuelve a intentarlo.`
+  setStatusT(
+    "status.officialConflict.blocked",
+    `Debes cambiar ${fieldsText} del estilo en Metadatos antes de ${targetLabel} para no sobrescribir la plantilla oficial.`,
+    { fieldsText, targetLabel }
+  );
+  alertT(
+    "alert.officialConflict.blocked",
+    `${String(targetLabel).charAt(0).toUpperCase()}${String(targetLabel).slice(1)} bloqueado.\n\n${fieldsText} coincide con la plantilla oficial.\nCámbialo en Estilo > Información y exportación y vuelve a intentarlo.`,
+    { targetLabel: `${String(targetLabel).charAt(0).toUpperCase()}${String(targetLabel).slice(1)}`, fieldsText }
   );
   focusMetadataForRename({ preferTitle: !officialConflict.nameEqual && officialConflict.titleEqual });
   return true;
@@ -902,7 +881,10 @@ function askRenameForElpxExport(officialName, officialTitle) {
   const confirmBtn = els.exportRenameConfirmBtn;
   const cancelBtn = els.exportRenameCancelBtn;
   const modal = els.exportRenameModal;
-  const removalWarning = "Si mantienes Nombre/Título oficiales, en eXeLearning debes eliminar antes el estilo anterior para poder importarlo.";
+  const removalWarning = i18nText(
+    "elpx.rename.removalWarning",
+    "Si mantienes Nombre/Título oficiales, en eXeLearning debes eliminar antes el estilo anterior para poder importarlo."
+  );
 
   nameInput.value = String(els.metaName?.value || "").trim();
   titleInput.value = String(els.metaTitle?.value || "").trim();
@@ -917,7 +899,7 @@ function askRenameForElpxExport(officialName, officialTitle) {
     help.classList.remove("error", "warn");
 
     if (!nextName || !nextTitle) {
-      help.textContent = "Completa Nombre y Título para continuar.";
+      help.textContent = i18nText("elpx.rename.completeFields", "Completa Nombre y Título para continuar.");
       help.classList.add("error");
       return;
     }
@@ -927,11 +909,11 @@ function askRenameForElpxExport(officialName, officialTitle) {
       return;
     }
     if (!nameChanged || !titleChanged) {
-      help.textContent = `Recomendado: cambiar ambos campos. ${removalWarning}`;
+      help.textContent = i18nText("elpx.rename.recommendedChangeBoth", `Recomendado: cambiar ambos campos. ${removalWarning}`, { removalWarning });
       help.classList.add("warn");
       return;
     }
-    help.textContent = "Listo. Puedes guardar el ELPX como estilo nuevo.";
+    help.textContent = i18nText("elpx.rename.ready", "Listo. Puedes guardar el ELPX como estilo nuevo.");
   };
 
   return new Promise((resolve) => {
@@ -987,7 +969,7 @@ async function ensureElpxRenameForOfficialStyle() {
   const officialTitle = String(official?.meta?.title || "").trim();
   const result = await askRenameForElpxExport(officialName, officialTitle);
   if (!result) {
-    setStatus("Guardado de ELPX cancelado. Puedes ajustar más metadatos y volver a intentarlo.");
+    setStatusT("status.elpxSaveCancelled", "Guardado de ELPX cancelado. Puedes ajustar más metadatos y volver a intentarlo.");
     return { ok: false, keptOfficialMetadata: false };
   }
 
@@ -1194,8 +1176,8 @@ async function clearElpxCaches({ keepCacheName = "" } = {}) {
 }
 
 async function registerElpxServiceWorkerIfNeeded() {
-  if (!("serviceWorker" in navigator)) throw new Error("Service Worker no disponible en este navegador.");
-  if (!window.isSecureContext) throw new Error("ELPX requiere HTTPS o localhost para usar Service Worker.");
+  if (!("serviceWorker" in navigator)) throw new Error(i18nText("error.serviceWorkerUnavailable", "Service Worker no disponible en este navegador."));
+  if (!window.isSecureContext) throw new Error(i18nText("error.elpxRequiresSecureContext", "ELPX requiere HTTPS o localhost para usar Service Worker."));
   await navigator.serviceWorker.register(ELPX_SW_URL);
   await navigator.serviceWorker.ready;
 }
@@ -1284,7 +1266,7 @@ async function deactivateElpxMode({ resetFrame = true } = {}) {
     els.previewFrame.setAttribute("src", "about:blank");
   }
   if (els.elpxInput) els.elpxInput.value = "";
-  if (els.elpxInputName) els.elpxInputName.textContent = "Ningún archivo seleccionado";
+  if (els.elpxInputName) els.elpxInputName.textContent = i18nText("file.none", "Ningún archivo seleccionado");
   setElpxModeUi();
 }
 
@@ -1549,39 +1531,43 @@ function findCustomLogoPath() {
 function updateLogoInfo() {
   if (!els.logoInfo) return;
   if (!state.quick.logoPath || !state.files.has(state.quick.logoPath)) {
-    els.logoInfo.textContent = "Sin logo cargado.";
+    els.logoInfo.textContent = i18nText("status.noLogoLoaded", "Sin logo cargado.");
     return;
   }
-  els.logoInfo.textContent = `Logo actual: ${state.quick.logoPath}`;
+  els.logoInfo.textContent = i18nText("info.logoCurrent", "Logo actual: {path}", { path: state.quick.logoPath });
 }
 
 function updateBgImageInfo() {
   if (!els.bgImageInfo) return;
   if (!state.quick.bgImagePath || !state.files.has(state.quick.bgImagePath) || !state.quick.bgImageEnabled) {
-    els.bgImageInfo.textContent = "Sin imagen de fondo.";
+    els.bgImageInfo.textContent = i18nText("status.noBgImageLoaded", "Sin imagen de fondo.");
     return;
   }
-  els.bgImageInfo.textContent = `Fondo actual: ${state.quick.bgImagePath}`;
+  els.bgImageInfo.textContent = i18nText("info.bgCurrent", "Fondo actual: {path}", { path: state.quick.bgImagePath });
 }
 
 function updateHeaderImageInfo() {
   if (!els.headerImageInfo) return;
   if (!state.quick.headerImagePath || !state.files.has(state.quick.headerImagePath)) {
-    els.headerImageInfo.textContent = "Sin imagen de cabecera.";
+    els.headerImageInfo.textContent = i18nText("status.noHeaderImageLoaded", "Sin imagen de cabecera.");
     return;
   }
-  const stateText = state.quick.headerImageEnabled ? "activa" : "cargada (desactivada)";
-  els.headerImageInfo.textContent = `Cabecera ${stateText}: ${state.quick.headerImagePath}`;
+  const stateText = state.quick.headerImageEnabled
+    ? i18nText("status.state.active", "activa")
+    : i18nText("status.state.loadedDisabled", "cargada (desactivada)");
+  els.headerImageInfo.textContent = i18nText("info.headerCurrent", "Cabecera {state}: {path}", { state: stateText, path: state.quick.headerImagePath });
 }
 
 function updateFooterImageInfo() {
   if (!els.footerImageInfo) return;
   if (!state.quick.footerImagePath || !state.files.has(state.quick.footerImagePath)) {
-    els.footerImageInfo.textContent = "Sin imagen de pie.";
+    els.footerImageInfo.textContent = i18nText("status.noFooterImageLoaded", "Sin imagen de pie.");
     return;
   }
-  const stateText = state.quick.footerImageEnabled ? "activa" : "cargada (desactivada)";
-  els.footerImageInfo.textContent = `Pie ${stateText}: ${state.quick.footerImagePath}`;
+  const stateText = state.quick.footerImageEnabled
+    ? i18nText("status.state.active", "activa")
+    : i18nText("status.state.loadedDisabled", "cargada (desactivada)");
+  els.footerImageInfo.textContent = i18nText("info.footerCurrent", "Pie {state}: {path}", { state: stateText, path: state.quick.footerImagePath });
 }
 
 function listStyleImagePaths({ includeAll = false } = {}) {
@@ -1610,8 +1596,8 @@ function refreshStyleImageSelect(selectEl, currentPath, kindLabel, { includeAll 
   const placeholder = document.createElement("option");
   placeholder.value = "";
   placeholder.textContent = options.length
-    ? `Seleccionar imagen del estilo…`
-    : `No hay imágenes del estilo`;
+    ? i18nText("quick.common.selectStyleImage", "Seleccionar imagen del estilo...")
+    : i18nText("quick.common.noStyleImages", "No hay imágenes del estilo");
   selectEl.appendChild(placeholder);
 
   for (const path of options) {
@@ -1623,31 +1609,33 @@ function refreshStyleImageSelect(selectEl, currentPath, kindLabel, { includeAll 
 
   selectEl.value = options.includes(current) ? current : "";
   selectEl.disabled = options.length === 0;
-  selectEl.title = options.length ? `Selecciona una imagen del estilo para ${kindLabel}` : "";
+  selectEl.title = options.length
+    ? i18nText("quick.common.selectStyleImageFor", "Selecciona una imagen del estilo para {kind}", { kind: kindLabel })
+    : "";
 }
 
 function refreshHeaderFooterImageSelects() {
   const includeAll = Boolean(els.showAllStyleImages?.checked);
-  refreshStyleImageSelect(els.bgImageSelect, state.quick.bgImagePath, "fondo", { includeAll });
-  refreshStyleImageSelect(els.headerImageSelect, state.quick.headerImagePath, "cabecera", { includeAll });
-  refreshStyleImageSelect(els.footerImageSelect, state.quick.footerImagePath, "pie", { includeAll });
+  refreshStyleImageSelect(els.bgImageSelect, state.quick.bgImagePath, i18nText("kind.background", "fondo"), { includeAll });
+  refreshStyleImageSelect(els.headerImageSelect, state.quick.headerImagePath, i18nText("kind.header", "cabecera"), { includeAll });
+  refreshStyleImageSelect(els.footerImageSelect, state.quick.footerImagePath, i18nText("kind.footer", "pie"), { includeAll });
 }
 
 function refreshNavIconSelects() {
-  refreshStyleImageSelect(els.navPrevIconSelect, state.quick.navIconPrevPath, "anterior", { includeAll: true });
-  refreshStyleImageSelect(els.navNextIconSelect, state.quick.navIconNextPath, "siguiente", { includeAll: true });
-  refreshStyleImageSelect(els.navMenuIconSelect, state.quick.navIconMenuPath, "menú", { includeAll: true });
+  refreshStyleImageSelect(els.navPrevIconSelect, state.quick.navIconPrevPath, i18nText("kind.navPrev", "anterior"), { includeAll: true });
+  refreshStyleImageSelect(els.navNextIconSelect, state.quick.navIconNextPath, i18nText("kind.navNext", "siguiente"), { includeAll: true });
+  refreshStyleImageSelect(els.navMenuIconSelect, state.quick.navIconMenuPath, i18nText("kind.navMenu", "menú"), { includeAll: true });
 }
 
 function updateNavIconsInfo() {
   if (!els.navIconsInfo) return;
   const parts = [];
-  if (state.quick.navIconPrevPath && state.files.has(state.quick.navIconPrevPath)) parts.push(`Anterior: ${state.quick.navIconPrevPath}`);
-  if (state.quick.navIconNextPath && state.files.has(state.quick.navIconNextPath)) parts.push(`Siguiente: ${state.quick.navIconNextPath}`);
-  if (state.quick.navIconMenuPath && state.files.has(state.quick.navIconMenuPath)) parts.push(`Menú: ${state.quick.navIconMenuPath}`);
+  if (state.quick.navIconPrevPath && state.files.has(state.quick.navIconPrevPath)) parts.push(i18nText("info.navPrev", "Anterior: {path}", { path: state.quick.navIconPrevPath }));
+  if (state.quick.navIconNextPath && state.files.has(state.quick.navIconNextPath)) parts.push(i18nText("info.navNext", "Siguiente: {path}", { path: state.quick.navIconNextPath }));
+  if (state.quick.navIconMenuPath && state.files.has(state.quick.navIconMenuPath)) parts.push(i18nText("info.navMenu", "Menú: {path}", { path: state.quick.navIconMenuPath }));
   els.navIconsInfo.textContent = parts.length
-    ? `Iconos activos. ${parts.join(" | ")}`
-    : "Sin cambios en iconos de navegación.";
+    ? i18nText("status.navIconsActive", "Iconos activos. {details}", { details: parts.join(" | ") })
+    : i18nText("status.noNavIconsChanges", "Sin cambios en iconos de navegación.");
 }
 
 function isEditorManagedHeaderImage(path) {
@@ -1700,20 +1688,25 @@ function renderOfficialStylePreview(id = state.selectedOfficialStyleId) {
 
   const meta = style.meta || {};
   const title = meta.title || style.id;
-  const author = meta.author || "Sin autor";
-  const version = meta.version || "s/v";
-  const compatibility = meta.compatibility || "s/d";
-  const desc = meta.description || "Sin descripción.";
+  const author = meta.author || i18nText("meta.noAuthor", "Sin autor");
+  const version = meta.version || i18nText("meta.noVersionShort", "s/v");
+  const compatibility = meta.compatibility || i18nText("meta.noDataShort", "s/d");
+  const desc = meta.description || i18nText("meta.noDescription", "Sin descripción.");
   const screenshot = `${style.dir}/screenshot.png`;
+  const altText = i18nText("preview.stylePreviewAlt", "Vista previa {title}", { title });
+  const idLabel = i18nText("preview.meta.id", "ID");
+  const versionLabel = i18nText("meta.version", "Versión");
+  const compatLabel = i18nText("preview.meta.compat", "Compat");
+  const authorLabel = i18nText("meta.author", "Autor");
 
   els.officialPreview.className = "official-preview";
   els.officialPreview.innerHTML = `
     <figure>
-      <img src="${escapeHtml(screenshot)}" alt="Vista previa ${escapeHtml(title)}" loading="lazy" />
+      <img src="${escapeHtml(screenshot)}" alt="${escapeHtml(altText)}" loading="lazy" />
       <figcaption>
         <span class="title">${escapeHtml(title)}</span>
-        <span class="meta">ID: ${escapeHtml(style.id)} | Versión: ${escapeHtml(version)} | Compat: ${escapeHtml(compatibility)}</span>
-        <span class="meta">Autor: ${escapeHtml(author)}</span>
+        <span class="meta">${escapeHtml(idLabel)}: ${escapeHtml(style.id)} | ${escapeHtml(versionLabel)}: ${escapeHtml(version)} | ${escapeHtml(compatLabel)}: ${escapeHtml(compatibility)}</span>
+        <span class="meta">${escapeHtml(authorLabel)}: ${escapeHtml(author)}</span>
         <span class="desc">${escapeHtml(desc)}</span>
       </figcaption>
     </figure>
@@ -1856,17 +1849,17 @@ function setDetachedEditorButtonState() {
   const enabled = isDetachedEditorAvailable();
   els.openDetachedEditorBtn.disabled = !enabled;
   els.openDetachedEditorBtn.title = enabled
-    ? "Abre el archivo actual en una ventana de edición separada para trabajar con más espacio."
-    : "Solo disponible para archivos de texto.";
+    ? i18nText("files.openDetachedEditor", "Abrir editor en ventana independiente")
+    : i18nText("files.detachedOnlyText", "Solo disponible para archivos de texto.");
 }
 
 function detachedEditorHtml() {
   return `<!doctype html>
-<html lang="es">
+<html lang="${escapeHtml(window.EditorI18n?.getLang?.() || "en")}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Editor de archivo</title>
+  <title>${i18nText("files.editorTitle", "Editor de archivo")}</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css" />
   <style>
     :root { color-scheme: light; }
@@ -2010,11 +2003,13 @@ function syncDetachedEditorFromMain() {
   const canEdit = isDetachedEditorAvailable();
   const path = canEdit ? state.activePath : "";
   detachedEditor.path = path;
-  refs.pathLabel.textContent = path || "(archivo no editable en texto)";
+  refs.pathLabel.textContent = path || i18nText("files.notEditableText", "(archivo no editable en texto)");
   refs.textarea.disabled = !canEdit;
   const nextValue = canEdit ? (els.textEditor.value || "") : "";
   if (refs.textarea.value !== nextValue) refs.textarea.value = nextValue;
-  refs.win.document.title = path ? `Editor: ${path}` : "Editor de archivo";
+  refs.win.document.title = path
+    ? i18nText("files.detachedTitle", "Editor: {path}", { path })
+    : i18nText("files.editorTitle", "Editor de archivo");
   renderDetachedHighlight();
 }
 
@@ -2052,7 +2047,7 @@ function openDetachedEditor() {
   }
   const popup = window.open("", "editor-estilos-detached", "popup=yes,width=860,height=620");
   if (!popup) {
-    setStatus("No se pudo abrir la ventana independiente (bloqueada por el navegador).");
+    setStatusT("status.detachedWindowBlocked", "No se pudo abrir la ventana independiente (bloqueada por el navegador).");
     return;
   }
   setupDetachedEditorWindow(popup);
@@ -2077,7 +2072,7 @@ function refreshFileTypeFilterOptions({ forceAll = false } = {}) {
   els.fileTypeFilter.innerHTML = "";
   const allOption = document.createElement("option");
   allOption.value = "all";
-  allOption.textContent = `Todos (${total})`;
+  allOption.textContent = `${i18nText("files.type.all", "Todos")} (${total})`;
   els.fileTypeFilter.appendChild(allOption);
 
   for (const opt of FILE_TYPE_OPTIONS) {
@@ -2085,7 +2080,7 @@ function refreshFileTypeFilterOptions({ forceAll = false } = {}) {
     if (!count) continue;
     const option = document.createElement("option");
     option.value = opt.value;
-    option.textContent = `${opt.label} (${count})`;
+    option.textContent = `${i18nText(opt.key, opt.label)} (${count})`;
     els.fileTypeFilter.appendChild(option);
   }
 
@@ -2338,12 +2333,12 @@ function clearClickOverrides() {
   const css = readCss();
   const next = writeClickOverridesBlock(css, "");
   if (next === css) {
-    setStatus("No había cambios por clic que deshacer.");
+    setStatusT("status.noClickChangesToUndo", "No había cambios por clic que deshacer.");
     return;
   }
   writeCss(next);
   markDirty();
-  setStatus("Cambios por clic eliminados.");
+  setStatusT("status.clickChangesRemoved", "Cambios por clic eliminados.");
 }
 
 function renderFileList() {
@@ -2378,7 +2373,9 @@ function renderFileList() {
   if (!els.fileList.children.length) {
     const empty = document.createElement("div");
     empty.className = "file-group-header";
-    empty.textContent = query ? "No hay coincidencias para la búsqueda en este tipo." : "No hay archivos para este tipo.";
+    empty.textContent = query
+      ? i18nText("files.noSearchMatches", "No hay coincidencias para la búsqueda en este tipo.")
+      : i18nText("files.noFilesForType", "No hay archivos para este tipo.");
     els.fileList.appendChild(empty);
   }
 }
@@ -2386,7 +2383,7 @@ function renderFileList() {
 function syncEditorWithActiveFile() {
   const bytes = state.files.get(state.activePath);
   if (!bytes) {
-    els.editorPath.textContent = "Archivo no encontrado";
+    els.editorPath.textContent = i18nText("files.notFound", "Archivo no encontrado");
     els.textEditor.value = "";
     els.textEditor.disabled = true;
     els.textEditor.style.display = "block";
@@ -2712,7 +2709,7 @@ function applyPreviewTogglesFromUI() {
   state.preview = previewFromUI();
   savePreviewToggles(state.preview);
   renderPreview();
-  setStatus("Previsualización actualizada.");
+  setStatusT("status.previewUpdated", "Previsualización actualizada.");
 }
 
 function setupPreviewFrame() {
@@ -3060,7 +3057,7 @@ function handleClickEditClick(ev) {
   if (!target) return;
   const selector = buildElementSelector(target);
   if (!selector) {
-    setStatus("No se pudo identificar un selector para ese elemento.");
+    setStatusT("status.selectorNotIdentified", "No se pudo identificar un selector para ese elemento.");
     return;
   }
   state.clickEditTargetSelector = selector;
@@ -3134,7 +3131,7 @@ function toggleClickEditMode() {
 function applyClickEditChanges() {
   const baseSelector = String(state.clickEditTargetSelector || "").trim();
   if (!baseSelector) {
-    setStatus("No hay elemento seleccionado para aplicar cambios.");
+    setStatusT("status.noElementSelected", "No hay elemento seleccionado para aplicar cambios.");
     return;
   }
   const selector = expandedClickEditSelector();
@@ -3145,13 +3142,17 @@ function applyClickEditChanges() {
   state.clickEditIgnoreUntil = Date.now() + 350;
   if (nextCss === css) {
     closeClickEditModal();
-    setStatus("No había cambios nuevos para aplicar.");
+    setStatusT("status.noNewClickChanges", "No había cambios nuevos para aplicar.");
     return;
   }
   writeCss(nextCss);
   markDirty();
   closeClickEditModal();
-  setStatus(`Cambios aplicados en ${baseSelector}${withInteractiveStates ? " (incluye hover/focus/active)" : ""}`);
+  setStatus(i18nText(
+    "status.clickChangesApplied",
+    `Cambios aplicados en ${baseSelector}${withInteractiveStates ? " (incluye hover/focus/active)" : ""}`,
+    { selector: baseSelector, extra: withInteractiveStates ? " (incluye hover/focus/active)" : "" }
+  ));
 }
 
 function ensureFontFamilyOption(fontValue, selectId) {
@@ -3904,7 +3905,7 @@ function applyQuickControls({ showStatus = true } = {}) {
   const css = `${cleanedBaseCss}\n\n/* quick-overrides:start */\n${quickCss}\n/* quick-overrides:end */\n`;
   writeCss(css);
   markDirty();
-  if (showStatus) setStatus("Ajustes rápidos volcados en style.css");
+  if (showStatus) setStatusT("status.quickApplied", "Ajustes rápidos volcados en style.css");
 }
 
 function quickBlockNeedsSchemaMigration(css) {
@@ -4061,7 +4062,7 @@ function ensureMetaTitleFromNameFallback() {
 
 function saveMetaFields({ showStatus = true } = {}) {
   if (!state.files.has("config.xml")) {
-    if (showStatus) setStatus("No existe config.xml en este estilo");
+    if (showStatus) setStatusT("status.configMissing", "No existe config.xml en este estilo");
     return;
   }
   pushUndoSnapshot();
@@ -4079,7 +4080,7 @@ function saveMetaFields({ showStatus = true } = {}) {
   markDirty();
   if (state.activePath === "config.xml") syncEditorWithActiveFile();
   renderPreview();
-  if (showStatus) setStatus("config.xml actualizado");
+  if (showStatus) setStatusT("status.configUpdated", "config.xml actualizado");
 }
 
 function warnIfNotDownloadable(context = "estilo") {
@@ -4197,7 +4198,7 @@ function waitForPreviewFrameReady(timeoutMs = 1200) {
 
 async function capturePreviewScreenshotBytes({ width = 1200, height = 550 } = {}) {
   const frame = els.previewFrame;
-  if (!frame?.contentDocument?.documentElement) throw new Error("Previsualización no disponible");
+  if (!frame?.contentDocument?.documentElement) throw new Error(i18nText("error.previewUnavailable", "Previsualización no disponible"));
 
   const htmlClone = frame.contentDocument.documentElement.cloneNode(true);
   const body = htmlClone.querySelector("body");
@@ -4220,19 +4221,19 @@ async function capturePreviewScreenshotBytes({ width = 1200, height = 550 } = {}
       const i = new Image();
       i.decoding = "sync";
       i.onload = () => resolve(i);
-      i.onerror = () => reject(new Error("No se pudo renderizar SVG de previsualización"));
+      i.onerror = () => reject(new Error(i18nText("error.previewSvgRender", "No se pudo renderizar SVG de previsualización")));
       i.src = svgUrl;
     });
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas no disponible");
+    if (!ctx) throw new Error(i18nText("error.canvasUnavailable", "Canvas no disponible"));
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(img, 0, 0, width, height);
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
-    if (!blob) throw new Error("No se pudo generar PNG");
+    if (!blob) throw new Error(i18nText("error.pngGenerationFailed", "No se pudo generar PNG"));
     return new Uint8Array(await blob.arrayBuffer());
   } finally {
     URL.revokeObjectURL(svgUrl);
@@ -4268,11 +4269,11 @@ function commonRoot(paths) {
 
 async function loadOfficialStylesCatalog() {
   const manifest = await fetch("app/official-styles.json").then((r) => {
-    if (!r.ok) throw new Error("No se pudo cargar app/official-styles.json");
+    if (!r.ok) throw new Error(i18nText("error.officialCatalogLoad", "No se pudo cargar app/official-styles.json"));
     return r.json();
   });
   state.officialStyles = Array.isArray(manifest.styles) ? manifest.styles : [];
-  if (!state.officialStyles.length) throw new Error("No hay estilos oficiales en el catálogo");
+  if (!state.officialStyles.length) throw new Error(i18nText("error.noOfficialStyles", "No hay estilos oficiales en el catálogo"));
 
   const defaultId = state.officialStyles.some((s) => s.id === "base") ? "base" : state.officialStyles[0].id;
   state.selectedOfficialStyleId = defaultId;
@@ -4337,8 +4338,8 @@ async function loadOfficialStyle(styleId, { showStatus = true, resetFileFilter =
     const label = style.meta?.title || style.id;
     setStatus(
       applyOverLoadedElpx
-        ? `Plantilla oficial aplicada al ELPX actual: ${label} (${style.id})`
-        : `Plantilla oficial cargada: ${label} (${style.id})`
+        ? i18nText("status.officialTemplateAppliedToElpx", `Plantilla oficial aplicada al ELPX actual: ${label} (${style.id})`, { label, styleId: style.id })
+        : i18nText("status.officialTemplateLoaded", `Plantilla oficial cargada: ${label} (${style.id})`, { label, styleId: style.id })
     );
   }
 }
@@ -4400,7 +4401,8 @@ async function loadZip(file) {
   const titleAutofilledFromName = ensureMetaTitleFromNameFallback();
   if (titleAutofilledFromName) refreshMetaFields();
   if (els.metaDownloadable?.value === "0") {
-    window.alert(
+    alertT(
+      "alert.notDownloadableStyle",
       "Este estilo está marcado como no descargable (downloadable=0).\n\nPuedes editarlo aquí, pero en eXe no se podrá importar desde la interfaz mientras siga en 0."
     );
   }
@@ -4422,13 +4424,14 @@ async function loadZip(file) {
     if (titleAutofilledFromName) parts.push("title vacío completado automáticamente con name");
     setStatus(
       applyOverLoadedElpx
-        ? `ZIP aplicado al ELPX con incidencias: ${parts.join(" ; ")}`
-        : `ZIP cargado con incidencias: ${parts.join(" ; ")}`
+        ? i18nText("status.zipAppliedWithIssues", `ZIP aplicado al ELPX con incidencias: ${parts.join(" ; ")}`, { details: parts.join(" ; ") })
+        : i18nText("status.zipLoadedWithIssues", `ZIP cargado con incidencias: ${parts.join(" ; ")}`, { details: parts.join(" ; ") })
     );
   } else {
-    const fallbackMsg = titleAutofilledFromName ? " Se completó automáticamente Título con Nombre." : "";
-    const baseMsg = zipStatus || `ZIP cargado: ${file.name} (${state.files.size} archivos)`;
-    setStatus(`${applyOverLoadedElpx ? `ZIP aplicado al ELPX: ${file.name}. ` : ""}${baseMsg}${fallbackMsg}`);
+    const fallbackMsg = titleAutofilledFromName ? i18nText("status.titleAutofilled", " Se completó automáticamente Título con Nombre.") : "";
+    const baseMsg = zipStatus || i18nText("status.zipLoaded", `ZIP cargado: ${file.name} (${state.files.size} archivos)`, { fileName: file.name, count: state.files.size });
+    const prefix = applyOverLoadedElpx ? i18nText("status.zipAppliedToElpxPrefix", `ZIP aplicado al ELPX: ${file.name}. `, { fileName: file.name }) : "";
+    setStatus(`${prefix}${baseMsg}${fallbackMsg}`);
   }
 }
 
@@ -4447,8 +4450,8 @@ async function loadElpx(file) {
     packageFiles.set(short, bytes);
   }
 
-  if (!packageFiles.has("index.html")) throw new Error("El ELPX no contiene index.html.");
-  if (!packageFiles.has("content.xml")) throw new Error("El ELPX no contiene content.xml.");
+  if (!packageFiles.has("index.html")) throw new Error(i18nText("error.elpxMissingIndex", "El ELPX no contiene index.html."));
+  if (!packageFiles.has("content.xml")) throw new Error(i18nText("error.elpxMissingContent", "El ELPX no contiene content.xml."));
 
   const themePrefixRaw = detectElpxThemePrefix(Array.from(packageFiles.keys()));
   const themePrefix = themePrefixRaw ? (themePrefixRaw.endsWith("/") ? themePrefixRaw : `${themePrefixRaw}/`) : "";
@@ -4511,8 +4514,16 @@ async function loadElpx(file) {
   clearDirty();
   clearUndoHistory();
 
-  const autoAddedMsg = autoAddedOnLoad.length ? ` Se añadieron ficheros de tema faltantes: ${autoAddedOnLoad.join(", ")}.` : "";
-  setStatus(`Proyecto ELPX cargado: ${file.name} (${packageFiles.size} archivos). Navega el contenido real en la previsualización.${autoAddedMsg}`);
+  const autoAddedMsg = autoAddedOnLoad.length
+    ? i18nText("status.elpxThemeFilesAdded", ` Se añadieron ficheros de tema faltantes: ${autoAddedOnLoad.join(", ")}.`, { files: autoAddedOnLoad.join(", ") })
+    : "";
+  setStatus(
+    i18nText(
+      "status.elpxLoaded",
+      `Proyecto ELPX cargado: ${file.name} (${packageFiles.size} archivos). Navega el contenido real en la previsualización.${autoAddedMsg}`,
+      { fileName: file.name, count: packageFiles.size, extra: autoAddedMsg }
+    )
+  );
 }
 
 function validationReport() {
@@ -4579,7 +4590,7 @@ async function exportZip() {
     const parts = [];
     if (report.missingCore.length) parts.push(`faltan obligatorios: ${report.missingCore.join(", ")}`);
     if (report.cssIssues.length) parts.push(`incidencias CSS: ${report.cssIssues.join(" | ")}`);
-    setStatus(`Exportación bloqueada: ${parts.join(" ; ")}`);
+    setStatus(i18nText("status.exportBlocked", `Exportación bloqueada: ${parts.join(" ; ")}`, { details: parts.join(" ; ") }));
     return;
   }
 
@@ -4604,13 +4615,13 @@ async function exportZip() {
   if (autoAddedOnExport.length) warnings.push(`se crearon obligatorios: ${autoAddedOnExport.join(", ")}`);
   if (report.missingTemplate.length) warnings.push(`faltan ${report.missingTemplate.length} archivo(s) respecto a la plantilla original`);
   if (report.missingBase.length) warnings.push(`faltan ${report.missingBase.length} archivo(s) respecto a la base oficial`);
-  const warningText = warnings.length ? ` con aviso: ${warnings.join(" ; ")}` : "";
-  setStatus(`ZIP exportado correctamente (${state.files.size} archivos)${warningText}`);
+  const warningText = warnings.length ? i18nText("status.withWarning", ` con aviso: ${warnings.join(" ; ")}`, { details: warnings.join(" ; ") }) : "";
+  setStatus(i18nText("status.zipExported", `ZIP exportado correctamente (${state.files.size} archivos)${warningText}`, { count: state.files.size, warningText }));
 }
 
 async function exportElpx() {
   if (!state.elpxMode) {
-    setStatus("Primero carga un ELPX para poder exportarlo modificado.");
+    setStatusT("status.loadElpxFirst", "Primero carga un ELPX para poder exportarlo modificado.");
     return;
   }
   const renameCheck = await ensureElpxRenameForOfficialStyle();
@@ -4632,9 +4643,9 @@ async function exportElpx() {
     a.remove();
   }, 0);
   const warning = renameCheck.keptOfficialMetadata
-    ? " Aviso: en eXeLearning elimina antes el estilo anterior con ese Nombre/Título para poder importarlo."
+    ? i18nText("status.elpxExportWarningPreviousStyle", " Aviso: en eXeLearning elimina antes el estilo anterior con ese Nombre/Título para poder importarlo.")
     : "";
-  setStatus(`ELPX exportado correctamente (${state.elpxFiles.size} archivos).${warning}`);
+  setStatus(i18nText("status.elpxExported", `ELPX exportado correctamente (${state.elpxFiles.size} archivos).${warning}`, { count: state.elpxFiles.size, warning }));
 }
 
 function onEditorInput() {
@@ -4666,13 +4677,13 @@ async function onReplaceImageSelected(file) {
   invalidateBlob(state.activePath);
   syncEditorWithActiveFile();
   renderPreview();
-  setStatus(`Imagen reemplazada: ${state.activePath}`);
+  setStatus(i18nText("status.imageReplaced", `Imagen reemplazada: ${state.activePath}`, { path: state.activePath }));
 }
 
 async function onAddLogoSelected(file) {
   if (!file) return;
   if (!isImageFile(file.name)) {
-    setStatus("El logo debe ser una imagen válida.");
+    setStatusT("status.logoInvalidImage", "El logo debe ser una imagen válida.");
     return;
   }
   const extension = (file.name.split(".").pop() || "png").toLowerCase();
@@ -4688,11 +4699,16 @@ async function onAddLogoSelected(file) {
   markDirty();
   refreshFileTypeFilterOptions();
   renderFileList();
-  renderPreview();
-  setStatus(`Logo cargado: ${path}`);
+  if (state.elpxMode) {
+    await syncThemeFilesToElpxCache();
+    reloadElpxPreviewPage();
+  } else {
+    renderPreview();
+  }
+  setStatus(i18nText("status.logoLoaded", `Logo cargado: ${path}`, { path }));
 }
 
-function removeLogo() {
+async function removeLogo() {
   pushUndoSnapshot();
   if (state.quick.logoPath && state.files.has(state.quick.logoPath)) {
     state.files.delete(state.quick.logoPath);
@@ -4705,14 +4721,19 @@ function removeLogo() {
   markDirty();
   refreshFileTypeFilterOptions();
   renderFileList();
-  renderPreview();
-  setStatus("Logo eliminado.");
+  if (state.elpxMode) {
+    await syncThemeFilesToElpxCache();
+    reloadElpxPreviewPage();
+  } else {
+    renderPreview();
+  }
+  setStatusT("status.logoRemoved", "Logo eliminado.");
 }
 
 async function onAddBackgroundImageSelected(file) {
   if (!file) return;
   if (!isImageFile(file.name)) {
-    setStatus("La imagen de fondo debe ser un archivo de imagen válido.");
+    setStatusT("status.bgImageInvalid", "La imagen de fondo debe ser un archivo de imagen válido.");
     return;
   }
   const extension = (file.name.split(".").pop() || "png").toLowerCase();
@@ -4735,14 +4756,14 @@ async function onAddBackgroundImageSelected(file) {
   refreshFileTypeFilterOptions();
   renderFileList();
   renderPreview();
-  setStatus(`Imagen de fondo cargada: ${path}`);
+  setStatus(i18nText("status.bgImageLoaded", `Imagen de fondo cargada: ${path}`, { path }));
 }
 
 function selectBackgroundImageFromStylePath(path) {
   const clean = normalizePath(path || "");
   if (!clean) return;
   if (!state.files.has(clean) || !isImageFile(clean)) {
-    setStatus("La imagen seleccionada para fondo no está disponible en el estilo.");
+    setStatusT("status.bgImageUnavailable", "La imagen seleccionada para fondo no está disponible en el estilo.");
     return;
   }
   state.quick.bgImagePath = clean;
@@ -4751,7 +4772,7 @@ function selectBackgroundImageFromStylePath(path) {
   applyQuickControls({ showStatus: false });
   markDirty();
   renderPreview();
-  setStatus(`Imagen de fondo seleccionada desde el estilo: ${clean}`);
+  setStatus(i18nText("status.bgImageSelected", `Imagen de fondo seleccionada desde el estilo: ${clean}`, { path: clean }));
 }
 
 function removeBackgroundImage() {
@@ -4768,13 +4789,13 @@ function removeBackgroundImage() {
   refreshFileTypeFilterOptions();
   renderFileList();
   renderPreview();
-  setStatus("Imagen de fondo eliminada.");
+  setStatusT("status.bgImageRemoved", "Imagen de fondo eliminada.");
 }
 
 async function onAddHeaderImageSelected(file) {
   if (!file) return;
   if (!isImageFile(file.name)) {
-    setStatus("La imagen de cabecera debe ser un archivo de imagen válido.");
+    setStatusT("status.headerImageInvalid", "La imagen de cabecera debe ser un archivo de imagen válido.");
     return;
   }
   const extension = (file.name.split(".").pop() || "png").toLowerCase();
@@ -4802,14 +4823,14 @@ async function onAddHeaderImageSelected(file) {
   refreshFileTypeFilterOptions();
   renderFileList();
   renderPreview();
-  setStatus(`Imagen de cabecera cargada: ${path}`);
+  setStatus(i18nText("status.headerImageLoaded", `Imagen de cabecera cargada: ${path}`, { path }));
 }
 
 function selectHeaderImageFromStylePath(path) {
   const clean = normalizePath(path || "");
   if (!clean) return;
   if (!state.files.has(clean) || !isImageFile(clean)) {
-    setStatus("La imagen seleccionada para cabecera no está disponible en el estilo.");
+    setStatusT("status.headerImageUnavailable", "La imagen seleccionada para cabecera no está disponible en el estilo.");
     return;
   }
   state.quick.headerImagePath = clean;
@@ -4818,7 +4839,7 @@ function selectHeaderImageFromStylePath(path) {
   applyQuickControls({ showStatus: false });
   markDirty();
   renderPreview();
-  setStatus(`Imagen de cabecera seleccionada desde el estilo: ${clean}`);
+  setStatus(i18nText("status.headerImageSelected", `Imagen de cabecera seleccionada desde el estilo: ${clean}`, { path: clean }));
 }
 
 function removeHeaderImage() {
@@ -4839,13 +4860,13 @@ function removeHeaderImage() {
   refreshFileTypeFilterOptions();
   renderFileList();
   renderPreview();
-  setStatus("Imagen de cabecera eliminada.");
+  setStatusT("status.headerImageRemoved", "Imagen de cabecera eliminada.");
 }
 
 async function onAddFooterImageSelected(file) {
   if (!file) return;
   if (!isImageFile(file.name)) {
-    setStatus("La imagen de pie debe ser un archivo de imagen válido.");
+    setStatusT("status.footerImageInvalid", "La imagen de pie debe ser un archivo de imagen válido.");
     return;
   }
   const extension = (file.name.split(".").pop() || "png").toLowerCase();
@@ -4873,14 +4894,14 @@ async function onAddFooterImageSelected(file) {
   refreshFileTypeFilterOptions();
   renderFileList();
   renderPreview();
-  setStatus(`Imagen de pie cargada: ${path}`);
+  setStatus(i18nText("status.footerImageLoaded", `Imagen de pie cargada: ${path}`, { path }));
 }
 
 function selectFooterImageFromStylePath(path) {
   const clean = normalizePath(path || "");
   if (!clean) return;
   if (!state.files.has(clean) || !isImageFile(clean)) {
-    setStatus("La imagen seleccionada para pie no está disponible en el estilo.");
+    setStatusT("status.footerImageUnavailable", "La imagen seleccionada para pie no está disponible en el estilo.");
     return;
   }
   state.quick.footerImagePath = clean;
@@ -4889,7 +4910,7 @@ function selectFooterImageFromStylePath(path) {
   applyQuickControls({ showStatus: false });
   markDirty();
   renderPreview();
-  setStatus(`Imagen de pie seleccionada desde el estilo: ${clean}`);
+  setStatus(i18nText("status.footerImageSelected", `Imagen de pie seleccionada desde el estilo: ${clean}`, { path: clean }));
 }
 
 function removeFooterImage() {
@@ -4910,7 +4931,7 @@ function removeFooterImage() {
   refreshFileTypeFilterOptions();
   renderFileList();
   renderPreview();
-  setStatus("Imagen de pie eliminada.");
+  setStatusT("status.footerImageRemoved", "Imagen de pie eliminada.");
 }
 
 function navIconManagedPath(slot, extension = "svg") {
@@ -4930,16 +4951,16 @@ function quickNavKeyBySlot(slot) {
 }
 
 function navSlotLabel(slot) {
-  if (slot === "prev") return "Anterior";
-  if (slot === "next") return "Siguiente";
-  return "Menú";
+  if (slot === "prev") return i18nText("slot.prev", "Anterior");
+  if (slot === "next") return i18nText("slot.next", "Siguiente");
+  return i18nText("slot.menu", "Menú");
 }
 
 function selectNavIconFromStylePath(path, slot) {
   const clean = normalizePath(path || "");
   if (!clean) return;
   if (!state.files.has(clean) || !isImageFile(clean)) {
-    setStatus(`La imagen seleccionada para ${navSlotLabel(slot)} no está disponible en el estilo.`);
+    setStatus(i18nText("status.navIconUnavailable", `La imagen seleccionada para ${navSlotLabel(slot)} no está disponible en el estilo.`, { slot: navSlotLabel(slot) }));
     return;
   }
   const key = quickNavKeyBySlot(slot);
@@ -4948,13 +4969,13 @@ function selectNavIconFromStylePath(path, slot) {
   applyQuickControls({ showStatus: false });
   markDirty();
   renderPreview();
-  setStatus(`Icono de ${navSlotLabel(slot)} seleccionado desde el estilo: ${clean}`);
+  setStatus(i18nText("status.navIconSelected", `Icono de ${navSlotLabel(slot)} seleccionado desde el estilo: ${clean}`, { slot: navSlotLabel(slot), path: clean }));
 }
 
 async function onAddNavIconSelected(file, slot) {
   if (!file) return;
   if (!isImageFile(file.name)) {
-    setStatus(`El icono de ${navSlotLabel(slot)} debe ser un archivo de imagen válido.`);
+    setStatus(i18nText("status.navIconInvalid", `El icono de ${navSlotLabel(slot)} debe ser un archivo de imagen válido.`, { slot: navSlotLabel(slot) }));
     return;
   }
   const extension = (file.name.split(".").pop() || "svg").toLowerCase();
@@ -4983,7 +5004,7 @@ async function onAddNavIconSelected(file, slot) {
   refreshFileTypeFilterOptions();
   renderFileList();
   renderPreview();
-  setStatus(`Icono de ${navSlotLabel(slot)} cargado: ${path}`);
+  setStatus(i18nText("status.navIconLoaded", `Icono de ${navSlotLabel(slot)} cargado: ${path}`, { slot: navSlotLabel(slot), path }));
 }
 
 function normalizeIconBaseName(fileName) {
@@ -4999,7 +5020,7 @@ function normalizeIconBaseName(fileName) {
 async function onAddIdeviceIconsSelected(fileList) {
   const files = Array.from(fileList || []).filter((f) => isImageFile(f.name));
   if (!files.length) {
-    setStatus("No se seleccionaron iconos válidos (.png, .jpg, .jpeg, .gif, .webp, .svg).");
+    setStatusT("status.noValidIcons", "No se seleccionaron iconos válidos (.png, .jpg, .jpeg, .gif, .webp, .svg).");
     return;
   }
   pushUndoSnapshot();
@@ -5032,7 +5053,7 @@ async function onAddIdeviceIconsSelected(fileList) {
   }
 
   if (!added && !replaced) {
-    setStatus("No se añadieron iconos iDevice.");
+    setStatusT("status.noIdeviceIconsAdded", "No se añadieron iconos iDevice.");
     return;
   }
 
@@ -5040,7 +5061,7 @@ async function onAddIdeviceIconsSelected(fileList) {
   refreshFileTypeFilterOptions();
   renderFileList();
   renderPreview();
-  setStatus(`Iconos iDevice actualizados: ${added} añadidos, ${replaced} reemplazados.`);
+  setStatus(i18nText("status.ideviceIconsUpdated", `Iconos iDevice actualizados: ${added} añadidos, ${replaced} reemplazados.`, { added, replaced }));
 }
 
 function isFontFileName(name) {
@@ -5176,7 +5197,7 @@ function applyFontStackToTargets(fontStack, targets) {
 async function onAddFontsSelected(fileList) {
   const files = Array.from(fileList || []).filter((f) => isFontFileName(f.name));
   if (!files.length) {
-    setStatus("No se seleccionaron fuentes válidas (.woff, .woff2, .ttf, .otf).");
+    setStatusT("status.noValidFonts", "No se seleccionaron fuentes válidas (.woff, .woff2, .ttf, .otf).");
     return;
   }
   pushUndoSnapshot();
@@ -5201,7 +5222,7 @@ async function onAddFontsSelected(fileList) {
   refreshFileTypeFilterOptions();
   renderFileList();
   renderPreview();
-  setStatus(`Fuentes añadidas: ${added}. Ya están disponibles en los selectores de tipografía.`);
+  setStatus(i18nText("status.fontsAdded", `Fuentes añadidas: ${added}. Ya están disponibles en los selectores de tipografía.`, { added }));
 }
 
 function setupTabs() {
@@ -5242,10 +5263,10 @@ function setupEvents() {
   els.textEditor.addEventListener("scroll", syncHighlightedScroll);
   els.previewInspectBtn?.addEventListener("click", toggleClickEditMode);
   els.undoBtn?.addEventListener("click", () => {
-    undoLastChange().catch((err) => setStatus(`No se pudo deshacer: ${err.message}`));
+    undoLastChange().catch((err) => setStatus(i18nText("status.undoError", `No se pudo deshacer: ${err.message}`, { error: err.message })));
   });
   els.redoBtn?.addEventListener("click", () => {
-    redoLastChange().catch((err) => setStatus(`No se pudo rehacer: ${err.message}`));
+    redoLastChange().catch((err) => setStatus(i18nText("status.redoError", `No se pudo rehacer: ${err.message}`, { error: err.message })));
   });
   els.openDetachedEditorBtn?.addEventListener("click", openDetachedEditor);
   els.clickEditTitle?.addEventListener("mousedown", startClickEditModalDrag);
@@ -5329,7 +5350,7 @@ function setupEvents() {
     if (!fontStack) return;
     if (target === "all") applyFontStackToTargets(fontStack, ["body", "titles", "menu"]);
     else applyFontStackToTargets(fontStack, [target]);
-    setStatus("Fuente aplicada en tipografía.");
+    setStatusT("status.fontApplied", "Fuente aplicada en tipografía.");
   });
 
   els.officialStyleSelect.addEventListener("change", async () => {
@@ -5346,7 +5367,7 @@ function setupEvents() {
     } catch (err) {
       els.officialStyleSelect.value = previousId;
       renderOfficialStylePreview(previousId);
-      setStatus(`Error cargando plantilla oficial: ${err.message}`);
+      setStatus(i18nText("status.errorLoadingOfficialTemplate", `Error cargando plantilla oficial: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5356,17 +5377,17 @@ function setupEvents() {
 
   els.zipInput.addEventListener("change", async (ev) => {
     const file = ev.target.files?.[0];
-    if (els.zipInputName) els.zipInputName.textContent = file ? file.name : "Ningún archivo seleccionado";
+    if (els.zipInputName) els.zipInputName.textContent = file ? file.name : i18nText("file.none", "Ningún archivo seleccionado");
     if (!file) return;
     if (!confirmDiscardUnsavedChanges("cargar un ZIP")) {
       ev.target.value = "";
-      if (els.zipInputName) els.zipInputName.textContent = "Ningún archivo seleccionado";
+      if (els.zipInputName) els.zipInputName.textContent = i18nText("file.none", "Ningún archivo seleccionado");
       return;
     }
     try {
       await loadZip(file);
     } catch (err) {
-      setStatus(`Error cargando ZIP: ${err.message}`);
+      setStatus(i18nText("status.errorLoadingZip", `Error cargando ZIP: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5376,19 +5397,19 @@ function setupEvents() {
 
   els.elpxInput?.addEventListener("change", async (ev) => {
     const file = ev.target.files?.[0];
-    if (els.elpxInputName) els.elpxInputName.textContent = file ? file.name : "Ningún archivo seleccionado";
+    if (els.elpxInputName) els.elpxInputName.textContent = file ? file.name : i18nText("file.none", "Ningún archivo seleccionado");
     if (!file) return;
     if (!confirmDiscardUnsavedChanges("cargar un ELPX")) {
       ev.target.value = "";
-      if (els.elpxInputName) els.elpxInputName.textContent = "Ningún archivo seleccionado";
+      if (els.elpxInputName) els.elpxInputName.textContent = i18nText("file.none", "Ningún archivo seleccionado");
       return;
     }
     try {
       setBusyOverlay(true, "Cargando ELPX…");
       await loadElpx(file);
     } catch (err) {
-      setStatus(`Error cargando ELPX: ${err.message}`);
-      if (els.elpxInputName) els.elpxInputName.textContent = "Ningún archivo seleccionado";
+      setStatus(i18nText("status.errorLoadingElpx", `Error cargando ELPX: ${err.message}`, { error: err.message }));
+      if (els.elpxInputName) els.elpxInputName.textContent = i18nText("file.none", "Ningún archivo seleccionado");
       await deactivateElpxMode({ resetFrame: true });
     } finally {
       setBusyOverlay(false);
@@ -5411,7 +5432,7 @@ function setupEvents() {
     try {
       await onAddFontsSelected(ev.target.files);
     } catch (err) {
-      setStatus(`Error añadiendo fuentes: ${err.message}`);
+      setStatus(i18nText("status.errorAddingFonts", `Error añadiendo fuentes: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5427,12 +5448,14 @@ function setupEvents() {
     try {
       await onAddLogoSelected(file);
     } catch (err) {
-      setStatus(`Error cargando logo: ${err.message}`);
+      setStatus(i18nText("status.errorLoadingLogo", `Error cargando logo: ${err.message}`, { error: err.message }));
     }
   });
 
   els.removeLogoBtn?.addEventListener("click", () => {
-    removeLogo();
+    removeLogo().catch((err) => {
+      setStatus(i18nText("status.errorLoadingLogo", `Error cargando logo: ${err.message}`, { error: err.message }));
+    });
   });
 
   els.addBgImageBtn?.addEventListener("click", () => {
@@ -5447,7 +5470,7 @@ function setupEvents() {
     try {
       await onAddBackgroundImageSelected(file);
     } catch (err) {
-      setStatus(`Error cargando imagen de fondo: ${err.message}`);
+      setStatus(i18nText("status.errorLoadingBgImage", `Error cargando imagen de fondo: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5473,7 +5496,7 @@ function setupEvents() {
     try {
       await onAddHeaderImageSelected(file);
     } catch (err) {
-      setStatus(`Error cargando imagen de cabecera: ${err.message}`);
+      setStatus(i18nText("status.errorLoadingHeaderImage", `Error cargando imagen de cabecera: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5504,7 +5527,7 @@ function setupEvents() {
     try {
       await onAddFooterImageSelected(file);
     } catch (err) {
-      setStatus(`Error cargando imagen de pie: ${err.message}`);
+      setStatus(i18nText("status.errorLoadingFooterImage", `Error cargando imagen de pie: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5560,7 +5583,7 @@ function setupEvents() {
     try {
       await onAddNavIconSelected(file, "prev");
     } catch (err) {
-      setStatus(`Error cargando icono de Anterior: ${err.message}`);
+      setStatus(i18nText("status.errorLoadingPrevIcon", `Error cargando icono de Anterior: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5570,7 +5593,7 @@ function setupEvents() {
     try {
       await onAddNavIconSelected(file, "next");
     } catch (err) {
-      setStatus(`Error cargando icono de Siguiente: ${err.message}`);
+      setStatus(i18nText("status.errorLoadingNextIcon", `Error cargando icono de Siguiente: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5580,7 +5603,7 @@ function setupEvents() {
     try {
       await onAddNavIconSelected(file, "menu");
     } catch (err) {
-      setStatus(`Error cargando icono de Menú: ${err.message}`);
+      setStatus(i18nText("status.errorLoadingMenuIcon", `Error cargando icono de Menú: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5594,7 +5617,7 @@ function setupEvents() {
     try {
       await onAddIdeviceIconsSelected(ev.target.files);
     } catch (err) {
-      setStatus(`Error añadiendo iconos iDevice: ${err.message}`);
+      setStatus(i18nText("status.errorAddingIdeviceIcons", `Error añadiendo iconos iDevice: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5604,7 +5627,7 @@ function setupEvents() {
     try {
       await onReplaceImageSelected(file);
     } catch (err) {
-      setStatus(`Error reemplazando imagen: ${err.message}`);
+      setStatus(i18nText("status.errorReplacingImage", `Error reemplazando imagen: ${err.message}`, { error: err.message }));
     }
   });
 
@@ -5651,14 +5674,29 @@ function setupEvents() {
   els.metaDownloadable?.addEventListener("change", () => {
     saveMetaFields({ showStatus: false });
     if (els.metaDownloadable.value === "0") {
-      window.alert(
+      alertT(
+        "alert.downloadableZero",
         "Has marcado el estilo como no descargable (downloadable=0).\n\nEn eXe no podrá importarse desde la interfaz mientras mantengas ese valor."
       );
-      setStatus("downloadable=0: el estilo no será importable desde la interfaz de eXe.");
+      setStatusT("status.downloadableZero", "downloadable=0: el estilo no será importable desde la interfaz de eXe.");
     } else {
-      setStatus("downloadable=1: el estilo será importable desde la interfaz de eXe.");
+      setStatusT("status.downloadableOne", "downloadable=1: el estilo será importable desde la interfaz de eXe.");
     }
   });
+}
+
+function refreshI18nDependentUi() {
+  applyControlTooltips();
+  setDetachedEditorButtonState();
+  refreshFileTypeFilterOptions();
+  refreshHeaderFooterImageSelects();
+  refreshNavIconSelects();
+  updateLogoInfo();
+  updateBgImageInfo();
+  updateHeaderImageInfo();
+  updateFooterImageInfo();
+  updateNavIconsInfo();
+  syncDetachedEditorFromMain();
 }
 
 async function loadDefaultBootElpx() {
@@ -5668,26 +5706,30 @@ async function loadDefaultBootElpx() {
   }
   const blob = await response.blob();
   const file = new File([blob], "ejemplo.elpx", { type: blob.type || "application/zip" });
-  setBusyOverlay(true, "Cargando ejemplo…");
+  setBusyOverlay(true, i18nText("preview.loadingExample", "Cargando ejemplo..."));
   try {
     await loadElpx(file);
-    if (els.elpxInputName) els.elpxInputName.textContent = "ejemplo.elpx (cargado por defecto)";
-    setStatus("Ejemplo cargado por defecto.");
+    if (els.elpxInputName) els.elpxInputName.textContent = i18nText("file.defaultExampleLoaded", "ejemplo.elpx (cargado por defecto)");
+    setStatus(i18nText("status.defaultExampleLoaded", "Ejemplo cargado por defecto."));
   } finally {
     setBusyOverlay(false);
   }
 }
 
 (async function boot() {
+  if (window.EditorI18n && typeof window.EditorI18n.init === "function") {
+    window.EditorI18n.init();
+  }
   setupEvents();
-  setDetachedEditorButtonState();
+  refreshI18nDependentUi();
+  window.addEventListener("editor-i18n:changed", refreshI18nDependentUi);
   state.preview = loadPreviewToggles();
   previewToUI(state.preview);
   try {
     await loadOfficialStylesCatalog();
     await loadDefaultBootElpx();
   } catch (err) {
-    setStatus(`No se pudo cargar ejemplo.elpx por defecto: ${err.message}`);
+    setStatus(i18nText("status.defaultElpxLoadError", `No se pudo cargar ejemplo.elpx por defecto: ${err.message}`, { error: err.message }));
     setBusyOverlay(false);
   }
 })();

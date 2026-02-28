@@ -168,6 +168,30 @@ body {
   height: 100%;
 }
 
+.panel-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lang-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #475467;
+}
+
+.lang-select-wrap select {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: #1d2939;
+  min-width: 118px;
+  padding: 4px 8px;
+}
+
 .preview-header {
   padding: 8px 12px;
   border-bottom: 1px solid var(--line-soft);
