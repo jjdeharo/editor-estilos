@@ -1428,6 +1428,18 @@ function convertLegacyThemePackageIfNeeded() {
     }
   }
 
+  if (!state.files.has("style.js")) {
+    let adoptedLegacyJs = "";
+    if (moveThemeFile("default.js", "style.js")) {
+      adoptedLegacyJs = "default.js";
+    } else if (moveThemeFile("legacy/default.js", "style.js")) {
+      adoptedLegacyJs = "legacy/default.js";
+    }
+    if (adoptedLegacyJs) {
+      notes.push(`style.js adoptado automáticamente desde: ${adoptedLegacyJs}`);
+    }
+  }
+
   const legacyRootJs = rootPaths.filter((p) => p.toLowerCase().endsWith(".js") && p.toLowerCase() !== "style.js");
   let movedJs = 0;
   for (const jsPath of legacyRootJs) {
