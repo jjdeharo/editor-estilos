@@ -669,6 +669,9 @@ const state = {
   clickEditDragOffsetY: 0,
   clickEditIgnoreUntil: 0,
   clickEditHasText: true,
+  clickEditBgInitiallyTransparent: false,
+  clickEditProfile: null,
+  clickEditTouchedFields: {},
   undoStack: [],
   redoStack: [],
   isRestoringUndo: false,
@@ -2755,6 +2758,122 @@ function removeLiveClickEditPreviewStyle() {
   if (node) node.remove();
 }
 
+function getClickEditFieldWrap(input) {
+  return input?.closest("label") || null;
+}
+
+function defaultClickEditProfile() {
+  return {
+    allowText: true,
+    allowBackground: true,
+    allowWidth: true,
+    allowMaxWidth: true,
+    allowMarginBottom: true,
+    allowPadding: true,
+    allowInteractiveStates: true
+  };
+}
+
+function currentClickEditProfile() {
+  const profile = state.clickEditProfile;
+  if (!profile || typeof profile !== "object") return defaultClickEditProfile();
+  return { ...defaultClickEditProfile(), ...profile };
+}
+
+function setClickEditProfile(nextProfile) {
+  state.clickEditProfile = { ...defaultClickEditProfile(), ...(nextProfile || {}) };
+}
+
+function profileForElementSelector(selector) {
+  const value = String(selector || "").trim();
+  if (!value) return defaultClickEditProfile();
+
+  const textSafeProfile = {
+    allowText: true,
+    allowBackground: true,
+    allowWidth: false,
+    allowMaxWidth: false,
+    allowMarginBottom: false,
+    allowPadding: false
+  };
+  const contentSafeProfile = {
+    allowText: true,
+    allowBackground: true,
+    allowWidth: false,
+    allowMaxWidth: false,
+    allowMarginBottom: true,
+    allowPadding: true
+  };
+  const layoutSafeProfile = {
+    allowText: false,
+    allowBackground: true,
+    allowWidth: false,
+    allowMaxWidth: false,
+    allowMarginBottom: false,
+    allowPadding: false,
+    allowInteractiveStates: false
+  };
+
+  if (
+    /(?:^|,)\s*\.exe-content\s+\.fx-accordion-title\s+h[1-6]\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.exe-tabs\s+\.fx-tabs\s+a\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.fx-pagination\s+(?:\.fx-current\s+)?a\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.fx-carousel-pagination\s+a\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.fx-timeline-(?:major\s+h2|minor\s+h3)\s+a\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.fx-timeline-expand\b/i.test(value) ||
+    /(?:^|,)\s*#siteNav\s+a\b/i.test(value) ||
+    /(?:^|,)\s*\.nav-buttons\s+a\b/i.test(value) ||
+    /(?:^|,)\s*\.nav-buttons\s+span\.nav-button\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.package-title\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.page-title\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.box-title\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.iDeviceTitle\b/i.test(value)
+  ) {
+    return textSafeProfile;
+  }
+
+  if (
+    /(?:^|,)\s*\.exe-content\s+\.fx-accordion-content\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.exe-tabs\s+\.fx-tab-content\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.fx-page-content\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.fx-carousel-content\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.fx-timeline-event\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+.*(?:\.box-content|\.iDevice_content|\.iDevice_inner)\b/i.test(value)
+  ) {
+    return contentSafeProfile;
+  }
+
+  if (
+    /(?:^|,)\s*#siteNav\b/i.test(value) ||
+    /(?:^|,)\s*\.nav-buttons\b/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.exe-fx(?:[.\s]|$)/i.test(value) ||
+    /(?:^|,)\s*\.exe-content\s+\.fx-timeline-container\b/i.test(value)
+  ) {
+    return layoutSafeProfile;
+  }
+
+  return defaultClickEditProfile();
+}
+
+function resetClickEditTouchedFields() {
+  state.clickEditTouchedFields = Object.create(null);
+}
+
+function markClickEditFieldTouched(fieldKey) {
+  const key = String(fieldKey || "").trim();
+  if (!key) return;
+  if (!state.clickEditTouchedFields || typeof state.clickEditTouchedFields !== "object") {
+    resetClickEditTouchedFields();
+  }
+  state.clickEditTouchedFields[key] = true;
+}
+
+function wasClickEditFieldTouched(...fieldKeys) {
+  const touched = state.clickEditTouchedFields;
+  if (!touched || typeof touched !== "object") return false;
+  return fieldKeys.some((key) => Boolean(touched[key]));
+}
+
 function expandedClickEditSelector() {
   const baseSelector = String(state.clickEditTargetSelector || "").trim();
   if (!baseSelector) return "";
@@ -2767,26 +2886,34 @@ function expandedClickEditSelector() {
 }
 
 function currentClickEditDeclarations() {
+  const profile = currentClickEditProfile();
   const bgHex = normalizeHex(els.clickPropBg?.value || "");
   const bgTransparency = normalizePercentNumber(els.clickPropBgAlpha?.value || "0", 0);
-  const declarations = {
-    "background-color": cssColorWithTransparency(bgHex, bgTransparency),
-  };
-  if (state.clickEditHasText) {
+  const declarations = {};
+  if (profile.allowBackground && wasClickEditFieldTouched("bg", "bgAlpha") && !(state.clickEditBgInitiallyTransparent && bgTransparency >= 100)) {
+    declarations["background-color"] = cssColorWithTransparency(bgHex, bgTransparency);
+  }
+  if (profile.allowText && state.clickEditHasText) {
     const textHex = normalizeHex(els.clickPropColor?.value || "");
     const textTransparency = normalizePercentNumber(els.clickPropColorAlpha?.value || "0", 0);
-    declarations.color = cssColorWithTransparency(textHex, textTransparency);
-    declarations["font-size"] = `${normalizePxNumber(els.clickPropFontSize?.value || "16", 16)}px`;
-    declarations["font-weight"] = String(Number.parseInt(els.clickPropFontWeight?.value || "400", 10) || 400);
+    if (wasClickEditFieldTouched("color", "colorAlpha")) {
+      declarations.color = cssColorWithTransparency(textHex, textTransparency);
+    }
+    if (wasClickEditFieldTouched("fontSize")) {
+      declarations["font-size"] = `${normalizePxNumber(els.clickPropFontSize?.value || "16", 16)}px`;
+    }
+    if (wasClickEditFieldTouched("fontWeight")) {
+      declarations["font-weight"] = String(Number.parseInt(els.clickPropFontWeight?.value || "400", 10) || 400);
+    }
   }
   const width = sanitizeCssValue(els.clickPropWidth?.value || "");
   const maxWidth = sanitizeCssValue(els.clickPropMaxWidth?.value || "");
   const marginBottom = sanitizeCssValue(els.clickPropMarginBottom?.value || "");
   const padding = sanitizeCssValue(els.clickPropPadding?.value || "");
-  if (width) declarations.width = width;
-  if (maxWidth) declarations["max-width"] = maxWidth;
-  if (marginBottom) declarations["margin-bottom"] = marginBottom;
-  if (padding) declarations.padding = padding;
+  if (profile.allowWidth && wasClickEditFieldTouched("width") && width) declarations.width = width;
+  if (profile.allowMaxWidth && wasClickEditFieldTouched("maxWidth") && maxWidth) declarations["max-width"] = maxWidth;
+  if (profile.allowMarginBottom && wasClickEditFieldTouched("marginBottom") && marginBottom) declarations["margin-bottom"] = marginBottom;
+  if (profile.allowPadding && wasClickEditFieldTouched("padding") && padding) declarations.padding = padding;
   return declarations;
 }
 
@@ -2822,13 +2949,14 @@ function openClickEditModal() {
   if (!els.clickEditModal) return;
   els.clickEditModal.hidden = false;
   resetClickEditModalPosition();
-  renderLiveClickEditPreview();
 }
 
 function closeClickEditModal() {
   if (!els.clickEditModal) return;
   els.clickEditModal.hidden = true;
   state.clickEditDragActive = false;
+  state.clickEditProfile = null;
+  resetClickEditTouchedFields();
   removeLiveClickEditPreviewStyle();
 }
 
@@ -2884,6 +3012,10 @@ function ideviceTypeClassFromElement(el) {
 function buildFxSelector(el) {
   if (!isDomElement(el)) return "";
   const directMap = [
+    [
+      ".fx-accordion-title h1, .fx-accordion-title h2, .fx-accordion-title h3, .fx-accordion-title h4, .fx-accordion-title h5, .fx-accordion-title h6",
+      ".exe-content .fx-accordion-title h1, .exe-content .fx-accordion-title h2, .exe-content .fx-accordion-title h3, .exe-content .fx-accordion-title h4, .exe-content .fx-accordion-title h5, .exe-content .fx-accordion-title h6"
+    ],
     [".fx-accordion-title", ".exe-content .fx-accordion-title"],
     [".fx-accordion-content", ".exe-content .fx-accordion-content"],
     [".exe-tabs .fx-tabs a", ".exe-content .exe-tabs .fx-tabs a"],
@@ -2921,6 +3053,7 @@ function buildElementSelector(el) {
   }
   if (el.closest(".nav-buttons")) {
     if (tag === "a" || el.closest(".nav-buttons a")) return ".nav-buttons a";
+    if (el.closest(".nav-buttons span.nav-button")) return ".nav-buttons span.nav-button";
     return ".nav-buttons";
   }
   const fxSelector = buildFxSelector(el);
@@ -2976,11 +3109,17 @@ function fillClickEditModalFromElement(el, selector) {
   if (!isDomElement(el)) return;
   const ownerWin = el.ownerDocument?.defaultView || window;
   const computed = ownerWin.getComputedStyle(el);
+  const bgAlpha = alphaPercentFromColor(computed.backgroundColor, 0);
+  const profile = profileForElementSelector(selector);
+  const hasText = elementHasVisibleText(el);
+  const allowText = profile.allowText && hasText;
+  resetClickEditTouchedFields();
+  setClickEditProfile(profile);
   if (els.clickEditSelector) els.clickEditSelector.textContent = selector || "(sin selector)";
   if (els.clickPropColor) els.clickPropColor.value = rgbToHex(computed.color, "#333333");
   if (els.clickPropBg) els.clickPropBg.value = rgbToHex(computed.backgroundColor, "#ffffff");
   if (els.clickPropColorAlpha) els.clickPropColorAlpha.value = String(alphaPercentFromColor(computed.color, 0));
-  if (els.clickPropBgAlpha) els.clickPropBgAlpha.value = String(alphaPercentFromColor(computed.backgroundColor, 0));
+  if (els.clickPropBgAlpha) els.clickPropBgAlpha.value = String(bgAlpha);
   if (els.clickPropFontSize) els.clickPropFontSize.value = String(normalizePxNumber(computed.fontSize, 16));
   if (els.clickPropFontWeight) {
     const weight = Number.parseInt(String(computed.fontWeight || "400"), 10);
@@ -3003,18 +3142,29 @@ function fillClickEditModalFromElement(el, selector) {
     const padding = String(computed.padding || "").trim();
     els.clickPropPadding.value = padding && padding !== "0px" ? padding : "";
   }
-  const hasText = elementHasVisibleText(el);
   state.clickEditHasText = hasText;
-  if (els.clickTextColorWrap) els.clickTextColorWrap.hidden = !hasText;
-  if (els.clickTextAlphaWrap) els.clickTextAlphaWrap.hidden = !hasText;
-  if (els.clickTextSizeWrap) els.clickTextSizeWrap.hidden = !hasText;
-  if (els.clickTextWeightWrap) els.clickTextWeightWrap.hidden = !hasText;
+  state.clickEditBgInitiallyTransparent = bgAlpha >= 100;
+  if (els.clickTextColorWrap) els.clickTextColorWrap.hidden = !allowText;
+  if (els.clickTextAlphaWrap) els.clickTextAlphaWrap.hidden = !allowText;
+  if (els.clickTextSizeWrap) els.clickTextSizeWrap.hidden = !allowText;
+  if (els.clickTextWeightWrap) els.clickTextWeightWrap.hidden = !allowText;
+  const bgWrap = getClickEditFieldWrap(els.clickPropBg);
+  const bgAlphaWrap = getClickEditFieldWrap(els.clickPropBgAlpha);
+  const widthWrap = getClickEditFieldWrap(els.clickPropWidth);
+  const maxWidthWrap = getClickEditFieldWrap(els.clickPropMaxWidth);
+  const marginBottomWrap = getClickEditFieldWrap(els.clickPropMarginBottom);
+  const paddingWrap = getClickEditFieldWrap(els.clickPropPadding);
+  if (bgWrap) bgWrap.hidden = !profile.allowBackground;
+  if (bgAlphaWrap) bgAlphaWrap.hidden = !profile.allowBackground;
+  if (widthWrap) widthWrap.hidden = !profile.allowWidth;
+  if (maxWidthWrap) maxWidthWrap.hidden = !profile.allowMaxWidth;
+  if (marginBottomWrap) marginBottomWrap.hidden = !profile.allowMarginBottom;
+  if (paddingWrap) paddingWrap.hidden = !profile.allowPadding;
   const canUseInteractiveStates = isInteractiveLikeElement(el, computed);
-  if (els.clickApplyInteractiveWrap) els.clickApplyInteractiveWrap.hidden = !canUseInteractiveStates;
+  if (els.clickApplyInteractiveWrap) els.clickApplyInteractiveWrap.hidden = !(canUseInteractiveStates && profile.allowInteractiveStates);
   if (els.clickApplyInteractiveStates) {
-    els.clickApplyInteractiveStates.checked = canUseInteractiveStates;
+    els.clickApplyInteractiveStates.checked = canUseInteractiveStates && profile.allowInteractiveStates;
   }
-  renderLiveClickEditPreview();
 }
 
 function injectClickEditPreviewStyle(doc) {
@@ -5272,21 +5422,26 @@ function setupEvents() {
   els.clickEditTitle?.addEventListener("mousedown", startClickEditModalDrag);
   els.clickEditApplyBtn?.addEventListener("click", applyClickEditChanges);
   els.clickEditCancelBtn?.addEventListener("click", closeClickEditModal);
-  for (const input of [
-    els.clickPropColor,
-    els.clickPropBg,
-    els.clickPropColorAlpha,
-    els.clickPropBgAlpha,
-    els.clickPropFontSize,
-    els.clickPropFontWeight,
-    els.clickPropWidth,
-    els.clickPropMaxWidth,
-    els.clickPropMarginBottom,
-    els.clickPropPadding,
-    els.clickApplyInteractiveStates
+  for (const [input, fieldKey] of [
+    [els.clickPropColor, "color"],
+    [els.clickPropBg, "bg"],
+    [els.clickPropColorAlpha, "colorAlpha"],
+    [els.clickPropBgAlpha, "bgAlpha"],
+    [els.clickPropFontSize, "fontSize"],
+    [els.clickPropFontWeight, "fontWeight"],
+    [els.clickPropWidth, "width"],
+    [els.clickPropMaxWidth, "maxWidth"],
+    [els.clickPropMarginBottom, "marginBottom"],
+    [els.clickPropPadding, "padding"],
+    [els.clickApplyInteractiveStates, "interactiveStates"]
   ]) {
-    input?.addEventListener("input", renderLiveClickEditPreview);
-    input?.addEventListener("change", renderLiveClickEditPreview);
+    if (!input) continue;
+    const onInput = () => {
+      markClickEditFieldTouched(fieldKey);
+      renderLiveClickEditPreview();
+    };
+    input.addEventListener("input", onInput);
+    input.addEventListener("change", onInput);
   }
   // No cerrar por clic en el fondo: evita cierres accidentales al arrastrar.
   document.addEventListener("keydown", (ev) => {
