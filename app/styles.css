@@ -239,9 +239,9 @@ body {
 }
 
 .icon-btn[aria-pressed="true"] {
-  background: #e6f6f6;
-  border-color: color-mix(in srgb, var(--action) 45%, #8aa0b2);
-  color: var(--action-dark);
+  background: #fff3d6;
+  border-color: #f2b84b;
+  color: #b45309;
 }
 
 #previewInspectBtn[aria-pressed="false"] {
@@ -251,12 +251,12 @@ body {
 @keyframes inspect-soft-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgb(7 142 142 / 0);
+    box-shadow: 0 0 0 0 rgb(245 158 11 / 0);
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 0 4px rgb(7 142 142 / 0.14);
-    transform: scale(1.035);
+    box-shadow: 0 0 0 6px rgb(245 158 11 / 0.24);
+    transform: scale(1.045);
   }
 }
 
