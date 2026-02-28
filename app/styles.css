@@ -304,6 +304,19 @@ body {
   color: var(--action-dark);
 }
 
+.panel-header h1 {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-title-logo {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  display: block;
+}
+
 .panel-header p {
   margin: 6px 0 0;
   color: var(--muted);

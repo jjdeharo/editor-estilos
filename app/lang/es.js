@@ -1,11 +1,11 @@
 window.$i18n = window.$i18n || {};
 window.$i18n.es = {
-  "app.title": "Editor de estilos eXeLearning (v3 y superiores)",
+  "app.title": "EdEX",
   "trial.notice.strong": "Editor de estilos en fase de pruebas.",
   "trial.notice.text": "Verifica siempre el resultado final en eXeLearning antes de publicarlo o compartirlo.",
   "trial.notice.close": "Cerrar aviso",
-  "header.title": "Editor de estilos eXeLearning (v3 y superiores)",
-  "header.subtitle": "Carga una plantilla oficial o un ZIP, edita y exporta.",
+  "header.title": "EdEX",
+  "header.subtitle": "Editor de estilos de eXeLearning",
   "language.label": "Idioma",
   "tab.style": "Estilo",
   "tab.settings": "Ajustes",

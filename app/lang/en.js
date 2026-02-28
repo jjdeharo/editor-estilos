@@ -1,11 +1,11 @@
 window.$i18n = window.$i18n || {};
 window.$i18n.en = {
-  "app.title": "eXeLearning Style Editor (v3 and above)",
+  "app.title": "EdEX",
   "trial.notice.strong": "Style editor in testing phase.",
   "trial.notice.text": "Always verify the final result in eXeLearning before publishing or sharing.",
   "trial.notice.close": "Close notice",
-  "header.title": "eXeLearning Style Editor (v3 and above)",
-  "header.subtitle": "Load an official template or a ZIP, edit and export.",
+  "header.title": "EdEX",
+  "header.subtitle": "eXeLearning style editor",
   "language.label": "Language",
   "tab.style": "Style",
   "tab.settings": "Settings",
