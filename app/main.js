@@ -2200,6 +2200,116 @@ function cssColorWithTransparency(hex, transparencyPercent) {
   return `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
 }
 
+function quickFromPreviewSnapshot(baseValues) {
+  const next = { ...(baseValues || {}) };
+  const doc = els.previewFrame?.contentDocument || null;
+  const win = doc?.defaultView || null;
+  if (!doc || !win) return next;
+
+  const parsePx = (value, fallback = null) => {
+    const m = String(value || "").match(/([0-9.]+)\s*px/i);
+    if (!m) return fallback;
+    const n = Number.parseFloat(m[1]);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const parseLineHeightRatio = (lineHeightValue, fontSizePx, fallback) => {
+    const raw = String(lineHeightValue || "").trim().toLowerCase();
+    if (!raw || raw === "normal") return fallback;
+    const px = parsePx(raw, null);
+    if (Number.isFinite(px) && Number.isFinite(fontSizePx) && fontSizePx > 0) {
+      return Math.max(1, Math.min(2.2, Number((px / fontSizePx).toFixed(2))));
+    }
+    const n = Number.parseFloat(raw);
+    if (Number.isFinite(n)) return Math.max(1, Math.min(2.2, Number(n.toFixed(2))));
+    return fallback;
+  };
+  const parseRemFromPx = (value, fallback) => {
+    const px = parsePx(value, null);
+    if (!Number.isFinite(px)) return fallback;
+    return Math.max(1, Math.min(2.4, Number((px / 16).toFixed(2))));
+  };
+  const parseOptionPx = (value, fallback) => {
+    const px = parsePx(value, null);
+    if (!Number.isFinite(px)) return fallback;
+    const rounded = Math.round(px);
+    const candidate = `${rounded}px`;
+    if (BOX_FONT_SIZE_OPTIONS.includes(candidate)) return candidate;
+    if (rounded <= 15) return "14px";
+    if (rounded <= 17) return "16px";
+    if (rounded <= 19) return "18px";
+    if (rounded <= 21) return "20px";
+    if (rounded <= 23) return "22px";
+    return "24px";
+  };
+  const first = (...selectors) => {
+    for (const selector of selectors) {
+      const node = doc.querySelector(selector);
+      if (node) return node;
+    }
+    return null;
+  };
+
+  const content = first(".exe-content", "#node-content-container.exe-content");
+  if (content) {
+    const computed = win.getComputedStyle(content);
+    if (computed.fontFamily) next.fontBody = computed.fontFamily;
+    const fontSizePx = parsePx(computed.fontSize, null);
+    if (Number.isFinite(fontSizePx)) next.baseFontSize = Math.round(fontSizePx);
+    next.lineHeight = parseLineHeightRatio(computed.lineHeight, fontSizePx, next.lineHeight);
+    if (computed.color) next.textColor = rgbToHex(computed.color, next.textColor);
+    if (computed.backgroundColor && String(computed.backgroundColor).toLowerCase() !== "transparent") {
+      next.contentBgColor = rgbToHex(computed.backgroundColor, next.contentBgColor);
+    }
+  }
+
+  const pageTitle = first(".page-title");
+  if (pageTitle) {
+    const computed = win.getComputedStyle(pageTitle);
+    if (computed.fontFamily) next.fontTitles = computed.fontFamily;
+  } else {
+    const boxTitle = first(".box-title", ".iDeviceTitle");
+    if (boxTitle) {
+      const computed = win.getComputedStyle(boxTitle);
+      if (computed.fontFamily) next.fontTitles = computed.fontFamily;
+    }
+  }
+
+  const boxTitle = first(".box-title", ".iDeviceTitle");
+  if (boxTitle) {
+    const computed = win.getComputedStyle(boxTitle);
+    if (computed.color) next.boxTitleColor = rgbToHex(computed.color, next.boxTitleColor);
+    next.boxTitleSize = parseRemFromPx(computed.fontSize, next.boxTitleSize);
+  }
+
+  const boxHead = first(".box-head");
+  if (boxHead) {
+    const computed = win.getComputedStyle(boxHead);
+    const gap = parsePx(computed.gap, null);
+    if (Number.isFinite(gap)) next.boxTitleGap = Math.max(0, Math.min(28, Math.round(gap)));
+  }
+
+  const boxContent = first(".box .box-content", ".box-content", ".iDevice_content", ".iDevice_inner");
+  if (boxContent) {
+    const computed = win.getComputedStyle(boxContent);
+    if (computed.backgroundColor && String(computed.backgroundColor).toLowerCase() !== "transparent") {
+      next.boxBgColor = rgbToHex(computed.backgroundColor, next.boxBgColor);
+    }
+    const align = String(computed.textAlign || "").toLowerCase();
+    if (["left", "center", "right", "justify", "inherit"].includes(align)) next.boxTextAlign = align;
+    next.boxFontSize = parseOptionPx(computed.fontSize, next.boxFontSize);
+  }
+
+  const box = first(".box");
+  if (box) {
+    const computed = win.getComputedStyle(box);
+    if (computed.borderColor && String(computed.borderStyle || "").toLowerCase() !== "none") {
+      next.boxBorderColor = rgbToHex(computed.borderColor, next.boxBorderColor);
+    }
+  }
+
+  return next;
+}
+
 function sanitizeCssValue(input) {
   const raw = String(input || "").trim();
   if (!raw) return "";
@@ -2484,11 +2594,13 @@ function syncEditorWithActiveFile() {
   syncDetachedEditorFromMain();
 }
 
-function quickFromUI() {
-  const next = { ...state.quick };
+function quickFromUI({ base = state.quick, onlyKey = "" } = {}) {
+  const next = { ...base };
+  const normalizedOnlyKey = String(onlyKey || "").trim();
   for (const input of els.quickInputs) {
     const key = input.dataset.quick;
     if (!key || !(key in next)) continue;
+    if (normalizedOnlyKey && key !== normalizedOnlyKey) continue;
     if (input.type === "number") next[key] = Number(input.value || QUICK_DEFAULTS[key]);
     else if (input.type === "checkbox") next[key] = input.checked;
     else next[key] = input.value;
@@ -3460,8 +3572,12 @@ function quickFromCss(cssText) {
     return value;
   };
   const bodyModeSelectors = ["body.exe-web-site", "body.exe-ims", "body.exe-scorm", "body.exe-export", "body"];
+  const contentTypographySelectors = [".exe-content", "#node-content-container.exe-content"];
   const bodyFontSizeRaw = lastRulePropValue(bodyModeSelectors, ["font-size"]);
   const bodyLineHeightRaw = lastRulePropValue(bodyModeSelectors, ["line-height"]);
+  const contentFontSizeRaw = lastRulePropValue(contentTypographySelectors, ["font-size"]);
+  const contentLineHeightRaw = lastRulePropValue(contentTypographySelectors, ["line-height"]);
+  const contentFontFamilyRaw = lastRulePropValue(contentTypographySelectors, ["font-family"]);
 
   q.pageBgColor = normalizeHex(
     lastRulePropValue(bodyModeSelectors, ["background-color", "background"]) || q.pageBgColor,
@@ -3469,7 +3585,7 @@ function quickFromCss(cssText) {
   );
   q.fontBody = matchValue(
     /\.exe-content\s*\{[\s\S]*?font-family:\s*([^;]+);/i,
-    lastRulePropValue(bodyModeSelectors, ["font-family"]) || q.fontBody
+    contentFontFamilyRaw || lastRulePropValue(bodyModeSelectors, ["font-family"]) || q.fontBody
   );
   q.fontTitles = matchValue(
     /\.exe-content\s*\.page-title\s*\{[\s\S]*?font-family:\s*([^;]+);/i,
@@ -3479,9 +3595,14 @@ function quickFromCss(cssText) {
     )
   );
   q.fontMenu = matchValue(/#siteNav a\s*\{[\s\S]*?font-family:\s*([^;]+);/i, q.fontBody);
-  const sizeMatch = String(bodyFontSizeRaw || "").match(/([0-9.]+)\s*px/i);
+  const effectiveFontSizeRaw = String(contentFontSizeRaw || bodyFontSizeRaw || "").trim();
+  const sizeMatch = effectiveFontSizeRaw.match(/([0-9.]+)\s*px/i);
   if (sizeMatch) q.baseFontSize = Number(sizeMatch[1]);
-  const lineHeightMatch = String(bodyLineHeightRaw || "").match(/([0-9.]+)/);
+  else {
+    const sizeRem = parseCssLengthToRem(effectiveFontSizeRaw, q.baseFontSize / 16);
+    if (Number.isFinite(sizeRem)) q.baseFontSize = Math.round(sizeRem * 16);
+  }
+  const lineHeightMatch = String(contentLineHeightRaw || bodyLineHeightRaw || "").match(/([0-9.]+)/);
   if (lineHeightMatch) q.lineHeight = Number(lineHeightMatch[1]);
   const pageTitleSizeRaw = matchValue(/\.exe-content\s*\.page-title\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
   const pageTitleSizeMatch = pageTitleSizeRaw.match(/([0-9.]+)\s*rem/i);
@@ -3508,12 +3629,13 @@ function quickFromCss(cssText) {
       || matchValue(/\.exe-content\s*\.package-title\s*\{[\s\S]*?color:\s*([^;]+);/i, q.packageTitleColor),
     q.packageTitleColor
   );
-  const boxTitleSizeRaw = matchValue(/\.exe-content\s*\.box-title,\s*[\s\S]*?\.exe-content\s*\.iDeviceTitle\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
-  const boxTitleSizeMatch = boxTitleSizeRaw.match(/([0-9.]+)\s*rem/i);
-  if (boxTitleSizeMatch) q.boxTitleSize = Number(boxTitleSizeMatch[1]);
-  const boxHeadGapRaw = matchValue(/\.exe-content\s*\.box-head\s*\{[\s\S]*?gap:\s*([^;]+);/i, "");
-  const boxHeadGapMatch = boxHeadGapRaw.match(/([0-9.]+)\s*px/i);
-  if (boxHeadGapMatch) q.boxTitleGap = Number(boxHeadGapMatch[1]);
+  const boxTitleSelectors = [".exe-export .box-title", ".exe-content .box-title", ".exe-content .iDeviceTitle", ".box-title", ".iDeviceTitle"];
+  const boxTitleSizeRaw = lastRulePropValue(boxTitleSelectors, ["font-size"])
+    || matchValue(/\.exe-content\s*\.box-title,\s*[\s\S]*?\.exe-content\s*\.iDeviceTitle\s*\{[\s\S]*?font-size:\s*([^;]+);/i, "");
+  q.boxTitleSize = parseCssLengthToRem(boxTitleSizeRaw, q.baseFontSize / 16);
+  const boxHeadGapRaw = lastRulePropValue([".exe-content .box-head", ".box-head"], ["gap"])
+    || matchValue(/\.exe-content\s*\.box-head\s*\{[\s\S]*?gap:\s*([^;]+);/i, "");
+  q.boxTitleGap = parseCssPx(boxHeadGapRaw, 0);
 
   q.linkColor = normalizeHex(lastCssPropValue("\\.exe-content a", "color") || q.linkColor, q.linkColor);
   q.titleColor = normalizeHex(lastCssPropValue("\\.exe-content \\.page-title", "color") || q.titleColor, q.titleColor);
@@ -3545,12 +3667,18 @@ function quickFromCss(cssText) {
   );
   q.menuActiveTextColor = normalizeHex(lastCssPropValue("#siteNav a\\.active", "color") || q.menuActiveTextColor, q.menuActiveTextColor);
   q.boxBgColor = normalizeHex(
-    matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?background-color:\s*([^;]+);/i, "")
-      || matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?background:\s*([^;]+);/i, q.boxBgColor),
+    lastRulePropValue([".exe-content .box-content", ".exe-content .iDevice_content", ".exe-content .iDevice_inner"], ["background-color"])
+      || lastRulePropValue([".exe-content .box-content", ".exe-content .iDevice_content", ".exe-content .iDevice_inner"], ["background"])
+      || matchValue(/\.exe-content \.box-content,\s*[\s\S]*?\.exe-content \.iDevice_content,\s*[\s\S]*?\.exe-content \.iDevice_inner\s*\{[\s\S]*?background-color:\s*([^;]+);/i, "")
+      || matchValue(/\.exe-content \.box-content,\s*[\s\S]*?\.exe-content \.iDevice_content,\s*[\s\S]*?\.exe-content \.iDevice_inner\s*\{[\s\S]*?background:\s*([^;]+);/i, q.boxBgColor),
     q.boxBgColor
   );
   q.boxBorderColor = normalizeHex(matchValue(/\.exe-content \.box,\s*[\s\S]*?#node-content-container\.exe-content \.box\s*\{[\s\S]*?border-color:\s*([^;]+);/i, q.boxBorderColor), q.boxBorderColor);
-  q.boxTitleColor = normalizeHex(matchValue(/\.exe-content \.box-title,\s*[\s\S]*?\.exe-content \.iDeviceTitle\s*\{[\s\S]*?color:\s*([^;]+);/i, q.boxTitleColor), q.boxTitleColor);
+  q.boxTitleColor = normalizeHex(
+    lastRulePropValue(boxTitleSelectors, ["color"])
+      || matchValue(/\.exe-content \.box-title,\s*[\s\S]*?\.exe-content \.iDeviceTitle\s*\{[\s\S]*?color:\s*([^;]+);/i, q.boxTitleColor),
+    q.boxTitleColor
+  );
   const boxTextAlignRaw = lastRulePropValue([".exe-content .box-content", ".exe-content .iDevice_inner", ".exe-content .iDevice_content"], ["text-align"]);
   if (["left", "center", "right", "justify", "inherit"].includes(String(boxTextAlignRaw).toLowerCase())) {
     q.boxTextAlign = String(boxTextAlignRaw).toLowerCase();
@@ -3760,6 +3888,7 @@ function quickFromCss(cssText) {
 function buildQuickCss({ important = true } = {}) {
   const q = state.quick;
   const bang = important ? " !important" : "";
+  const boxBgBang = " !important";
   const bodyModeSelectors = modeBodySelectors();
   const bodyModeAfterSelectors = modeBodySelectors("::after");
   const contentAreaSelectors = joinSelectorList([
@@ -3948,7 +4077,6 @@ ${layoutWidthSelectors} {
 }
 .exe-content .box,
 #node-content-container.exe-content .box {
-  background-color: ${normalizeHex(q.boxBgColor)}${bang};
   border-color: ${normalizeHex(q.boxBorderColor)}${bang};
 }
 .exe-content .box-title,
@@ -3962,6 +4090,7 @@ ${layoutWidthSelectors} {
 .exe-content .box-content,
 .exe-content .iDevice_content,
 .exe-content .iDevice_inner {
+  background-color: ${normalizeHex(q.boxBgColor)}${boxBgBang};
   text-align: ${q.boxTextAlign}${bang};
   ${q.boxFontSize !== "inherit" ? `font-size: ${q.boxFontSize}${bang};` : ""}
 }
@@ -4045,8 +4174,16 @@ function auditStyleCss(css) {
   return issues;
 }
 
-function applyQuickControls({ showStatus = true } = {}) {
-  state.quick = quickFromUI();
+function applyQuickControls({ showStatus = true, changedKey = "" } = {}) {
+  const key = String(changedKey || "").trim();
+  if (key) {
+    state.quick = quickFromUI({
+      base: quickFromPreviewSnapshot(quickFromCss(readCss())),
+      onlyKey: key
+    });
+  } else {
+    state.quick = quickFromUI();
+  }
   updateContentWidthControls(state.quick);
   applyEditorTheme();
   const baseCss = stripQuickBlock(readCss());
@@ -4083,6 +4220,7 @@ function migrateQuickBlockSchemaIfNeeded() {
 function refreshQuickControls() {
   const css = readCss();
   state.quick = { ...state.quick, ...quickFromCss(css) };
+  state.quick = quickFromPreviewSnapshot(state.quick);
   if (state.quick.bgImagePath && !state.files.has(state.quick.bgImagePath)) {
     state.quick.bgImagePath = "";
     state.quick.bgImageEnabled = false;
@@ -5791,10 +5929,10 @@ function setupEvents() {
 
   for (const input of els.quickInputs) {
     input.addEventListener("input", () => {
-      applyQuickControls({ showStatus: false });
+      applyQuickControls({ showStatus: false, changedKey: input.dataset.quick || "" });
     });
     input.addEventListener("change", () => {
-      applyQuickControls({ showStatus: false });
+      applyQuickControls({ showStatus: false, changedKey: input.dataset.quick || "" });
     });
   }
 
