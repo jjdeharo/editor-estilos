@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pagina web trasladada | EdEX</title>
   <meta name="robots" content="noindex,follow" />
-  <meta http-equiv="refresh" content="0; url=https://exe-style-editor.github.io/" />
+  <meta http-equiv="refresh" content="5; url=https://exe-style-editor.github.io/" />
   <link rel="canonical" href="https://exe-style-editor.github.io/" />
   <style>
     :root {
@@ -73,6 +73,12 @@
       margin-top: 24px;
     }
 
+    .countdown {
+      margin-top: 18px;
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+
     .button {
       display: inline-flex;
       align-items: center;
@@ -97,14 +103,29 @@
   <main>
     <h1>La pagina web antigua de EdEX se ha trasladado.</h1>
     <p>La web oficial de EdEX es ahora <a href="https://exe-style-editor.github.io/">https://exe-style-editor.github.io/</a>.</p>
-    <p>El codigo del proyecto se mantiene en <a href="https://github.com/eXe-style-editor/eXe-style-editor.github.io">eXe-style-editor/eXe-style-editor.github.io</a>. Si no se abre automaticamente, usa uno de los enlaces siguientes.</p>
+    <p>El codigo del proyecto se mantiene en <a href="https://github.com/eXe-style-editor/eXe-style-editor.github.io">eXe-style-editor/eXe-style-editor.github.io</a>. La redireccion automatica comenzara en unos segundos.</p>
+    <p class="countdown">Redirigiendo en <strong id="countdownValue">5</strong> segundos.</p>
     <div class="actions">
-      <a class="button primary" href="https://exe-style-editor.github.io/">Abrir la web oficial</a>
+      <a id="goNowLink" class="button primary" href="https://exe-style-editor.github.io/">Ir ahora a la web oficial</a>
       <a class="button secondary" href="https://github.com/eXe-style-editor/eXe-style-editor.github.io">Abrir el repositorio canónico</a>
     </div>
   </main>
   <script>
-    window.location.replace("https://exe-style-editor.github.io/");
+    const targetUrl = "https://exe-style-editor.github.io/";
+    const countdownEl = document.getElementById("countdownValue");
+    let remainingSeconds = 5;
+    const redirectNow = () => window.location.replace(targetUrl);
+    const timerId = window.setInterval(() => {
+      remainingSeconds -= 1;
+      if (countdownEl) countdownEl.textContent = String(Math.max(remainingSeconds, 0));
+      if (remainingSeconds <= 0) {
+        window.clearInterval(timerId);
+        redirectNow();
+      }
+    }, 1000);
+    document.getElementById("goNowLink")?.addEventListener("click", () => {
+      window.clearInterval(timerId);
+    });
   </script>
 </body>
 </html>
