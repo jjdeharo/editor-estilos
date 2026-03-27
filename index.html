@@ -1,759 +1,110 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="analytics-endpoint" content="https://bilateria.org/app/estadistica/editor-estilos/track.php" />
-  <meta name="analytics-stats-url" content="https://bilateria.org/app/estadistica/editor-estilos/admin-stats.php" />
-  <meta name="analytics-site-id" content="editor-estilos" />
-  <title>EdEX</title>
-  <link id="appDocumentFavicon" rel="icon" type="image/svg+xml" href="app/favicon.svg" />
-  <link rel="stylesheet" href="app/styles.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Repositorio trasladado | EdEX</title>
+  <meta name="robots" content="noindex,follow" />
+  <meta http-equiv="refresh" content="0; url=https://exe-style-editor.github.io/" />
+  <link rel="canonical" href="https://exe-style-editor.github.io/" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f1e8;
+      --panel: #fffdf9;
+      --text: #1c1b18;
+      --muted: #5f5a51;
+      --accent: #0b6b5f;
+      --accent-strong: #084d45;
+      --border: #d9d0c2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: "Noto Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(11, 107, 95, 0.12), transparent 34%),
+        linear-gradient(180deg, #f9f5ed 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    main {
+      width: min(720px, 100%);
+      padding: 32px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--panel);
+      box-shadow: 0 18px 48px rgba(28, 27, 24, 0.08);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.05;
+    }
+
+    p {
+      margin: 0 0 14px;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    a {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    a:hover,
+    a:focus-visible {
+      color: var(--accent-strong);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      text-decoration: none;
+    }
+
+    .button.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .button.secondary {
+      background: transparent;
+    }
+  </style>
 </head>
 <body>
-  <div id="trialNotice" class="trial-notice" role="status" aria-live="polite">
-    <p><strong data-i18n="trial.notice.strong">Editor de estilos en fase de pruebas.</strong> <span data-i18n="trial.notice.text">Verifica siempre el resultado final antes de publicarlo o compartirlo. Puedes informar sobre problemas o sugerencias en el enlace que tienes en la parte inferior.</span></p>
-    <button id="dismissTrialNotice" type="button" aria-label="Cerrar aviso" data-i18n-aria-label="trial.notice.close">×</button>
-  </div>
-  <div id="appShell" class="app-shell">
-    <aside id="editorPanel" class="editor-panel">
-      <header class="panel-header">
-        <div class="panel-header-top">
-          <h1><img class="app-title-logo" src="app/favicon.svg" alt="" aria-hidden="true" /><span data-i18n="header.title">EdEX</span></h1>
-          <div class="panel-header-tools">
-            <a
-              id="helpLink"
-              class="header-link"
-              href="app/help.html?lang=es"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-i18n-title="header.helpTitle"
-              data-i18n-aria-label="header.helpTitle"
-              title="Abrir ayuda de uso"
-            ><span class="material-symbols-outlined" aria-hidden="true">help</span></a>
-            <div id="appLanguageWrap" class="lang-select-wrap">
-              <select id="appLanguageSelect">
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="ca">Català</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <p data-i18n="header.subtitle">Editor de estilos de eXeLearning</p>
-      </header>
-
-      <nav class="tabs" aria-label="Secciones">
-        <button class="tab active" data-tab="io" type="button">
-          <span class="tab-icon material-symbols-outlined" aria-hidden="true">save</span>
-          <span data-i18n="tab.style">Estilo</span>
-        </button>
-        <button class="tab" data-tab="quick" type="button">
-          <span class="tab-icon material-symbols-outlined" aria-hidden="true">palette</span>
-          <span data-i18n="tab.settings">Ajustes</span>
-        </button>
-        <button class="tab" data-tab="files" type="button">
-          <span class="tab-icon material-symbols-outlined" aria-hidden="true">description</span>
-          <span data-i18n="tab.files">Archivos</span>
-        </button>
-      </nav>
-
-      <section class="tab-panel active" data-panel="io">
-        <div class="panel-block">
-          <h3 class="section-title"><span class="section-icon material-symbols-outlined" aria-hidden="true">folder_open</span><span data-i18n="section.loadTemplate">Cargar plantilla</span></h3>
-          <div class="section-content">
-            <div class="load-group">
-              <label class="file-label" for="elpxInput"><span class="inline-icon material-symbols-outlined" aria-hidden="true">library_books</span><span data-i18n="load.elpx">Cargar proyecto ELPX</span></label>
-              <div class="file-picker-row">
-                <button id="elpxPickBtn" type="button"><span class="inline-icon material-symbols-outlined" aria-hidden="true">upload_file</span><span data-i18n="button.selectElpx">Seleccionar ELPX</span></button>
-                <span id="elpxInputName" class="file-picked-name" data-i18n="file.none">Ningún archivo seleccionado</span>
-              </div>
-              <input id="elpxInput" type="file" accept=".elpx,.zip,application/zip" class="sr-only" />
-            </div>
-            <div class="load-group">
-              <label class="file-label"><span class="inline-icon material-symbols-outlined" aria-hidden="true">palette</span><span data-i18n="choose.style">Elegir estilo</span></label>
-              <p class="status-inline" data-i18n="load.hint">Puedes aplicar un estilo oficial o importar un ZIP personalizado.</p>
-              <div class="style-choice-grid">
-                <div class="style-choice-col">
-                  <label class="file-label" for="officialStyleSelect" data-i18n="label.officialBase">Estilo base oficial</label>
-                  <select id="officialStyleSelect"></select>
-                </div>
-                <div class="style-choice-col">
-                  <label class="file-label" for="zipInput" data-i18n="label.importStyle">Importar estilo</label>
-                  <div class="file-picker-row">
-                    <button id="zipPickBtn" type="button"><span class="inline-icon material-symbols-outlined" aria-hidden="true">upload_file</span><span data-i18n="button.selectZip">Seleccionar ZIP</span></button>
-                    <span id="zipInputName" class="file-picked-name" data-i18n="file.none">Ningún archivo seleccionado</span>
-                  </div>
-                </div>
-              </div>
-              <input id="zipInput" type="file" accept=".zip" class="sr-only" />
-            </div>
-            <article id="officialPreview" class="official-preview" aria-live="polite"></article>
-          </div>
-        </div>
-
-        <div class="panel-block" id="metaDetails">
-          <h3 class="section-title"><span class="section-icon material-symbols-outlined" aria-hidden="true">edit_note</span><span data-i18n="section.metaExport">Información y exportación</span></h3>
-          <div class="section-content quick-grid info-grid">
-            <label><span data-i18n="meta.name">Nombre</span> <input id="metaName" type="text" /></label>
-            <label><span data-i18n="meta.title">Título</span> <input id="metaTitle" type="text" /></label>
-            <label><span data-i18n="meta.version">Versión</span> <input id="metaVersion" type="text" /></label>
-            <label><span data-i18n="meta.compatibility">Compatibilidad</span> <input id="metaCompatibility" type="text" placeholder="3.0" value="3.0" readonly /></label>
-            <label><span data-i18n="meta.author">Autor</span> <input id="metaAuthor" type="text" /></label>
-            <label><span data-i18n="meta.license">Licencia</span> <input id="metaLicense" type="text" placeholder="Creative Commons by-sa" /></label>
-            <label><span data-i18n="meta.licenseUrl">URL licencia</span> <input id="metaLicenseUrl" type="url" placeholder="https://..." /></label>
-            <label><span data-i18n="meta.downloadable">Descargable</span>
-              <select id="metaDownloadable">
-                <option value="1" data-i18n="meta.yes">Sí (1)</option>
-                <option value="0" data-i18n="meta.no">No (0)</option>
-              </select>
-            </label>
-            <label class="full-width"><span data-i18n="meta.description">Descripción</span>
-              <textarea id="metaDescription" rows="6"></textarea>
-            </label>
-            <div class="button-row">
-              <button id="exportBtn" type="button"><span class="inline-icon material-symbols-outlined" aria-hidden="true">download</span><span data-i18n="button.exportStyle">Exportar estilo</span></button>
-              <button id="exportElpxBtn" type="button" hidden><span class="inline-icon material-symbols-outlined" aria-hidden="true">folder_zip</span><span data-i18n="button.exportElpx">Guardar ELPX con el estilo modificado</span></button>
-            </div>
-            <p id="status" class="status"></p>
-          </div>
-        </div>
-      </section>
-
-      <section class="tab-panel" data-panel="quick">
-        <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">palette</span><span data-i18n="quick.appearance.summary">Apariencia general</span></summary>
-          <div class="section-content quick-grid">
-            <div class="palette-compact">
-              <label><span data-i18n="quick.appearance.linkColor">Color enlaces</span> <input id="linkColor" data-quick="linkColor" type="color" /></label>
-              <label><span data-i18n="quick.appearance.pageTitleColor">Color título página</span> <input id="titleColor" data-quick="titleColor" type="color" /></label>
-              <label><span data-i18n="quick.appearance.baseTextColor">Color texto base</span> <input id="textColor" data-quick="textColor" type="color" /></label>
-              <label><span data-i18n="quick.appearance.contentBg">Fondo contenido</span> <input id="contentBgColor" data-quick="contentBgColor" type="color" /></label>
-              <label><span data-i18n="quick.appearance.globalBg">Fondo global</span> <input id="pageBgColor" data-quick="pageBgColor" type="color" /></label>
-              <label id="contentOuterBgWrap"><span data-i18n="quick.appearance.sideSpace">Espacio lateral</span>
-                <input id="contentOuterBgColor" data-quick="contentOuterBgColor" type="color" />
-              </label>
-            </div>
-          </div>
-        </details>
-
-        <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">width</span><span data-i18n="quick.layout.summary">Distribución y fondo general</span></summary>
-          <div class="section-content quick-grid">
-            <div class="group-card">
-              <h4 class="group-title" data-i18n="quick.layout.contentWidthTitle">Ancho de contenido</h4>
-              <div class="inline-three">
-                <label><span data-i18n="quick.layout.contentWidthMode">Ancho contenido</span>
-                  <select id="contentWidthMode" data-quick="contentWidthMode">
-                    <option value="default" data-i18n="quick.common.defaultFromStyle">Por defecto del estilo</option>
-                    <option value="px" data-i18n="quick.layout.fixedWidthPx">Ancho fijo (px)</option>
-                    <option value="percent" data-i18n="quick.layout.relativeWidthPercent">Ancho relativo (%)</option>
-                    <option value="mixed" data-i18n="quick.layout.mixedWidth">Mixto (px y %)</option>
-                  </select>
-                </label>
-                <label id="contentWidthPxWrap"><span data-i18n="quick.layout.widthPx">Ancho (px)</span>
-                  <input id="contentWidth" data-quick="contentWidth" type="number" min="640" max="2000" step="10" />
-                </label>
-                <label id="contentWidthPercentWrap"><span data-i18n="quick.layout.widthPercent">Ancho (%)</span>
-                  <input id="contentWidthPercent" data-quick="contentWidthPercent" type="number" min="10" max="100" step="1" />
-                </label>
-              </div>
-              <p id="contentWidthDefaultSummary" class="status-inline" hidden></p>
-              <p id="contentWidthMixedHint" class="status-inline" hidden data-i18n="quick.layout.mixedHint">Modo mixto: se aplica el menor valor entre px y % (`max-width: min(px, %)`)</p>
-              <div id="contentCenterWrap" class="toggle-item">
-                <span class="toggle-control">
-                  <input id="contentCentered" data-quick="contentCentered" class="toggle-input" type="checkbox" checked />
-                  <span class="toggle-visual"></span>
-                </span>
-                <label class="toggle-label" for="contentCentered" data-i18n="quick.layout.centerContent">Centrar contenido</label>
-              </div>
-            </div>
-
-            <div class="group-card">
-              <h4 class="group-title" data-i18n="quick.layout.bgImageTitle">Imagen de fondo</h4>
-              <div class="button-row">
-                <button id="addBgImageBtn" type="button" data-i18n="quick.layout.addBg">Añadir fondo</button>
-                <button id="removeBgImageBtn" type="button" data-i18n="quick.layout.removeBg">Quitar fondo</button>
-                <input id="addBgImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
-              </div>
-              <label><span data-i18n="quick.layout.bgImageFromStyle">Imagen de fondo del estilo</span>
-                <select id="bgImageSelect">
-                  <option value="" data-i18n="quick.common.selectStyleImage">Seleccionar imagen del estilo…</option>
-                </select>
-              </label>
-              <label><span data-i18n="quick.layout.bgRepeat">Repetición fondo</span>
-                <select id="bgImageRepeat" data-quick="bgImageRepeat">
-                  <option value="no-repeat" data-i18n="quick.common.repeat.none">No repetir</option>
-                  <option value="repeat-x" data-i18n="quick.common.repeat.x">Repetir horizontal</option>
-                  <option value="repeat-y" data-i18n="quick.common.repeat.y">Repetir vertical</option>
-                  <option value="repeat" data-i18n="quick.common.repeat.xy">Repetir ambos</option>
-                </select>
-              </label>
-              <label><span data-i18n="quick.layout.bgSoftness">Suavizado fondo (%)</span>
-                <input id="bgImageSoftness" data-quick="bgImageSoftness" type="number" min="0" max="90" step="1" />
-              </label>
-              <p id="bgImageInfo" class="status-inline" data-i18n="status.noBgImageLoaded">Sin imagen de fondo.</p>
-            </div>
-          </div>
-        </details>
-
-        <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">text_fields</span><span data-i18n="quick.typography.summary">Tipografía general</span></summary>
-          <div class="section-content quick-grid">
-            <div class="inline-three">
-              <label><span data-i18n="quick.typography.bodyFont">Fuente general</span>
-                <select id="fontBody" data-quick="fontBody">
-                  <option value="Georgia, 'Times New Roman', serif" data-i18n="quick.fontOption.serif">Serif (Georgia)</option>
-                  <option value="'Noto Sans', 'DejaVu Sans', sans-serif" data-i18n="quick.fontOption.sans">Sans (Noto Sans)</option>
-                  <option value="'Trebuchet MS', 'DejaVu Sans', sans-serif">Trebuchet</option>
-                  <option value="'Verdana', 'DejaVu Sans', sans-serif">Verdana</option>
-                </select>
-              </label>
-              <label><span data-i18n="quick.typography.titlesFont">Fuente títulos</span>
-                <select id="fontTitles" data-quick="fontTitles">
-                  <option value="Georgia, 'Times New Roman', serif" data-i18n="quick.fontOption.serif">Serif (Georgia)</option>
-                  <option value="'Noto Sans', 'DejaVu Sans', sans-serif" data-i18n="quick.fontOption.sans">Sans (Noto Sans)</option>
-                  <option value="'Trebuchet MS', 'DejaVu Sans', sans-serif">Trebuchet</option>
-                  <option value="'Verdana', 'DejaVu Sans', sans-serif">Verdana</option>
-                </select>
-              </label>
-              <label><span data-i18n="quick.typography.menuFont">Fuente menú</span>
-                <select id="fontMenu" data-quick="fontMenu">
-                  <option value="Georgia, 'Times New Roman', serif" data-i18n="quick.fontOption.serif">Serif (Georgia)</option>
-                  <option value="'Noto Sans', 'DejaVu Sans', sans-serif" data-i18n="quick.fontOption.sans">Sans (Noto Sans)</option>
-                  <option value="'Trebuchet MS', 'DejaVu Sans', sans-serif">Trebuchet</option>
-                  <option value="'Verdana', 'DejaVu Sans', sans-serif">Verdana</option>
-                </select>
-              </label>
-            </div>
-            <div class="button-row">
-              <button id="addFontBtn" type="button" data-i18n="quick.typography.addFonts">Añadir fuentes</button>
-              <input id="addFontInput" type="file" accept=".woff,.woff2,.ttf,.otf,font/woff,font/woff2,font/ttf,font/otf" multiple hidden />
-            </div>
-            <div class="inline-two">
-              <label><span data-i18n="quick.typography.baseSize">Tamaño base (px)</span> <input id="baseFontSize" data-quick="baseFontSize" type="number" min="12" max="28" step="1" /></label>
-              <label><span data-i18n="quick.typography.lineHeight">Interlineado</span> <input id="lineHeight" data-quick="lineHeight" type="number" min="1" max="2.2" step="0.05" /></label>
-            </div>
-          </div>
-        </details>
-
-        <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">title</span><span data-i18n="quick.titles.summary">Títulos de página y proyecto</span></summary>
-          <div class="section-content quick-grid">
-            <div class="inline-three">
-              <label><span data-i18n="quick.titles.pageSize">Tamaño título página (rem)</span> <input id="pageTitleSize" data-quick="pageTitleSize" type="number" min="1.1" max="3.2" step="0.05" /></label>
-              <label><span data-i18n="quick.titles.pageWeight">Peso título página</span>
-                <select id="pageTitleWeight" data-quick="pageTitleWeight">
-                  <option value="600">600</option>
-                  <option value="700">700</option>
-                  <option value="800">800</option>
-                  <option value="900">900</option>
-                </select>
-              </label>
-              <label><span data-i18n="quick.titles.pageLetterSpacing">Espaciado letras título (px)</span> <input id="pageTitleLetterSpacing" data-quick="pageTitleLetterSpacing" type="number" min="0" max="6" step="0.1" /></label>
-            </div>
-            <div class="inline-three">
-              <label><span data-i18n="quick.titles.pageMarginBottom">Margen inferior título (rem)</span> <input id="pageTitleMarginBottom" data-quick="pageTitleMarginBottom" type="number" min="0" max="2.5" step="0.05" /></label>
-              <label><span data-i18n="quick.titles.packageSize">Tamaño título de proyecto (rem)</span> <input id="packageTitleSize" data-quick="packageTitleSize" type="number" min="0" max="4" step="0.05" /></label>
-              <label><span data-i18n="quick.titles.packageWeight">Peso título de proyecto</span>
-                <select id="packageTitleWeight" data-quick="packageTitleWeight">
-                  <option value="400">400</option>
-                  <option value="500">500</option>
-                  <option value="600">600</option>
-                  <option value="700">700</option>
-                </select>
-              </label>
-            </div>
-            <div class="inline-three">
-              <label><span data-i18n="quick.titles.packageColor">Color título de proyecto</span> <input id="packageTitleColor" data-quick="packageTitleColor" type="color" /></label>
-              <label><span data-i18n="quick.titles.boxSize">Tamaño título iDevice (rem)</span> <input id="boxTitleSize" data-quick="boxTitleSize" type="number" min="1" max="2.4" step="0.05" /></label>
-              <label><span data-i18n="quick.titles.boxGap">Separación icono/título (px)</span> <input id="boxTitleGap" data-quick="boxTitleGap" type="number" min="0" max="28" step="1" /></label>
-            </div>
-            <div class="toggle-item">
-              <span class="toggle-control">
-                <input id="pageTitleUppercase" data-quick="pageTitleUppercase" class="toggle-input" type="checkbox" />
-                <span class="toggle-visual"></span>
-              </span>
-              <label class="toggle-label" for="pageTitleUppercase" data-i18n="quick.titles.pageUppercase">Título de página en mayúsculas</label>
-            </div>
-            <div class="toggle-item">
-              <span class="toggle-control">
-                <input id="compactNoHeaderIdevices" data-quick="compactNoHeaderIdevices" class="toggle-input" type="checkbox" />
-                <span class="toggle-visual"></span>
-              </span>
-              <label class="toggle-label" for="compactNoHeaderIdevices" data-i18n="quick.titles.compactNoHeader">Reducir el espacio superior en iDevices sin título</label>
-            </div>
-          </div>
-        </details>
-
-        <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">account_balance</span><span data-i18n="quick.logo.summary">Logotipo institucional</span></summary>
-          <div class="section-content quick-grid">
-            <div class="button-row">
-              <button id="addLogoBtn" type="button" data-i18n="quick.logo.addReplace">Añadir/reemplazar logo</button>
-              <button id="removeLogoBtn" type="button" data-i18n="quick.logo.remove">Quitar logo</button>
-              <input id="addLogoInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
-            </div>
-            <p id="logoInfo" class="status-inline" data-i18n="status.noLogoLoaded">Sin logo cargado.</p>
-            <div class="toggle-item">
-              <span class="toggle-control">
-                <input id="logoEnabled" data-quick="logoEnabled" class="toggle-input" type="checkbox" />
-                <span class="toggle-visual"></span>
-              </span>
-              <label class="toggle-label" for="logoEnabled" data-i18n="quick.logo.show">Mostrar logo</label>
-            </div>
-            <div class="inline-three">
-              <label><span data-i18n="quick.logo.size">Tamaño logo (px)</span> <input id="logoSize" data-quick="logoSize" type="number" min="40" max="500" step="1" /></label>
-              <label><span data-i18n="quick.logo.position">Posición</span>
-                <select id="logoPosition" data-quick="logoPosition">
-                  <option value="top-left" data-i18n="quick.pos.topLeft">Arriba izquierda</option>
-                  <option value="top-center" data-i18n="quick.pos.topCenter">Arriba centro</option>
-                  <option value="top-right" data-i18n="quick.pos.topRight">Arriba derecha</option>
-                  <option value="bottom-left" data-i18n="quick.pos.bottomLeft">Abajo izquierda</option>
-                  <option value="bottom-center" data-i18n="quick.pos.bottomCenter">Abajo centro</option>
-                  <option value="bottom-right" data-i18n="quick.pos.bottomRight">Abajo derecha</option>
-                </select>
-              </label>
-              <label><span data-i18n="quick.logo.marginX">Margen horizontal (px)</span> <input id="logoMarginX" data-quick="logoMarginX" type="number" min="0" max="300" step="1" /></label>
-            </div>
-            <label><span data-i18n="quick.logo.marginY">Margen vertical (px)</span> <input id="logoMarginY" data-quick="logoMarginY" type="number" min="0" max="300" step="1" /></label>
-          </div>
-        </details>
-
-        <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">tab_close_right</span><span data-i18n="quick.favicon.summary">Favicon del proyecto exportado</span></summary>
-          <div class="section-content quick-grid">
-            <div class="button-row">
-              <button id="addFaviconBtn" type="button" data-i18n="quick.favicon.addReplace">Añadir/reemplazar favicon</button>
-              <button id="removeFaviconBtn" type="button" data-i18n="quick.favicon.remove">Quitar favicon</button>
-              <input id="addFaviconInput" type="file" accept=".ico,.png,image/x-icon,image/png" hidden />
-            </div>
-            <div id="faviconPreviewWrap" class="binary-preview favicon-preview" hidden>
-              <img id="faviconPreviewImage" alt="Vista previa del favicon" width="32" height="32" />
-            </div>
-            <p id="faviconInfo" class="status-inline" data-i18n="status.noFaviconLoaded">Sin favicon personalizado.</p>
-            <p class="status-inline" data-i18n="quick.favicon.help">eXe usará `img/favicon.ico` o `img/favicon.png` al exportar el proyecto.</p>
-          </div>
-        </details>
-
-        <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">view_day</span><span data-i18n="quick.headerFooter.summary">Cabecera y pie</span></summary>
-          <div class="section-content quick-grid">
-            <div class="inline-three">
-              <div class="toggle-item">
-                <span class="toggle-control">
-                  <input id="headerImageEnabled" data-quick="headerImageEnabled" class="toggle-input" type="checkbox" />
-                  <span class="toggle-visual"></span>
-                </span>
-                <label class="toggle-label" for="headerImageEnabled" data-i18n="quick.headerFooter.showHeader">Mostrar imagen de cabecera</label>
-              </div>
-              <div class="toggle-item">
-                <span class="toggle-control">
-                  <input id="headerHideTitle" data-quick="headerHideTitle" class="toggle-input" type="checkbox" />
-                  <span class="toggle-visual"></span>
-                </span>
-                <label class="toggle-label" for="headerHideTitle" data-i18n="quick.headerFooter.hideHeaderTitle">Ocultar título en cabecera</label>
-              </div>
-              <label><span data-i18n="quick.headerFooter.headerHeight">Alto cabecera (px)</span> <input id="headerImageHeight" data-quick="headerImageHeight" type="number" min="48" max="420" step="1" /></label>
-              <label><span data-i18n="quick.headerFooter.headerFit">Ajuste cabecera</span>
-                <select id="headerImageFit" data-quick="headerImageFit">
-                  <option value="contain" data-i18n="quick.fit.contain">Contain (imagen completa)</option>
-                  <option value="cover" data-i18n="quick.fit.coverHeader">Cover (rellenar cabecera)</option>
-                  <option value="auto" data-i18n="quick.fit.auto">Auto (tamaño original)</option>
-                </select>
-              </label>
-            </div>
-            <div class="inline-three">
-              <label><span data-i18n="quick.headerFooter.headerPosition">Posición cabecera</span>
-                <select id="headerImagePosition" data-quick="headerImagePosition">
-                  <option value="left top" data-i18n="quick.align.leftTop">Izquierda arriba</option>
-                  <option value="center top" data-i18n="quick.align.centerTop">Centro arriba</option>
-                  <option value="right top" data-i18n="quick.align.rightTop">Derecha arriba</option>
-                  <option value="left center" data-i18n="quick.align.leftCenter">Izquierda centro</option>
-                  <option value="center center" data-i18n="quick.align.center">Centro</option>
-                  <option value="right center" data-i18n="quick.align.rightCenter">Derecha centro</option>
-                  <option value="left bottom" data-i18n="quick.align.leftBottom">Izquierda abajo</option>
-                  <option value="center bottom" data-i18n="quick.align.centerBottom">Centro abajo</option>
-                  <option value="right bottom" data-i18n="quick.align.rightBottom">Derecha abajo</option>
-                </select>
-              </label>
-              <label><span data-i18n="quick.headerFooter.headerRepeat">Repetición cabecera</span>
-                <select id="headerImageRepeat" data-quick="headerImageRepeat">
-                  <option value="no-repeat" data-i18n="quick.common.repeat.none">No repetir</option>
-                  <option value="repeat-x" data-i18n="quick.common.repeat.x">Repetir horizontal</option>
-                  <option value="repeat-y" data-i18n="quick.common.repeat.y">Repetir vertical</option>
-                  <option value="repeat" data-i18n="quick.common.repeat.xy">Repetir ambos</option>
-                </select>
-              </label>
-            </div>
-            <div class="toggle-item">
-              <span class="toggle-control">
-                <input id="showAllStyleImages" class="toggle-input" type="checkbox" />
-                <span class="toggle-visual"></span>
-              </span>
-              <label class="toggle-label" for="showAllStyleImages" data-i18n="quick.headerFooter.showAllImages">Mostrar todas las imágenes del estilo (incluye iconos)</label>
-            </div>
-            <label><span data-i18n="quick.headerFooter.headerImageFromStyle">Imagen de cabecera del estilo</span>
-              <select id="headerImageSelect">
-                <option value="" data-i18n="quick.common.selectStyleImage">Seleccionar imagen del estilo…</option>
-              </select>
-            </label>
-            <div class="button-row">
-              <button id="addHeaderImageBtn" type="button" data-i18n="quick.headerFooter.addReplaceHeader">Añadir/reemplazar cabecera</button>
-              <button id="removeHeaderImageBtn" type="button" data-i18n="quick.headerFooter.removeHeader">Quitar cabecera</button>
-              <input id="addHeaderImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
-            </div>
-            <p id="headerImageInfo" class="status-inline" data-i18n="status.noHeaderImageLoaded">Sin imagen de cabecera.</p>
-            <div class="inline-three">
-              <div class="toggle-item">
-                <span class="toggle-control">
-                  <input id="footerImageEnabled" data-quick="footerImageEnabled" class="toggle-input" type="checkbox" />
-                  <span class="toggle-visual"></span>
-                </span>
-                <label class="toggle-label" for="footerImageEnabled" data-i18n="quick.headerFooter.showFooter">Mostrar imagen de pie</label>
-              </div>
-              <label><span data-i18n="quick.headerFooter.footerHeight">Alto pie (px)</span> <input id="footerImageHeight" data-quick="footerImageHeight" type="number" min="36" max="320" step="1" /></label>
-              <label><span data-i18n="quick.headerFooter.footerFit">Ajuste pie</span>
-                <select id="footerImageFit" data-quick="footerImageFit">
-                  <option value="contain" data-i18n="quick.fit.contain">Contain (imagen completa)</option>
-                  <option value="cover" data-i18n="quick.fit.coverFooter">Cover (rellenar pie)</option>
-                  <option value="auto" data-i18n="quick.fit.auto">Auto (tamaño original)</option>
-                </select>
-              </label>
-            </div>
-            <div class="inline-three">
-              <label><span data-i18n="quick.headerFooter.footerPosition">Posición pie</span>
-                <select id="footerImagePosition" data-quick="footerImagePosition">
-                  <option value="left top" data-i18n="quick.align.leftTop">Izquierda arriba</option>
-                  <option value="center top" data-i18n="quick.align.centerTop">Centro arriba</option>
-                  <option value="right top" data-i18n="quick.align.rightTop">Derecha arriba</option>
-                  <option value="left center" data-i18n="quick.align.leftCenter">Izquierda centro</option>
-                  <option value="center center" data-i18n="quick.align.center">Centro</option>
-                  <option value="right center" data-i18n="quick.align.rightCenter">Derecha centro</option>
-                  <option value="left bottom" data-i18n="quick.align.leftBottom">Izquierda abajo</option>
-                  <option value="center bottom" data-i18n="quick.align.centerBottom">Centro abajo</option>
-                  <option value="right bottom" data-i18n="quick.align.rightBottom">Derecha abajo</option>
-                </select>
-              </label>
-              <label><span data-i18n="quick.headerFooter.footerRepeat">Repetición pie</span>
-                <select id="footerImageRepeat" data-quick="footerImageRepeat">
-                  <option value="no-repeat" data-i18n="quick.common.repeat.none">No repetir</option>
-                  <option value="repeat-x" data-i18n="quick.common.repeat.x">Repetir horizontal</option>
-                  <option value="repeat-y" data-i18n="quick.common.repeat.y">Repetir vertical</option>
-                  <option value="repeat" data-i18n="quick.common.repeat.xy">Repetir ambos</option>
-                </select>
-              </label>
-            </div>
-            <label><span data-i18n="quick.headerFooter.footerImageFromStyle">Imagen de pie del estilo</span>
-              <select id="footerImageSelect">
-                <option value="" data-i18n="quick.common.selectStyleImage">Seleccionar imagen del estilo…</option>
-              </select>
-            </label>
-            <div class="button-row">
-              <button id="addFooterImageBtn" type="button" data-i18n="quick.headerFooter.addReplaceFooter">Añadir/reemplazar pie</button>
-              <button id="removeFooterImageBtn" type="button" data-i18n="quick.headerFooter.removeFooter">Quitar pie</button>
-              <input id="addFooterImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
-            </div>
-            <p id="footerImageInfo" class="status-inline" data-i18n="status.noFooterImageLoaded">Sin imagen de pie.</p>
-            <p class="status-inline" data-i18n="quick.headerFooter.suggestion">Sugerencia: cabecera panorámica (p. ej. 1800x420) y pie (p. ej. 1800x220). Usa contain si no quieres recorte y cover si quieres ocupar toda la franja.</p>
-          </div>
-        </details>
-
-        <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">menu</span><span data-i18n="quick.menu.summary">Navegación (menú lateral)</span></summary>
-          <div class="section-content quick-grid">
-            <div class="palette-compact">
-              <label><span data-i18n="quick.menu.bg">Fondo menú</span> <input id="menuBgColor" data-quick="menuBgColor" type="color" /></label>
-              <label><span data-i18n="quick.menu.text">Texto menú</span> <input id="menuTextColor" data-quick="menuTextColor" type="color" /></label>
-              <label><span data-i18n="quick.menu.hoverBg">Fondo al pasar</span> <input id="menuHoverBgColor" data-quick="menuHoverBgColor" type="color" /></label>
-              <label><span data-i18n="quick.menu.hoverText">Texto al pasar</span> <input id="menuHoverTextColor" data-quick="menuHoverTextColor" type="color" /></label>
-              <label><span data-i18n="quick.menu.activeBg">Fondo activo</span> <input id="menuActiveBgColor" data-quick="menuActiveBgColor" type="color" /></label>
-              <label><span data-i18n="quick.menu.activeText">Texto activo</span> <input id="menuActiveTextColor" data-quick="menuActiveTextColor" type="color" /></label>
-            </div>
-            <div class="group-card">
-              <h4 class="group-title" data-i18n="quick.menu.navIcons">Iconos de navegación</h4>
-              <div class="nav-icon-grid">
-                <label><span data-i18n="quick.menu.prevIcon">Icono Anterior</span>
-                  <select id="navPrevIconSelect">
-                    <option value="" data-i18n="quick.common.selectStyleImage">Seleccionar imagen del estilo…</option>
-                  </select>
-                </label>
-                <div class="button-row">
-                  <button id="addNavPrevIconBtn" type="button" data-i18n="quick.menu.uploadIcon">Subir icono</button>
-                  <input id="addNavPrevIconInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
-                </div>
-                <label><span data-i18n="quick.menu.nextIcon">Icono Siguiente</span>
-                  <select id="navNextIconSelect">
-                    <option value="" data-i18n="quick.common.selectStyleImage">Seleccionar imagen del estilo…</option>
-                  </select>
-                </label>
-                <div class="button-row">
-                  <button id="addNavNextIconBtn" type="button" data-i18n="quick.menu.uploadIcon">Subir icono</button>
-                  <input id="addNavNextIconInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
-                </div>
-                <label><span data-i18n="quick.menu.menuIcon">Icono Menú</span>
-                  <select id="navMenuIconSelect">
-                    <option value="" data-i18n="quick.common.selectStyleImage">Seleccionar imagen del estilo…</option>
-                  </select>
-                </label>
-                <div class="button-row">
-                  <button id="addNavMenuIconBtn" type="button" data-i18n="quick.menu.uploadIcon">Subir icono</button>
-                  <input id="addNavMenuIconInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
-                </div>
-              </div>
-              <p id="navIconsInfo" class="status-inline" data-i18n="status.noNavIconsChanges">Sin cambios en iconos de navegación.</p>
-            </div>
-          </div>
-        </details>
-
-        <details>
-          <summary><span class="summary-icon material-symbols-outlined" aria-hidden="true">smart_button</span><span data-i18n="quick.content.summary">iDevices y botones (contenido)</span></summary>
-          <div class="section-content quick-grid">
-            <div class="palette-compact">
-              <label><span data-i18n="quick.content.boxBg">Fondo iDevice</span> <input id="boxBgColor" data-quick="boxBgColor" type="color" /></label>
-              <label><span data-i18n="quick.content.boxBorder">Borde iDevice</span> <input id="boxBorderColor" data-quick="boxBorderColor" type="color" /></label>
-              <label><span data-i18n="quick.content.boxTitle">Título iDevice</span> <input id="boxTitleColor" data-quick="boxTitleColor" type="color" /></label>
-              <label><span data-i18n="quick.content.buttonBg">Botón fondo</span> <input id="buttonBgColor" data-quick="buttonBgColor" type="color" /></label>
-              <label><span data-i18n="quick.content.buttonText">Botón texto</span> <input id="buttonTextColor" data-quick="buttonTextColor" type="color" /></label>
-            </div>
-            <div class="inline-two">
-              <label><span data-i18n="quick.content.boxTextAlign">Alineación texto iDevice</span>
-                <select id="boxTextAlign" data-quick="boxTextAlign">
-                  <option value="inherit" data-i18n="quick.common.defaultFromStyle">Por defecto del estilo</option>
-                  <option value="left" data-i18n="quick.textAlign.left">Izquierda</option>
-                  <option value="center" data-i18n="quick.textAlign.center">Centrado</option>
-                  <option value="right" data-i18n="quick.textAlign.right">Derecha</option>
-                  <option value="justify" data-i18n="quick.textAlign.justify">Justificado</option>
-                </select>
-              </label>
-              <label><span data-i18n="quick.content.boxTextSize">Tamaño texto iDevice</span>
-                <select id="boxFontSize" data-quick="boxFontSize">
-                  <option value="inherit" data-i18n="quick.common.defaultFromStyle">Por defecto del estilo</option>
-                  <option value="14px">14 px</option>
-                  <option value="16px">16 px</option>
-                  <option value="18px">18 px</option>
-                  <option value="20px">20 px</option>
-                  <option value="22px">22 px</option>
-                  <option value="24px">24 px</option>
-                </select>
-              </label>
-            </div>
-            <div class="button-row">
-              <button id="addIdeviceIconsBtn" type="button" data-i18n="quick.content.addIdeviceIcons">Añadir iconos iDevice</button>
-              <input id="addIdeviceIconsInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" multiple hidden />
-            </div>
-          </div>
-        </details>
-      </section>
-
-      <section class="tab-panel" data-panel="files">
-        <div class="section-content">
-          <h3 class="section-title" data-i18n="files.listTitle">Lista de archivos</h3>
-          <label class="file-label" for="fileTypeFilter" data-i18n="files.typeLabel">Tipo de archivo</label>
-          <select id="fileTypeFilter">
-            <option value="all" data-i18n="files.type.all">Todos</option>
-            <option value="images" data-i18n="files.type.images">Imágenes</option>
-            <option value="css" data-i18n="files.type.css">CSS</option>
-            <option value="js" data-i18n="files.type.js">JavaScript</option>
-            <option value="xml" data-i18n="files.type.xml">XML</option>
-            <option value="json" data-i18n="files.type.json">JSON</option>
-            <option value="html" data-i18n="files.type.html">HTML</option>
-            <option value="markdown" data-i18n="files.type.markdown">Markdown</option>
-            <option value="fonts" data-i18n="files.type.fonts">Fuentes</option>
-            <option value="text" data-i18n="files.type.text">Texto</option>
-            <option value="other" data-i18n="files.type.other">Otros</option>
-          </select>
-          <label class="file-label" for="fileNameFilter" data-i18n="files.searchLabel">Buscar archivo</label>
-          <input id="fileNameFilter" type="search" placeholder="Buscar por nombre o ruta..." autocomplete="off" data-i18n-placeholder="files.searchPlaceholder" />
-          <div id="fileList" class="file-list"></div>
-        </div>
-
-        <div class="section-content">
-          <h3 class="section-title" data-i18n="files.editorTitle">Editor de archivo</h3>
-          <p id="editorPath" class="editor-path" data-i18n="files.selectTextFile">Selecciona un archivo de texto</p>
-          <div id="imageActions" class="button-row image-actions">
-            <button id="replaceImageBtn" type="button" data-i18n="files.replaceImage">Reemplazar imagen</button>
-            <input id="replaceImageInput" type="file" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*" hidden />
-          </div>
-          <div id="editorSurface" class="editor-surface has-inline-action">
-            <button id="openDetachedEditorBtn" class="editor-inline-action" type="button" aria-label="Abrir editor en ventana independiente" data-i18n-aria-label="files.openDetachedEditor">
-              <span class="inline-icon material-symbols-outlined" aria-hidden="true">open_in_new</span>
-            </button>
-            <pre id="textHighlight" class="text-highlight" aria-hidden="true"></pre>
-            <textarea id="textEditor" spellcheck="false" wrap="off"></textarea>
-          </div>
-          <div id="binaryPreview" class="binary-preview"></div>
-        </div>
-      </section>
-    </aside>
-
-    <main id="previewPanel" class="preview-panel">
-      <header class="preview-header">
-        <div class="preview-header-top">
-          <h2 data-i18n="preview.title">Previsualización real del ELPX</h2>
-          <div class="preview-toolbar" aria-label="Acciones rápidas" data-i18n-aria-label="preview.quickActions">
-            <button id="undoBtn" class="icon-btn" type="button" title="Deshacer último cambio" data-i18n-title="preview.undoTitle" disabled>
-              <span class="material-symbols-outlined" aria-hidden="true">undo</span>
-              <span class="sr-only" data-i18n="preview.undoTitle">Deshacer último cambio</span>
-            </button>
-            <button id="redoBtn" class="icon-btn" type="button" title="Rehacer cambio deshecho" data-i18n-title="preview.redoTitle" disabled>
-              <span class="material-symbols-outlined" aria-hidden="true">redo</span>
-              <span class="sr-only" data-i18n="preview.redoTitle">Rehacer último cambio</span>
-            </button>
-            <button id="previewInspectBtn" class="icon-btn" type="button" aria-pressed="false" title="Modo edición por clic" data-i18n-title="preview.inspectTitle">
-              <span class="material-symbols-outlined" aria-hidden="true">ads_click</span>
-              <span class="sr-only" data-i18n="preview.inspectActivate">Activar modo edición por clic</span>
-            </button>
-          </div>
-        </div>
-      </header>
-      <iframe id="previewFrame" title="Previsualización eXe" data-i18n-title="preview.iframeTitle" src="about:blank" sandbox="allow-same-origin allow-scripts"></iframe>
-      <div id="busyOverlay" class="busy-overlay" hidden>
-        <div class="busy-card" role="status" aria-live="polite" aria-busy="true">
-          <span class="busy-spinner" aria-hidden="true"></span>
-          <span id="busyOverlayText" data-i18n="preview.loading">Cargando…</span>
-        </div>
-      </div>
-    </main>
-  </div>
-  <div id="clickEditModal" class="modal-backdrop" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="clickEditTitle">
-      <h3 id="clickEditTitle" data-i18n="clickEdit.title">Editar elemento</h3>
-      <p class="status-inline" data-i18n="clickEdit.selector">Selector:</p>
-      <p id="clickEditSelector" class="click-selector"></p>
-      <div class="inline-two click-edit-grid">
-        <label id="clickTextColorWrap"><span data-i18n="clickEdit.textColor">Color de texto</span>
-          <input id="clickPropColor" type="color" />
-        </label>
-        <label><span data-i18n="clickEdit.bgColor">Color de fondo</span>
-          <input id="clickPropBg" type="color" />
-        </label>
-      </div>
-      <div class="inline-two click-edit-grid">
-        <label id="clickTextAlphaWrap"><span data-i18n="clickEdit.textAlpha">Transparencia texto (%)</span>
-          <input id="clickPropColorAlpha" type="number" min="0" max="100" step="1" value="0" />
-        </label>
-        <label><span data-i18n="clickEdit.bgAlpha">Transparencia fondo (%)</span>
-          <input id="clickPropBgAlpha" type="number" min="0" max="100" step="1" value="0" />
-        </label>
-      </div>
-      <div class="inline-two click-edit-grid">
-        <label id="clickTextSizeWrap"><span data-i18n="clickEdit.textSize">Tamaño texto (solo px)</span>
-          <input id="clickPropFontSize" type="number" min="8" max="96" step="1" />
-        </label>
-        <label id="clickTextWeightWrap"><span data-i18n="clickEdit.textWeight">Peso texto</span>
-          <select id="clickPropFontWeight">
-            <option value="400" data-i18n="clickEdit.weight400">400 (normal)</option>
-            <option value="500">500</option>
-            <option value="600">600</option>
-            <option value="700" data-i18n="clickEdit.weight700">700 (negrita)</option>
-            <option value="800">800</option>
-          </select>
-        </label>
-      </div>
-      <div class="inline-two click-edit-grid">
-        <label id="clickTextAlignWrap"><span data-i18n="clickEdit.textAlign">Alineación texto</span>
-          <select id="clickPropTextAlign">
-            <option value="left" data-i18n="clickEdit.alignLeft">Izquierda</option>
-            <option value="center" data-i18n="clickEdit.alignCenter">Centro</option>
-            <option value="right" data-i18n="clickEdit.alignRight">Derecha</option>
-            <option value="justify" data-i18n="clickEdit.alignJustify">Justificado</option>
-          </select>
-        </label>
-        <label><span data-i18n="clickEdit.marginLeft">Margen izquierdo (`margin-left`, px y %)</span>
-          <input id="clickPropMarginLeft" type="text" placeholder="Ej.: 20px, 5% o auto" data-i18n-placeholder="clickEdit.marginSidePlaceholder" />
-        </label>
-      </div>
-      <div class="inline-two click-edit-grid">
-        <label><span data-i18n="clickEdit.marginRight">Margen derecho (`margin-right`, px y %)</span>
-          <input id="clickPropMarginRight" type="text" placeholder="Ej.: 20px, 5% o auto" data-i18n-placeholder="clickEdit.marginSidePlaceholder" />
-        </label>
-        <div></div>
-      </div>
-      <div class="inline-two click-edit-grid">
-        <label><span data-i18n="clickEdit.width">Ancho (`width`, px y %)</span>
-          <input id="clickPropWidth" type="text" placeholder="Ej.: 320px o 80%" data-i18n-placeholder="clickEdit.widthPlaceholder" />
-        </label>
-        <label><span data-i18n="clickEdit.maxWidth">Ancho máximo (`max-width`, px y %)</span>
-          <input id="clickPropMaxWidth" type="text" placeholder="Ej.: 1100px o 90%" data-i18n-placeholder="clickEdit.maxWidthPlaceholder" />
-        </label>
-      </div>
-      <div class="inline-two click-edit-grid">
-        <label><span data-i18n="clickEdit.marginBottom">Margen inferior (`margin-bottom`, px y %)</span>
-          <input id="clickPropMarginBottom" type="text" placeholder="Ej.: 16px o 2%" data-i18n-placeholder="clickEdit.marginBottomPlaceholder" />
-        </label>
-        <label><span data-i18n="clickEdit.padding">Espaciado interno (`padding`, px y %)</span>
-          <input id="clickPropPadding" type="text" placeholder="Ej.: 12px, 2% o 8px 2%" data-i18n-placeholder="clickEdit.paddingPlaceholder" />
-        </label>
-      </div>
-      <div id="clickApplyInteractiveWrap" class="toggle-item click-edit-toggle" hidden>
-        <span class="toggle-control">
-          <input id="clickApplyInteractiveStates" class="toggle-input" type="checkbox" checked />
-          <span class="toggle-visual"></span>
-        </span>
-        <label class="toggle-label" for="clickApplyInteractiveStates" data-i18n="clickEdit.applyInteractive">Aplicar también al pasar el ratón o al hacer clic</label>
-      </div>
-      <div id="clickCompactNoHeaderWrap" class="toggle-item click-edit-toggle" hidden>
-        <span class="toggle-control">
-          <input id="clickCompactNoHeader" class="toggle-input" type="checkbox" />
-          <span class="toggle-visual"></span>
-        </span>
-        <label class="toggle-label" for="clickCompactNoHeader" data-i18n="clickEdit.compactNoHeader">Reducir el espacio superior en iDevices sin título</label>
-      </div>
-      <div class="button-row click-edit-actions">
-        <button id="clickEditApplyBtn" type="button">
-          <span class="inline-icon material-symbols-outlined" aria-hidden="true">check</span><span data-i18n="clickEdit.apply">Aplicar cambios</span>
-        </button>
-        <button id="clickEditCancelBtn" type="button">
-          <span class="inline-icon material-symbols-outlined" aria-hidden="true">close</span><span data-i18n="common.cancel">Cancelar</span>
-        </button>
-      </div>
+  <main>
+    <h1>Este repositorio ya no es el principal.</h1>
+    <p>El proyecto oficial se mantiene en <a href="https://github.com/eXe-style-editor/eXe-style-editor.github.io">eXe-style-editor/eXe-style-editor.github.io</a>.</p>
+    <p>La web activa es <a href="https://exe-style-editor.github.io/">https://exe-style-editor.github.io/</a>. Si no se abre automáticamente, usa uno de los enlaces siguientes.</p>
+    <div class="actions">
+      <a class="button primary" href="https://exe-style-editor.github.io/">Abrir la web oficial</a>
+      <a class="button secondary" href="https://github.com/eXe-style-editor/eXe-style-editor.github.io">Abrir el repositorio canónico</a>
     </div>
-  </div>
-  <div id="exportRenameModal" class="modal-backdrop" hidden>
-    <div class="modal-card modal-card-centered rename-modal-card" role="dialog" aria-modal="true" aria-labelledby="exportRenameTitle">
-      <h3 id="exportRenameTitle" data-i18n="renameModal.title">Guardar ELPX: cambiar nombre del estilo</h3>
-      <p class="status-inline" data-i18n="renameModal.hint">Si quieres que eXeLearning lo detecte como estilo nuevo, cambia <strong>Nombre</strong> y <strong>Título</strong>. Si no los cambias, podrás guardarlo igualmente, pero tendrás que eliminar antes el estilo anterior en eXeLearning.</p>
-      <div class="inline-two click-edit-grid">
-        <label><span data-i18n="renameModal.name">Nombre del estilo</span>
-          <input id="exportRenameNameInput" type="text" />
-        </label>
-        <label><span data-i18n="renameModal.visibleTitle">Título visible</span>
-          <input id="exportRenameTitleInput" type="text" />
-        </label>
-      </div>
-      <p id="exportRenameHelp" class="status-inline"></p>
-      <div class="button-row click-edit-actions">
-        <button id="exportRenameConfirmBtn" type="button">
-          <span class="inline-icon material-symbols-outlined" aria-hidden="true">save</span><span data-i18n="renameModal.saveElpx">Guardar ELPX</span>
-        </button>
-        <button id="exportRenameCancelBtn" type="button">
-          <span class="inline-icon material-symbols-outlined" aria-hidden="true">close</span><span data-i18n="common.cancel">Cancelar</span>
-        </button>
-      </div>
-    </div>
-  </div>
-  <footer class="app-footer">
-    <p>v 1.0.0-beta.11 · © <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a> · <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer" data-i18n="footer.license">Licencia AGPLv3</a> · <a href="https://github.com/eXe-style-editor/eXe-style-editor.github.io" target="_blank" rel="noopener noreferrer" data-i18n="footer.repo">Repositorio GitHub</a> · <a href="https://github.com/eXe-style-editor/eXe-style-editor.github.io/issues" target="_blank" rel="noopener noreferrer" data-i18n="footer.issues">Problemas y sugerencias</a></p>
-    <p id="analyticsSummary" class="app-footer-stats" hidden>
-      <span data-i18n="footer.analytics.visits">Visitas</span> <strong id="analyticsTotalValue">-</strong>
-      <span class="app-footer-sep">·</span>
-      <span data-i18n="footer.analytics.today">Hoy</span> <strong id="analyticsTodayValue">-</strong>
-    </p>
-    <details class="app-footer-disclosure">
-      <summary data-i18n="footer.analyticsLink">Privacidad</summary>
-      <p class="app-footer-note" data-i18n="footer.analyticsNotice">Esta aplicación recoge únicamente estadísticas de uso agregadas con un sistema propio para conocer su utilización y mejorar la herramienta. No se almacenan direcciones IP ni se usan cookies de analítica para los visitantes.</p>
-    </details>
-    <p class="app-footer-note" data-i18n="footer.disclaimer">Proyecto independiente inspirado visualmente en eXeLearning. No esta afiliado ni avalado oficialmente por eXeLearning o INTEF.</p>
-  </footer>
-
-  <script src="app/lang/en.js"></script>
-  <script src="app/lang/es.js"></script>
-  <script src="app/lang/ca.js"></script>
-  <script src="app/i18n.js"></script>
-  <script src="vendor/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
-  <script type="module" src="app/main.js"></script>
+  </main>
+  <script>
+    window.location.replace("https://exe-style-editor.github.io/");
+  </script>
 </body>
 </html>
